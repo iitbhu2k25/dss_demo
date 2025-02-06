@@ -87,7 +87,7 @@ def get_villages(request, state_code, district_code, subdistrict_code):
 
     # Generate village list with 'ALL' for village_code == 0
     village_list = [
-        {"village_code": loc.village_code, "region_name": " All " if loc.village_code == 0 else loc.region_name}
+        {"village_code": loc.village_code, "region_name": " All " if loc.village_code == 0 else loc.region_name, "population_2011": loc.population_2011}
         for loc in locations
     ]
 

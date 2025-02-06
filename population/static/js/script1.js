@@ -1,4 +1,5 @@
-let code_to_villagename = {}
+let code_to_villagename = {};
+let villagePopulations = {};
 let chartInstances = {};
 document.addEventListener('DOMContentLoaded', () => {
     // Fetch states on page load
@@ -43,8 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (subdistrictCode) {
         fetch(`/population/get-villages/${stateCode}/${districtCode}/${subdistrictCode}/`)
           .then(response => response.json())
-          .then(villages => populateTownVillage(villages, 'village_code', 'region_name'))
+          .then(villages => populateTownVillage(villages, 'village_code', 'region_name', 'population_2011'))
           .catch(error => console.error('Error fetching villages:', error));
+          
       }
       resetTownVillage();
     });
@@ -69,7 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // Populate town/village container
-  function populateTownVillage(data, valueKey, textKey) {
+  function populateTownVillage(data, valueKey, textKey, populationKey) {
+    // console.log("Data hai ", data);
+   
     
     const container = document.getElementById('town-village-container');
     container.innerHTML = ''; // Clear previous checkboxes
@@ -80,6 +84,8 @@ document.addEventListener('DOMContentLoaded', () => {
       checkbox.value = item[valueKey];
       checkbox.id = `village-${item[valueKey]}`;
       checkbox.className = 'village-checkbox';
+      villagePopulations[item[valueKey]] = item[populationKey];
+      code_to_villagename[item[valueKey]] = item[textKey];
   
       const label = document.createElement('label');
       label.htmlFor = checkbox.id;
@@ -104,26 +110,44 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedContainer.innerHTML = '<span>No selections made</span>';
   }
   
+ 
+
+
+
+
   // Update selected villages display
   function updateSelectedVillages() {
     const checkboxes = document.querySelectorAll('.village-checkbox:checked');
     const selectedContainer = document.getElementById('selected-villages');
-   
-    
+    const totalPopulationContainer = document.getElementById('total-population');
+    let totalPopulation = 0;
+
     if (checkboxes.length === 0) {
       selectedContainer.innerHTML = '<span>No selections made</span>';
+      totalPopulationContainer.innerHTML = '';
       return;
     }
-  
+
     selectedContainer.innerHTML = '';
     checkboxes.forEach(checkbox => {
+      // console.log("Checkbox: ", checkbox); 
+      
+      
       const label = document.querySelector(`label[for="${checkbox.id}"]`);
+      // console.log("Label: ", label);
+      
       const div = document.createElement('div');
-      let parts = checkbox.id.split("-")
-      code_to_villagename[parts[1]] = label.textContent
-      div.textContent = label.textContent;
+      const villageId = checkbox.id.split("-")[1]; // Get the village ID from the checkbox ID
+      
+      // Get the population for the village from the villagePopulations object
+      const population = villagePopulations[villageId] || 0; // Default to 0 if not found
+      totalPopulation += population; // Add to total population
+
+      // Add the village name and population next to each other
+      div.textContent = `${label.textContent} (Population of 2011: ${population})`;
       selectedContainer.appendChild(div);
     });
+    totalPopulationContainer.textContent = `Total Population: ${totalPopulation}`;
     
 }
 
@@ -280,9 +304,16 @@ document.addEventListener('DOMContentLoaded', () => {
                   fill: false,
                 };
               });
-              console.log("datasets ", datasets);
+              // console.log("datasets ", datasets);
               
+              labels.shift()
 
+               // Iterate over each key of the datasets object
+              Object.keys(datasets).forEach(key => {
+                // Remove the first element from the data array of each dataset
+                datasets[key].data.shift();  // or datasets[key].data.splice(0, 1);
+              });
+          
               renderGraph(canvasId, datasets, labels);
             });
 
@@ -630,7 +661,13 @@ document.addEventListener("DOMContentLoaded", function () {
               };
             });
             console.log("datasets ", datasets);
-            
+           
+            labels.shift()
+            // Iterate over each key of the datasets object
+            Object.keys(datasets).forEach(key => {
+              // Remove the first element from the data array of each dataset
+              datasets[key].data.shift();  // or datasets[key].data.splice(0, 1);
+            });
 
             renderGraph(canvasId, datasets, labels);
           });
