@@ -1,0 +1,133 @@
+{% extends 'population/base.html' %}
+{% block content %}
+
+
+
+
+<div class="container-2 my-5" style="border: 1.5px solid;">
+
+  <form method="post">
+    {% csrf_token %}
+    <h3 class="text-center mb-4" style="color: #ff00cc;">Demographic-based prediction</h3>
+
+    <!-- State, District, and Sub-District Selection -->
+    <div class="row">
+      <div class="form-group col-12 col-md-3 mb-3">
+        <label for="state">State:</label>
+        <select id="state" name="state">
+          <option value="">Select a State</option>
+        </select>
+      </div>
+
+      <div class="form-group col-12 col-md-3 mb-3">
+        <label for="district">District:</label>
+        <select id="district" name="district">
+          <option value="">Select a District</option>
+        </select>
+      </div>
+
+      <div class="form-group col-12 col-md-3 mb-3">
+        <label for="subdistrict">Sub-District:</label>
+        <select id="subdistrict" name="subdistrict">
+          <option value="">Select a Sub-District</option>
+        </select>
+      </div>
+
+      <div class="form-group col-10 col-md-5 mb-3">
+        <label for="town-village">Town/Village:</label>
+        <div id="town-village-container" class="border p-2" style="max-height: 200px; overflow-y: auto;">
+          <!-- Villages/Towns checkboxes will be dynamically populated here -->
+        </div>
+      </div>
+
+      <!-- Selected Villages/Towns Display -->
+      <div class="form-group col-10 col-md-5 mb-3">
+        <label>Selected Town/Village:</label>
+        <div id="selected-villages" class="border p-2">
+          <!-- Selected villages/towns will be displayed here -->
+        </div>
+      </div>
+
+
+      <div class="form-group col-12 col-md-3 mb-3">
+        <label for="base-year">Select Base Year:</label>
+        <select id="base-year" name="base_year">
+          <option value="2011" selected>2011</option>
+        </select>
+      </div>
+
+      <div class="form-group col-5 mb-3">
+        <label class="mb-2">Select Target Year:</label>
+        <div class="d-flex align-items-center flex-wrap gap-3">
+          <!-- Single Year Option -->
+          <div class="d-flex align-items-center">
+            <input type="radio" id="single-year-option" name="year_selection" value="single" class="me-2" checked>
+            <label for="single-year-option" class="me-2 mb-0">Single Year:</label>
+            <input type="number" id="target-year" name="target_year" class="form-control form-control-sm"
+              placeholder="Enter year (e.g., 2025)" style="max-width: 150px;">
+          </div>
+
+          <!-- Range Year Option -->
+          <div class="d-flex align-items-center">
+            <input type="radio" id="range-year-option" name="year_selection" value="range" class="me-2">
+            <label for="range-year-option" class="me-2 mb-0">Range of Years:</label>
+            <div class="input-group input-group-sm" style="max-width: 350px;">
+              <input type="number" id="target-year-range-start" name="target_year_start" class="form-control"
+                placeholder="Start Year (e.g., 2020)" disabled>
+              <span class="input-group-text">to</span>
+              <input type="number" id="target-year-range-end" name="target_year_end" class="form-control"
+                placeholder="End Year (e.g., 2030)" disabled>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="form-group col-12 col-md-3 mb-3">
+          <label for="birth-rate">Annual Birth Rate:</label>
+          <input type="number" id="birth-rate" name="birth_rate" class="form-control" placeholder="Enter birth rate">
+        </div>
+
+        <div class="form-group col-12 col-md-3 mb-3">
+          <label for="death-rate">Annual Death Rate:</label>
+          <input type="number" id="death-rate" name="death_rate" class="form-control" placeholder="Enter death rate">
+        </div>
+
+        <div class="form-group col-12 col-md-3 mb-3">
+          <label for="emigration-rate">Annual Emigration Rate:</label>
+          <input type="number" id="emigration-rate" name="emigration_rate" class="form-control"
+            placeholder="Enter emigration rate">
+        </div>
+
+        <div class="form-group col-12 col-md-3 mb-3">
+          <label for="immigration-rate">Annual Immigration Rate:</label>
+          <input type="number" id="immigration-rate" name="immigration_rate" class="form-control"
+            placeholder="Enter immigration rate">
+        </div>
+      </div>
+    </div>
+
+
+    <button id="submit-btn" class="btn btn-dark mt-3">Submit</button>
+
+    <div id="projection-values" class="mt-3">
+      <div class="projection-view tables-view">
+        <div class="projection-item demographic-attribute" style="display: block;">
+          <h6>Click submit to see the predicted population and graph below :</h6>
+          <div class="container my-5">
+
+            <div id="dynamic-tables-demographic-attribute">
+              <!-- Dynamic tables for Arithmetic Increase will be rendered here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="graph-container" id="container-demographic-attribute" style="display: block;">
+      <canvas id="graph-demographic-attribute"></canvas>
+    </div>
+
+  </form>
+</div>
+{%endblock%}
