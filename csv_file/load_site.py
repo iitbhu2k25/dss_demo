@@ -9,7 +9,7 @@ DB_PORT = '5431'
 DB_NAME = 'postgres'
 
 # Table name and CSV file
-TABLE_NAME = 'STP_data'
+TABLE_NAME = 'stp_data'
 CSV_FILE = 'load2.csv'
 
 # Create the database engine
