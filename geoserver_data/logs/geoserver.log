@@ -2909,3 +2909,9 @@
 07 Feb 11:34:29 CONFIG [diskquota.DiskQuotaMonitor] - Disk quota periodic enforcement task set up every 10 SECONDS
 07 Feb 11:34:29 CONFIG [geoserver.security] - Start reloading user/groups for service named default
 07 Feb 11:34:29 CONFIG [geoserver.security] - Reloading user/groups successful for service named default
+07 Feb 11:48:41 CONFIG [gwc.layer] - GeoServer TileLayer store base directory is: gwc-layers
+07 Feb 11:48:41 CONFIG [gwc.layer] - Loading tile layers from gwc-layers
+07 Feb 11:48:41 CONFIG [gwc.layer] - Loaded 28 tile layers in 35.78 ms
+07 Feb 11:48:41 CONFIG [gwc.layer] - GeoServer TileLayer store base directory is: gwc-layers
+07 Feb 11:48:41 CONFIG [gwc.layer] - Loading tile layers from gwc-layers
+07 Feb 11:48:41 CONFIG [gwc.layer] - Loaded 28 tile layers in 33.57 ms
