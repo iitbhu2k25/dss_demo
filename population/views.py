@@ -9,7 +9,6 @@ from waterdemands.models import PopulationData,PopulationDataYear
 
 
 def prediction_methods_page(request):
-  print("indiasd ankula")
   return render(request,"population/prediction_methods.html")
 
 def time_series_based_page(request):
