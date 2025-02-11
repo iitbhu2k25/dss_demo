@@ -17,7 +17,7 @@
                     <a class="nav-link active" aria-current="page" href="/">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% static 'content/about.html' %}">About</a>
+                    <a class="nav-link" href="{% url 'about' %}">About</a>
                 </li>
 
                 <!-- Basic Modules Dropdown -->
@@ -45,7 +45,7 @@
                         </li>
                         <li><a class="dropdown-item" href="/waterdemand">Water Demand Module</a></li>
                         <li><a class="dropdown-item" href="/sewage">Sewage Generation</a></li>
-                        <li><a class="dropdown-item" href="/stp">Site sutability</a></li>
+
                     </ul>
                 </li>
 
@@ -54,6 +54,8 @@
                     <a class="nav-link dropdown-toggle" href="#" id="gwmDropdown" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
                         GWM
+                        <span class="full-form">Ground Water Management</span>
+
                     </a>
                     <ul class="dropdown-menu glass-dropdown" aria-labelledby="gwmDropdown">
                         <li class="dropdown-submenu">
@@ -85,7 +87,7 @@
                             <ul class="dropdown-menu dropdown-submenu glass-dropdown">
                                 <li><a class="dropdown-item" href="#">Local Scale Water Estimation</a></li>
                                 <li><a class="dropdown-item" href="#">Climate Change</a></li>
-                                <li><a class="dropdown-item" href="#">Site Suitability</a></li>
+                                <li><a class="dropdown-item" href="/stp">Site sutability</a></li>
                                 <li><a class="dropdown-item" href="#">Optimized Solution</a></li>
                             </ul>
                         </li>
@@ -107,6 +109,7 @@
                     <a class="nav-link dropdown-toggle" href="#" id="rwmDropdown" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
                         RWM
+                        <span class="full-form">River Water Management</span>
                     </a>
                     <ul class="dropdown-menu glass-dropdown" aria-labelledby="rwmDropdown">
                         <li class="dropdown-submenu">
@@ -152,7 +155,7 @@
                             <ul class="dropdown-menu dropdown-submenu glass-dropdown">
                                 <li><a class="dropdown-item" href="#">Water Pollution Inventory</a></li>
                                 <li><a class="dropdown-item" href="#">Treatment Technology</a></li>
-                                <li><a class="dropdown-item" href="#">Site Suitability</a></li>
+                                <li><a class="dropdown-item" href="/stp">Site sutability</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -163,6 +166,7 @@
                     <a class="nav-link dropdown-toggle" href="#" id="wrmDropdown" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
                         WRM
+                        <span class="full-form">Water Resource Management</span>
                     </a>
                     <ul class="dropdown-menu glass-dropdown" aria-labelledby="wrmDropdown">
                         <li class="dropdown-submenu">
@@ -195,6 +199,7 @@
                     <a class="nav-link dropdown-toggle" href="#" id="shsdDropdown" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
                         System Dynamics
+                        <span class="full-form">Hydrological System Dynamics</span>
                     </a>
                     <ul class="dropdown-menu glass-dropdown" aria-labelledby="shsdDropdown">
                         <li class="dropdown-submenu">
@@ -251,7 +256,7 @@
                     <a class="nav-link" href="{% url 'mapdisplay' %}">Visual</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="">Contact</a>
+                    <a class="nav-link" href="{% url 'contact' %}">Contact</a>
                 </li>
 
                 <!-- Account Dropdown -->
@@ -273,9 +278,61 @@
 
 <!-- Styles -->
 <style>
+    /* style for full form shows of navbar item  */
+
+    /* Add these styles inside your existing <style> tag */
+    .nav-item.dropdown .full-form {
+        position: absolute;
+        top: -40px;
+        /* Position above the nav item */
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(238, 108, 1, 0.9);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 1040;
+    }
+
+    .nav-item.dropdown:hover .full-form {
+        opacity: 1;
+        visibility: visible;
+        top: -35px;
+        /* Slight upward animation on hover */
+    }
+
+    /* Arrow pointing down */
+    .nav-item.dropdown .full-form::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: rgba(8, 56, 128, 0.9) transparent transparent transparent;
+    }
+
+    /* Mobile responsiveness for full form */
+    @media (max-width: 991px) {
+        .nav-item.dropdown .full-form {
+            display: none;
+            /* Hide on mobile */
+        }
+    }
+
+    /* end of style of full form shows */
+
+    /* ----------------------------------------------------------------------------------- */
+
     /* Glassmorphism effect for navbar */
     .glass-navbar {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(3, 25, 100, 0.1);
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         padding: 15px 0;
         position: relative;
@@ -336,7 +393,7 @@
         left: 0;
         width: 0;
         height: 2px;
-        background: white;
+        background: rgb(9, 114, 175);
         transition: width 0.3s ease;
     }
 

@@ -25,3 +25,11 @@ def shsd(request):
 def basic(request):
     print("inside the nrw ")    
     return render(request, 'home/content/basic.html')
+
+def about(request):
+    print("inside the nrw ")    
+    return render(request, 'home/content/about.html')
+
+def contact(request):
+    print("inside the nrw ")    
+    return render(request, 'home/content/contact.html')
