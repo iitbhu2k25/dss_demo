@@ -1,22 +1,9 @@
 services:
-  db:
-    image: postgis/postgis:16-3.5
-    env_file:
-      - .env
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    ports:
-      - "5431:5432"
-    expose:
-      - "5431"
-    networks:
-      - geo_network
-
-  django:
+  web:
     build:
       context: .
-      dockerfile: Dockerfile.django
+      dockerfile: Dockerfile
+    container_name: django_app
     command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     env_file:
       - .env
@@ -26,51 +13,50 @@ services:
       - media_volume:/app/media
     ports:
       - "8000:8000"
-    depends_on:
-      - db
     expose:
       - "8000"
+    depends_on:
+      - db
     networks:
       - geo_network
-    restart: always
+    restart: unless-stopped
+
+  db:
+    image: postgis/postgis:16-3.5
+    container_name: postgis_db
+    env_file:
+      - .env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5431:5432"
+    expose:
+      - "5431"
+    networks:
+      - geo_network
+    restart: unless-stopped
 
   pgadmin:
-    image: dpage/pgadmin4:latest
+    image: dpage/pgadmin4
     container_name: pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "90:80"
-    expose:
-      - "90"
+    env_file:
+      - .env
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
     networks:
       - geo_network
     restart: unless-stopped
     depends_on:
       - db
 
-
-  geoserver:
-    image: docker.osgeo.org/geoserver:2.26.2
-    container_name: geoserver
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./geoserver_data:/opt/geoserver/data_dir # Persistent storage
-    environment:
-      - GEOSERVER_DATA_DIR=/opt/geoserver/data_dir
-      - GEOSERVER_HOME=/opt/geoserver
 networks:
   geo_network:
     driver: bridge
 
 volumes:
-  postgres_data:
-  geoserver_data:
+  pg_data:
+  pgadmin_data:
   static_volume:
   media_volume:
-  pgadmin_data:

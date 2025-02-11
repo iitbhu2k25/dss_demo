@@ -11,8 +11,6 @@ django-environ
 psycopg2-binary
 sqlalchemy
 
-# Geospatial
-GDAL==3.5.2
 geopandas
 geojson
 shapely
@@ -45,3 +43,4 @@ mypy
 
 # Monitoring & Error Tracking
 sentry-sdk
+

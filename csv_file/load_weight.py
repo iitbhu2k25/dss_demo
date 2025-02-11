@@ -6,7 +6,7 @@ DB_USER = 'myuser'
 DB_PASSWORD = 'mypassword'
 DB_HOST = 'localhost'
 DB_PORT = '5431'
-DB_NAME = 'postgres'
+DB_NAME = 'mydatabase'
 
 # Table name and CSV file
 TABLE_NAME = 'stp_weight'

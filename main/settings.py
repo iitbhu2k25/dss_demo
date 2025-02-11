@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "seawage",
     "waterdemands",
     "stp",
+    "leaflet",
 ]
 
 MIDDLEWARE = [
@@ -82,16 +83,25 @@ WSGI_APPLICATION = "main.wsgi.application"
 
 DATABASES = {
     'default': {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv('POSTGRES_NAME'),
-        "USER": os.getenv('POSTGRES_USER'),
-        "PASSWORD":os.getenv('POSTGRES_PASSWORD'),
-        "HOST": os.getenv('POSTGRES_HOST'),
-        "PORT": os.getenv('POSTGRES_PORT')
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': 'mydatabase',
+        'USER': 'myuser',
+        'PASSWORD': 'mypassword',
+        'HOST': 'db',
+        'PORT': '5432',
     }
 }
 
 
+LEAFLET_CONFIG = {
+    'DEFAULT_CENTER': (0.0, 0.0),
+    'DEFAULT_ZOOM': 2,
+    'MIN_ZOOM': 3,
+    'MAX_ZOOM': 18,
+    'TILES': [('OpenStreetMap', 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        'attribution': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    })],
+}
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 

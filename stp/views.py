@@ -8,7 +8,12 @@ from rest_framework.response import Response
 from django.shortcuts import render
 from .models import Data
 import json
+import geopandas as gpd
+from shapely.geometry import mapping
 from .service import weight_redisturb,normalize_data,rank_process 
+from shapely.geometry import Polygon, MultiPolygon
+from shapely.validation import make_valid
+import shapely.ops as ops
 def stp_home(request):
     return render(request, 'stp/prediction.html')
 
@@ -87,72 +92,159 @@ def GetRankView(request):
         ans=rank_process(table_data,weight_key,headings)
         print('main ans',ans)
         return JsonResponse(ans,safe=False)
-        # find the rank 
-        
-        
 
-
-
-
-# def calculate_ranks(list_of_dicts, normalized_weights):
-#     # Initialize list to store scores
-#     scores = []
-    
-#     # For each dictionary in the list
-#     for data_dict in list_of_dicts:
-#         total_score = 0
-        
-#         # For each normalized weight dictionary
-#         for weight_dict in normalized_weights:
-#             # Get the key and weight value from weight dictionary
-#             weight_key = list(weight_dict.keys())[0]
-#             weight_value = list(weight_dict.values())[0]
+@csrf_exempt
+def GetBoundry(request):
+    if request.method == 'GET':
+        try:
+            gdf = gpd.read_file('media/shapefile/all_district/States_Sub_District.shp')
+            coordinates = []
             
-#             # Multiply data value with corresponding weight
-#             if weight_key in data_dict:
-#                 total_score += data_dict[weight_key] * weight_value
-        
-#         # Store the original data and its score
-#         scores.append({
-#             'data': data_dict['Districts'],
-#             'score': total_score
-#         })
-    
-#     # Sort scores in descending order
-#     sorted_scores = sorted(scores, key=lambda x: x['score'], reverse=True)
-    
-#     # Add ranks
-#     for i, score in enumerate(sorted_scores, 1):
-#         score['rank'] = i
-    
-#     return sorted_scores
-# # Create your views here.
+            for geometry in gdf.geometry:
+                if geometry.geom_type == 'Polygon':
+                    coords = [[[float(x), float(y)] for x, y in geometry.exterior.coords]]
+                    coordinates.extend(coords)
+                elif geometry.geom_type == 'MultiPolygon':
+                    multi_coords = []
+                    for polygon in geometry.geoms:  
+                        coords = [[float(x), float(y)] for x, y in polygon.exterior.coords]
+                        multi_coords.append(coords)
+                    coordinates.extend(multi_coords)
+                    
+            return JsonResponse({'coordinates': coordinates})
+        except Exception as e:
+            print(str(e))
+            return JsonResponse({'error': str(e)}, status=500)
+    if request.method == 'POST':
+        try:
+            # Read the shapefile
+            gdf = gpd.read_file('media/shapefile/all_district/States_Sub_District.shp')
+            coordinates = []
+            request_data = json.loads(request.body)
+            
+            def fix_geometry(geometry):
+                """Fix invalid geometries and handle topology exceptions"""
+                try:
+                    # Check if geometry is valid
+                    if not geometry.is_valid:
+                        # Try to make the geometry valid
+                        geometry = make_valid(geometry)
+                    
+                    # Handle empty geometries
+                    if geometry.is_empty:
+                        return None
+                        
+                    # Ensure we have the right geometry type
+                    if isinstance(geometry, (Polygon, MultiPolygon)):
+                        return geometry
+                    else:
+                        # If we got a different geometry type, try to convert it
+                        return ops.unary_union(geometry)
+                        
+                except Exception as e:
+                    print(f"Error fixing geometry: {str(e)}")
+                    return None
 
-# class GetRankData(APIView):
-#     def post(self,request):
-#         ls=request.data
-#         ## this is getting heading
-#         headings=[] 
-#         headings.append(ls[0].keys())
-#         ## logic is
-#         headings=list(headings[0])
-#         replaced_map={'Districts':'Index_val'}
-#         updated_headings = [replaced_map.get(field, field) for field in headings]
-
-#         for i in ls:
-#             del i['id']
-
-#         weight=Weight.objects.values(*updated_headings)
-#         for i in weight:
-#             del i['id']
-#             del [i['Index_val']]
-#         updated_heading=updated_headings[2:]
-#         weights=list(weight)
-#         weights=weights[0]
-#         new_weight= weight_redisturb(weights,updated_heading)
-#         print("new weightis ",new_weight)
-#         ls,lst=normalize_columns(ls)
-#         print(ls)
-#         ans=calculate_ranks(ls,new_weight)
-#         print("ans is ",ans)
-#         return Response(ans,status=200)
+            def process_geometry(geometry):
+                """Process and extract coordinates from geometry"""
+                try:
+                    # Fix any topology issues first
+                    fixed_geometry = fix_geometry(geometry)
+                    if fixed_geometry is None:
+                        return
+                    
+                    if isinstance(fixed_geometry, Polygon):
+                        # Process single polygon
+                        coords = []
+                        # Get exterior coordinates
+                        for x, y in fixed_geometry.exterior.coords:
+                            coords.append([float(y), float(x)])  # [longitude, latitude]
+                        coordinates.append(coords)
+                        
+                    elif isinstance(fixed_geometry, MultiPolygon):
+                        # Process each polygon in the MultiPolygon
+                        for polygon in fixed_geometry.geoms:
+                            poly_coords = []
+                            # Get exterior coordinates for each polygon
+                            for x, y in polygon.exterior.coords:
+                                poly_coords.append([float(y), float(x)])  # [longitude, latitude]
+                            coordinates.append(poly_coords)
+                            
+                except Exception as e:
+                    print(f"Error processing geometry coordinates: {str(e)}")
+            
+            # Filter data based on request
+            try:
+                if request_data.get('villages'):
+                    village_list = request_data['villages']
+                    filtered_gdf = gdf[gdf['village'].isin(village_list)]
+                
+                elif request_data.get('sub_district'):
+                    # Get required parameters
+                    sub_district = request_data['sub_district']
+                    district = request_data.get('district')
+                    state = request_data.get('state')
+                    
+                    # Build filter conditions
+                    conditions = (gdf['sdtname'] == sub_district)
+                    if district:
+                        conditions &= (gdf['dtname'] == district)
+                    if state:
+                        conditions &= (gdf['stname'] == state)
+                    filtered_gdf = gdf[conditions]
+                
+                elif request_data.get('district'):
+                    # Get required parameters
+                    district = request_data['district']
+                    state = request_data.get('state')
+                    
+                    # Build filter conditions
+                    conditions = (gdf['dtname'] == district)
+                    if state:
+                        conditions &= (gdf['stname'] == state)
+                    filtered_gdf = gdf[conditions]
+                
+                elif request_data.get('state'):
+                    state = request_data['state']
+                    filtered_gdf = gdf[gdf['stname'] == state]
+                
+                else:
+                    return JsonResponse({'error': 'No valid geographic criteria provided'}, status=400)
+                    
+                # Check if we found any matching features
+                if filtered_gdf.empty:
+                    return JsonResponse({'error': 'No matching geographic features found'}, status=404)
+                    
+                # Dissolve geometries if multiple features exist
+                try:
+                    if len(filtered_gdf) > 1:
+                        filtered_gdf = filtered_gdf.dissolve()
+                        # Ensure the dissolved geometry is valid
+                        filtered_gdf.geometry = filtered_gdf.geometry.apply(fix_geometry)
+                except Exception as e:
+                    print(f"Error during dissolve operation: {str(e)}")
+                    # If dissolve fails, try processing individual geometries
+                    pass
+                
+                # Process each geometry
+                for geometry in filtered_gdf.geometry:
+                    if geometry is not None:
+                        process_geometry(geometry)
+                
+                # Ensure we have some coordinates
+                if not coordinates:
+                    return JsonResponse({'error': 'Failed to extract valid coordinates'}, status=500)
+                
+                # For MultiPolygon, ensure proper nesting
+                if len(coordinates) > 1:
+                    coordinates = [coordinates]
+                
+                return JsonResponse({'coordinates': coordinates})
+                
+            except Exception as e:
+                print(f"Error filtering or processing data: {str(e)}")
+                return JsonResponse({'error': 'Error processing geographic data'}, status=500)
+                
+        except Exception as e:
+            print(f"Error reading shapefile or processing request: {str(e)}")
+            return JsonResponse({'error': str(e)}, status=500)
