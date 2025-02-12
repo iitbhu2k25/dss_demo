@@ -5,11 +5,12 @@
 <style>
     .contact-container {
         max-width: 1000px;
-        margin: 2rem auto;
+      
+        margin: 4rem auto;
         padding: 0 1.5rem;
         border-color: #1A75BB;
-       border-style: ridge;
-        border-radius: 18px;
+        border-style: ridge;
+        border-radius: 15px;
     }
 
     .contact-grid {
@@ -52,7 +53,7 @@
 
     .contact-item:hover {
         transform: translateY(-2px);
-        background: #1A75BB;
+        background: #feffff;
     }
 
     .contact-item:hover .contact-icon {
@@ -163,6 +164,33 @@
             grid-template-columns: 1fr;
         }
     }
+
+    .contact-icon {
+        position: relative;
+        width: 50px;
+        height: 50px;
+        background: rgba(26, 117, 187, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.8rem;
+    }
+
+    .contact-logo {
+        width: 55px;  /* Reduced size for logo */
+        height: 55px;
+        object-fit: contain; /* Maintains aspect ratio */
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+  
+
+
+
 </style>
 
 <main class="contact-container">
@@ -173,6 +201,7 @@
             <div class="contact-items-grid">
                 <div class="contact-item">
                     <div class="contact-icon">
+                        <img src="{% static 'Images/mail.gif' %}" alt="Support" class="contact-logo">
                         <i class="fas fa-envelope"></i>
                     </div>
                     <div class="contact-text">
@@ -184,6 +213,7 @@
 
                 <div class="contact-item">
                     <div class="contact-icon">
+                        <img src="{% static 'Images/call_logo.png' %}" alt="Support" class="contact-logo">
                         <i class="fas fa-phone"></i>
                     </div>
                     <div class="contact-text">
@@ -194,6 +224,7 @@
 
                 <div class="contact-item">
                     <div class="contact-icon">
+                        <img src="{% static 'Images/visit.png' %}" alt="Support" class="contact-logo">
                         <i class="fas fa-map-marker-alt"></i>
                     </div>
                     <div class="contact-text">
@@ -211,6 +242,7 @@
 
                 <div class="contact-item">
                     <div class="contact-icon">
+                        <img src="{% static 'Images/working.png' %}" alt="Support" class="contact-logo">
                         <i class="fas fa-clock"></i>
                     </div>
                     <div class="contact-text">
@@ -222,6 +254,7 @@
 
                 <div class="contact-item">
                     <div class="contact-icon">
+                        <img src="{% static 'Images/live_chat.png' %}" alt="Support" class="contact-logo">
                         <i class="fas fa-comments"></i>
                     </div>
                     <div class="contact-text">
@@ -233,6 +266,7 @@
 
                 <div class="contact-item">
                     <div class="contact-icon">
+                        <img src="{% static 'Images/support.png' %}" alt="Support" class="contact-logo">
                         <i class="fas fa-headset"></i>
                     </div>
                     <div class="contact-text">
