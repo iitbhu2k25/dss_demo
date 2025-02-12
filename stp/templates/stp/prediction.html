@@ -563,14 +563,64 @@ function populateDropdown(dropdown, items) {
 }
 
 // Village Selection Handler
-function handleVillageSelection(event) {
-  const villageName = event.target.id;
+async function handleVillageSelection(event) {
+  const villageId = event.target.id;
+  const villageName = event.target.value;
+  
   if (event.target.checked) {
     selectedLocation.villages.push(villageName);
+    
+    try {
+      // Make API call to get village GeoJSON
+      const response = await fetch("/stp/get_village_boundary/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({
+          village_id: villageId.replace('village-', ''),
+          state: selectedLocation.state,
+          district: selectedLocation.district,
+          sub_district: selectedLocation.subDistrict
+        }),
+      });
+
+      const boundaryData = await response.json();
+      
+      if (boundaryData.coordinates) {
+        // Add new village boundary to map
+        const villageBoundary = L.polygon(boundaryData.coordinates, {
+          color: '#76ba1b',
+          fillColor: '#76ba1b',
+          fillOpacity: 0.2,
+          weight: 2
+        }).addTo(map);
+        
+        // Store reference to remove later if unchecked
+        event.target.boundaryLayer = villageBoundary;
+        
+        // Add popup with village info
+        villageBoundary.bindPopup(`Village: ${villageName}`);
+        
+        // Fit map to include new boundary
+        map.fitBounds(villageBoundary.getBounds());
+      }
+    } catch (error) {
+      console.error("Error fetching village boundary:", error);
+      alert("Failed to load village boundary. Please try again.");
+    }
   } else {
+    // Remove village from selected list
     selectedLocation.villages = selectedLocation.villages.filter(
       (v) => v !== villageName
     );
+    
+    // Remove boundary layer if it exists
+    if (event.target.boundaryLayer) {
+      map.removeLayer(event.target.boundaryLayer);
+      event.target.boundaryLayer = null;
+    }
   }
 }
 

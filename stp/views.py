@@ -93,6 +93,9 @@ def GetRankView(request):
         print('main ans',ans)
         return JsonResponse(ans,safe=False)
 
+# @csrf_exempt
+# def GetVillage_UP()
+
 @csrf_exempt
 def GetBoundry(request):
     if request.method == 'GET':
