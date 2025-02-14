@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     selectedContainer.innerHTML = '';
     checkboxes.forEach(checkbox => {
-      // console.log("Checkbox: ", checkbox); 
+      console.log("Checkbox: ", checkbox); 
       
       
       const label = document.querySelector(`label[for="${checkbox.id}"]`);
@@ -172,7 +172,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const targetYearRangeStart = document.getElementById('target-year-range-start');
     const targetYearRangeEnd = document.getElementById('target-year-range-end');
     
-    
+    const calculateBtn  =document.getElementById('clc')
+   
    
     
 
@@ -190,8 +191,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Event listener for projection method dropdown
-    projectionDropdown.addEventListener('change', function () {
-      const selectedValue = this.value;
+    calculateBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      const selectedValue = projectionDropdown.value;
 
       projectionItems.forEach(item => {
         const container = item.querySelector(`#dynamic-tables-${selectedValue}`);
@@ -280,20 +282,27 @@ document.addEventListener('DOMContentLoaded', () => {
             
             populateTable(data.result, projectionMethod);
 
-            // Render graphs for each method
+            //Render graphs for each method
             Object.keys(data.result).forEach(method => {
               const methodData = data.result[method];
+            
+              Object.values(methodData).forEach(yearData => {
+                if (yearData) {
+                  delete yearData[2011];  // If present, delete
+                  delete yearData["Growth Percent"]; // If present, delete
+                }
+              });
+            
               console.log("method ", method);
               console.log("methodData ", methodData);
-              
+            
               const canvasId = `graph-${method}`;
               console.log("Canvas Id ", canvasId);
-              
+            
               const labels = Object.keys(methodData[Object.keys(methodData)[0]]); // Years
-              console.log("Object.keys(methodData)[0] ",Object.keys(methodData)[0]);
+              console.log("Object.keys(methodData)[0] ", Object.keys(methodData)[0]);
               console.log("methodData[Object.keys(methodData)[0]]", methodData[Object.keys(methodData)[0]]);
-              
-
+            
               const datasets = Object.entries(methodData).map(([village, yearData]) => {
                 console.log(" Object.values(yearData) ", Object.values(yearData));
                 return {
@@ -304,18 +313,14 @@ document.addEventListener('DOMContentLoaded', () => {
                   fill: false,
                 };
               });
-              // console.log("datasets ", datasets);
-              
-              labels.shift()
-
-               // Iterate over each key of the datasets object
-              Object.keys(datasets).forEach(key => {
-                // Remove the first element from the data array of each dataset
-                datasets[key].data.shift();  // or datasets[key].data.splice(0, 1);
-              });
-          
+            
+              console.log("datasets ", datasets);
+              console.log("labels ", labels);
+            
               renderGraph(canvasId, datasets, labels);
             });
+            
+            
 
           } else {
             alert('Error: ' + (data.error || 'No data returned'));
@@ -328,83 +333,290 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Function to populate table
-    function populateTable(result, projectionMethod) {
-      const containerId = `dynamic-tables-${projectionMethod}`;
-      const dynamicTableContainer = document.getElementById(containerId);
+    // Function to populate table
+function populateTable(result, projectionMethod) {
+  console.log("Result of populateTable ", result);
   
-      // Clear previous tables in the selected container
-      dynamicTableContainer.innerHTML = '';
-  
-      const methodData = result[projectionMethod];
-      if (!methodData || Object.keys(methodData).length === 0) {
-          console.error("No data available for projection method:", projectionMethod);
-          const errorMessage = document.createElement('p');
-          errorMessage.textContent = `No data available for ${projectionMethod.replace(/-/g, ' ').toUpperCase()}`;
-          dynamicTableContainer.appendChild(errorMessage);
-          return;
-      }
-  
-      const tableContainer = document.createElement('div');
-      tableContainer.classList.add('mb-5');
-  
-      const title = document.createElement('h4');
-      title.textContent = projectionMethod.replace(/-/g, ' ').toUpperCase();
-      tableContainer.appendChild(title);
-  
-      const tableWrapper = document.createElement('div');
-      tableWrapper.style.overflowX = 'auto'; // Allow horizontal scrolling
-      tableWrapper.style.maxWidth = '100%'; // Prevent from exceeding container width
-  
-      const table = document.createElement('table');
-      table.classList.add('table', 'table-bordered', 'table-striped');
-  
-      const thead = document.createElement('thead');
-      const headerRow = document.createElement('tr');
-      headerRow.innerHTML = '<th>Village/Town Name</th>';
-  
-      const firstVillageData = Object.values(methodData)[0];
-      if (!firstVillageData) {
-          console.error("First village data is undefined or null.");
-          return;
-      }
-  
-      const firstVillageYears = Object.keys(firstVillageData);
-      console.log("firstVillageYears ", firstVillageYears);
-  
-      firstVillageYears.forEach(year => {
-          const th = document.createElement('th');
-          th.textContent = year;
-          headerRow.appendChild(th);
-      });
-      thead.appendChild(headerRow);
-      table.appendChild(thead);
-      console.log("methodData ", methodData);
-  
-      const tbody = document.createElement('tbody');
-      for (const villageCode in methodData) {
-          const row = document.createElement('tr');
-          const villageCell = document.createElement('td');
-          villageCell.textContent = code_to_villagename[villageCode] || "END";
-          row.appendChild(villageCell);
-  
-          const yearData = methodData[villageCode];
-          firstVillageYears.forEach(year => {
-              const yearCell = document.createElement('td');
-              yearCell.textContent = yearData[year] || '-';
-              row.appendChild(yearCell);
-          });
-  
-          tbody.appendChild(row);
-      }
-  
-      table.appendChild(tbody);
-      tableWrapper.appendChild(table);
-      tableContainer.appendChild(tableWrapper);
-      dynamicTableContainer.appendChild(tableContainer);
+  const containerId = `dynamic-tables-${projectionMethod}`;
+  const dynamicTableContainer = document.getElementById(containerId);
+
+  // Clear previous tables in the selected container
+  dynamicTableContainer.innerHTML = '';
+
+  const methodData = result[projectionMethod];
+  if (!methodData || Object.keys(methodData).length === 0) {
+      console.error("No data available for projection method:", projectionMethod);
+      const errorMessage = document.createElement('p');
+      errorMessage.textContent = `No data available for ${projectionMethod.replace(/-/g, ' ').toUpperCase()}`;
+      dynamicTableContainer.appendChild(errorMessage);
+      return;
   }
+
+  const tableContainer = document.createElement('div');
+  tableContainer.classList.add('mb-5');
+
+  const title = document.createElement('h4');
+  title.textContent = projectionMethod.replace(/-/g, ' ').toUpperCase();
+  tableContainer.appendChild(title);
+
+  const tableWrapper = document.createElement('div');
+  tableWrapper.style.overflowX = 'auto'; // Allow horizontal scrolling
+  tableWrapper.style.maxWidth = '100%'; // Prevent from exceeding container width
+
+  const table = document.createElement('table');
+  table.classList.add('table', 'table-bordered', 'table-striped');
+  table.id = `table-${projectionMethod}`; // Unique ID for the table
+
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  headerRow.innerHTML = '<th>Village/Town Name</th>';
+
+  const firstVillageData = Object.values(methodData)[0];
+  if (!firstVillageData) {
+      console.error("First village data is undefined or null.");
+      return;
+  }
+
+  const firstVillageYears = Object.keys(firstVillageData);
+  firstVillageYears.forEach(year => {
+      const th = document.createElement('th');
+      th.textContent = year;
+      headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  let totalPopulation = {}; // Store total for each year
   
+  console.log("methodDatapopTable", methodData);
+
+  
+  
+  for (const villageCode in methodData) {
+      console.log("villagecodee ",villageCode);
+      
+      const row = document.createElement('tr');
+      const villageCell = document.createElement('td');
+      villageCell.textContent = code_to_villagename[villageCode] || "END";
+      row.appendChild(villageCell);
+
+      const yearData = methodData[villageCode];
+      firstVillageYears.forEach(year => {
+          const yearCell = document.createElement('td');
+          yearCell.textContent = yearData[year] || '-';
+
+          let population = parseInt(yearData[year], 10) || 0;
+          totalPopulation[year] = (totalPopulation[year] || 0) + population;
+
+          row.appendChild(yearCell);
+      });
+
+      tbody.appendChild(row);
+  }
+
+  // Add the total row at the end
+  const totalRow = document.createElement('tr');
+  totalRow.style.fontWeight = "bold";
+  totalRow.style.backgroundColor = "#f8f9fa";
+
+  const totalLabelCell = document.createElement('td');
+  totalLabelCell.textContent = "Total Population";
+  totalRow.appendChild(totalLabelCell);
+  
+  let prev2TotalPop = 0;
+
+  firstVillageYears.forEach(year => {
+    console.log("yearissss",year);
+    const totalCell = document.createElement('td');
+      if(year!=='Growth Percent'){
+        totalCell.textContent = totalPopulation[year] || '-';
+      }
+      if(year!=='Growth Percent'){
+        totalRow.appendChild(totalCell);
+      }
+      else if(year === 'Growth Percent'){
+        prev2TotalPop=((totalPopulation[firstVillageYears[1]] - totalPopulation[firstVillageYears[0]] ) / totalPopulation[firstVillageYears[0]] ) * 100
+        prev2TotalPop = prev2TotalPop.toFixed(2); //to 2 decimal places
+        totalCell.textContent = prev2TotalPop>0 ? prev2TotalPop : "NA"
+        totalRow.appendChild(totalCell);
+      }
+  });
+
+  tbody.appendChild(totalRow);
+  table.appendChild(tbody);
+  tableWrapper.appendChild(table);
+  tableContainer.appendChild(tableWrapper);
+
+
+  // Create Export CSV Button
+const exportButton = document.createElement('button');
+exportButton.textContent = "Export CSV";
+exportButton.classList.add('btn', 'btn-success', 'btn-sm', 'mt-2');
+exportButton.addEventListener("click", function (event) {
+    event.preventDefault(); // Prevent page refresh
+    exportTableToCSV(table.id, `${projectionMethod}.csv`);
+});
+
+
+  tableContainer.appendChild(exportButton);
+  dynamicTableContainer.appendChild(tableContainer);
+}
+
+// Function to export table to CSV
+function exportTableToCSV(tableId, filename) {
+  const table = document.getElementById(tableId);
+  if (!table) {
+      console.error("Table not found!");
+      return;
+  }
+
+  let csv = [];
+  const rows = table.querySelectorAll("tr");
+
+  rows.forEach(row => {
+      let cols = row.querySelectorAll("th, td");
+      let rowData = [];
+
+      cols.forEach(col => {
+          rowData.push(col.innerText.replace(/,/g, "")); // Remove commas from cell data
+      });
+
+      csv.push(rowData.join(",")); // Join columns with a comma
+  });
+
+  // Create a CSV file and trigger download
+  let csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
+  let tempLink = document.createElement("a");
+  tempLink.download = filename;
+  tempLink.href = window.URL.createObjectURL(csvFile);
+  tempLink.style.display = "none";
+  document.body.appendChild(tempLink);
+  tempLink.click();
+  document.body.removeChild(tempLink);
+}
+
     
   });
+
+
+
+
+
+
+
+
+  // --editinggg_________________-----
+
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("Script loaded and running");
+
+    const graphMapping = {
+        "graphbtn-arithmetic-increase": "container-arithmetic-increase",
+        "graphbtn-geometric-increase": "container-geometric-increase",
+        "graphbtn-logistic-growth": "container-logistic-growth",
+        "graphbtn-exponential-growth": "container-exponential-growth",
+        "graphbtn-incremental-growth": "container-incremental-growth",
+    };
+
+    // Make sure all graph containers are hidden at the start
+    Object.values(graphMapping).forEach(graphContainerId => {
+        const container = document.getElementById(graphContainerId);
+        if (container) {
+            console.log(`Hiding container: ${graphContainerId}`);
+            container.style.display = "none";
+        } else {
+            console.log(`Container not found & its no a problem: ${graphContainerId}`);
+        }
+    });
+
+    // Attach event listeners to all buttons
+    Object.keys(graphMapping).forEach(btnId => {
+        const button = document.getElementById(btnId);
+        const graphContainer = document.getElementById(graphMapping[btnId]);
+
+        if (button && graphContainer) {
+            console.log(`Adding event listener to button: ${btnId}`);
+            button.addEventListener("click", function (e) {
+                e.preventDefault(); 
+
+                if (graphContainer.style.display === "none" || graphContainer.style.display === "") {
+                    console.log(`Showing: ${graphMapping[btnId]}`);
+                    graphContainer.style.display = "block";
+                } else {
+                    console.log(`Hiding: ${graphMapping[btnId]}`);
+                    graphContainer.style.display = "none";
+                }
+            });
+        } else {
+            console.log(`Button or container not found for ID and its no a problem: ${btnId}`);
+        }
+    });
+});
+
+
+
+
+
+
+      
+
+   
+
+
+
+
+
+       
+
+
+
+
+  
+      // button.addEventListener("click", function (e) {
+      //   e.preventDefault(); // Prevent any default behavior
+  
+      //   const selectedContainer = document.getElementById(graphContainerId);
+  
+      //   // If the clicked graph is already visible, hide it
+      //   if (selectedContainer.style.display === "block") {
+      //     selectedContainer.style.display = "none";
+      //     selectedContainer.classList.remove("active");
+  
+      //     // If no graph is visible, hide the entire graphsView section
+      //     const anyGraphVisible = Object.values(graphMapping).some(
+      //       (id) => document.getElementById(id).style.display === "block"
+      //     );
+  
+      //     if (!anyGraphVisible) {
+      //       graphsView.style.display = "none";
+      //     }
+      //   } else {
+      //     // Hide all graphs before showing the selected one
+      //     Object.values(graphMapping).forEach((containerId) => {
+      //       const container = document.getElementById(containerId);
+      //       container.style.display = "none"; // Hide all graphs
+      //       container.classList.remove("active");
+      //     });
+  
+      //     // Show the graphs section
+      //     graphsView.style.display = "block";
+  
+      //     // Show the selected graph container
+      //     selectedContainer.style.display = "block";
+      //     selectedContainer.classList.add("active");
+      //   }
+      // });
+   
+  
+  
+
+
+
+
+
+
+
 
 
 
@@ -414,105 +626,107 @@ document.addEventListener('DOMContentLoaded', () => {
   // js for showing graph-----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const projectionMethodDropdown = document.getElementById("projection-method");
-    const toggleViewButton = document.getElementById("toggle-view");
-    const tablesView = document.querySelector(".tables-view");
-    const graphsView = document.querySelector(".graphs-view");
+  // document.addEventListener("DOMContentLoaded", () => {
+  //   const projectionMethodDropdown = document.getElementById("projection-method");
+  //   const toggleViewButton = document.getElementById("toggle-view");
+  //   const tablesView = document.querySelector(".tables-view");
+  //   const graphsView = document.querySelector(".graphs-view");
   
-    let isGraphView = false;
+  //   let isGraphView = false;
   
-    toggleViewButton.addEventListener("click", (e) => {
-      e.preventDefault();
-      isGraphView = !isGraphView;
-      toggleViewButton.textContent = isGraphView ? "Show Tables" : "Show Graphs";
-      tablesView.style.display = isGraphView ? "none" : "block";
-      graphsView.style.display = isGraphView ? "block" : "none";
+  //   toggleViewButton.addEventListener("click", (e) => {
+  //     e.preventDefault();
+  //     isGraphView = !isGraphView;
+  //     toggleViewButton.textContent = isGraphView ? "Show Tables" : "Show Graphs";
+  //     tablesView.style.display = isGraphView ? "none" : "block";
+  //     graphsView.style.display = isGraphView ? "block" : "none";
   
-      // Update visibility of graphs based on selected method
-      updateProjectionView();
-    });
+  //     // Update visibility of graphs based on selected method
+  //     updateProjectionView();
+  //   });
   
-    projectionMethodDropdown.addEventListener("change", updateProjectionView);
+  //   projectionMethodDropdown.addEventListener("change", updateProjectionView);
   
-    function updateProjectionView() {
-      const selectedMethod = projectionMethodDropdown.value;
+  //   function updateProjectionView() {
+  //     const selectedMethod = projectionMethodDropdown.value;
     
-      // Hide all tables and graphs
-      document.querySelectorAll(".projection-item").forEach((item) => (item.style.display = "none"));
-      document.querySelectorAll(".graph-container").forEach((container) => {
-        container.classList.remove("active");
-        container.style.display = "none"; // Hide graph containers by default
-      });
+  //     // Hide all tables and graphs
+  //     document.querySelectorAll(".projection-item").forEach((item) => (item.style.display = "none"));
+  //     document.querySelectorAll(".graph-container").forEach((container) => {
+  //       container.classList.remove("active");
+  //       container.style.display = "none"; // Hide graph containers by default
+  //     });
     
-      if (selectedMethod === "all") {
-        if (isGraphView) {
-          document.querySelectorAll(".graph-container").forEach((container) => {
-            container.classList.add("active");
-            container.style.display = "block"; // Ensure visibility
-          });
-        } else {
-          document.querySelectorAll(".projection-item").forEach((item) => (item.style.display = "block"));
-        }
-      } else {
-        const specificTable = document.querySelector(`.projection-item.${selectedMethod}`);
-        const specificGraphContainer = document.getElementById(`container-${selectedMethod}`);
+  //     if (selectedMethod === "all") {
+  //       if (isGraphView) {
+  //         document.querySelectorAll(".graph-container").forEach((container) => {
+  //           container.classList.add("active");
+  //           container.style.display = "block"; // Ensure visibility
+  //         });
+  //       } else {
+  //         document.querySelectorAll(".projection-item").forEach((item) => (item.style.display = "block"));
+  //       }
+  //     } else {
+  //       const specificTable = document.querySelector(`.projection-item.${selectedMethod}`);
+  //       const specificGraphContainer = document.getElementById(`container-${selectedMethod}`);
     
-        if (isGraphView) {
-          specificGraphContainer.classList.add("active");
-          specificGraphContainer.style.display = "block"; // Show selected graph
-        } else if (specificTable) {
-          specificTable.style.display = "block"; // Show selected table
-        }
-      }
-    }
+  //       if (isGraphView) {
+  //         specificGraphContainer.classList.add("active");
+  //         specificGraphContainer.style.display = "block"; // Show selected graph
+  //       } else if (specificTable) {
+  //         specificTable.style.display = "block"; // Show selected table
+  //       }
+  //     }
+  //   }
     
     
-  });
+  // });
 
   
   // Example renderGraph function call:
-  function renderGraph(canvasId, datasets, labels) {
-    const canvas = document.getElementById(canvasId);
-  
-    // Ensure the parent container and canvas are visible
-    const container = canvas.parentElement;
-    container.style.display = "block";
-    container.classList.add("active");
-  
-    // Resize the canvas to fit its container
-    canvas.style.width = "100%";
-    canvas.style.height = "350px"; // Set an appropriate height
-  
-    // Destroy the previous chart instance if it exists
-    if (chartInstances[canvasId]) {
-      chartInstances[canvasId].destroy();
+    function renderGraph(canvasId, datasets, labels) {
+      console.log("I inside renderGraph");
+      
+      const canvas = document.getElementById(canvasId);
+    
+      // Ensure the parent container and canvas are visible
+      const container = canvas.parentElement;
+      container.style.display = "block";
+      container.classList.add("active");
+    
+      // Resize the canvas to fit its container
+      canvas.style.width = "100%";
+      canvas.style.height = "350px"; // Set an appropriate height
+    
+      // Destroy the previous chart instance if it exists
+      if (chartInstances[canvasId]) {
+        chartInstances[canvasId].destroy();
+      }
+    
+      // Create a new chart instance and store it
+      const ctx = canvas.getContext("2d");
+      const chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: datasets,
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false, // Adjust dimensions freely
+          plugins: {
+            legend: { position: "top" },
+          },
+          scales: {
+            x: { title: { display: true, text: "Years" } },
+            y: { title: { display: true, text: "Population" } },
+          },
+        },
+      });
+    
+      // Save the chart instance for future cleanup
+      chartInstances[canvasId] = chart;
     }
-  
-    // Create a new chart instance and store it
-    const ctx = canvas.getContext("2d");
-    const chart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: labels,
-        datasets: datasets,
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false, // Adjust dimensions freely
-        plugins: {
-          legend: { position: "top" },
-        },
-        scales: {
-          x: { title: { display: true, text: "Years" } },
-          y: { title: { display: true, text: "Population" } },
-        },
-      },
-    });
-  
-    // Save the chart instance for future cleanup
-    chartInstances[canvasId] = chart;
-  }
     
 
   
@@ -528,6 +742,30 @@ document.addEventListener('DOMContentLoaded', () => {
     return color;
   }
   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -679,84 +917,108 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function populateTable(result, projectionMethod) {
-
-    console.log(code_to_villagename);
-    
-
     const containerId = `dynamic-tables-${projectionMethod}`;
     const dynamicTableContainer = document.getElementById(containerId);
-  
+
     // Clear previous tables in the selected container
     dynamicTableContainer.innerHTML = '';
-     
-    
 
     const methodData = result[projectionMethod];
     if (!methodData || Object.keys(methodData).length === 0) {
-      console.error("No data available for projection method:", projectionMethod);
-      const errorMessage = document.createElement('p');
-      errorMessage.textContent = `No data available for ${projectionMethod.replace(/-/g, ' ').toUpperCase()}`;
-      dynamicTableContainer.appendChild(errorMessage);
-      return;
+        console.error("No data available for projection method:", projectionMethod);
+        const errorMessage = document.createElement('p');
+        errorMessage.textContent = `No data available for ${projectionMethod.replace(/-/g, ' ').toUpperCase()}`;
+        dynamicTableContainer.appendChild(errorMessage);
+        return;
     }
-  
+
     const tableContainer = document.createElement('div');
     tableContainer.classList.add('mb-5');
 
-
-   
-  
     const title = document.createElement('h4');
     title.textContent = projectionMethod.replace(/-/g, ' ').toUpperCase();
     tableContainer.appendChild(title);
-  
+
+    const tableWrapper = document.createElement('div');
+    tableWrapper.style.overflowX = 'auto'; // Allow horizontal scrolling
+    tableWrapper.style.maxWidth = '100%'; // Prevent from exceeding container width
+
     const table = document.createElement('table');
     table.classList.add('table', 'table-bordered', 'table-striped');
-  
+
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
     headerRow.innerHTML = '<th>Village/Town Name</th>';
-  
+
     const firstVillageData = Object.values(methodData)[0];
     if (!firstVillageData) {
-      console.error("First village data is undefined or null.");
-      return;
+        console.error("First village data is undefined or null.");
+        return;
     }
-  
+
     const firstVillageYears = Object.keys(firstVillageData);
     console.log("firstVillageYears ", firstVillageYears);
-    
+
     firstVillageYears.forEach(year => {
-      const th = document.createElement('th');
-      th.textContent = year;
-      headerRow.appendChild(th);
+        const th = document.createElement('th');
+        th.textContent = year;
+        headerRow.appendChild(th);
     });
     thead.appendChild(headerRow);
     table.appendChild(thead);
     console.log("methodData ", methodData);
-    
+
     const tbody = document.createElement('tbody');
+    let totalPopulation = {}; // Store total for each year
+
     for (const villageCode in methodData) {
-      const row = document.createElement('tr');
-      const villageCell = document.createElement('td');
-      villageCell.textContent = code_to_villagename[villageCode] || "END";
-      row.appendChild(villageCell);
-  
-      const yearData = methodData[villageCode];
-      firstVillageYears.forEach(year => {
-        const yearCell = document.createElement('td');
-        yearCell.textContent = yearData[year] || '-';
-        row.appendChild(yearCell);
-      });
-  
-      tbody.appendChild(row);
+        console.log("VillageCode:", villageCode);
+        
+        const row = document.createElement('tr');
+        const villageCell = document.createElement('td');
+        villageCell.textContent = code_to_villagename[villageCode] || "END";
+        row.appendChild(villageCell);
+
+        const yearData = methodData[villageCode];
+        console.log("yearData:", yearData);
+
+        firstVillageYears.forEach(year => {
+            const yearCell = document.createElement('td');
+            yearCell.textContent = yearData[year] || '-';
+            
+            // Convert value to integer and add to total population
+            let population = parseInt(yearData[year], 10) || 0;
+            totalPopulation[year] = (totalPopulation[year] || 0) + population;
+
+            row.appendChild(yearCell);
+        });
+
+        tbody.appendChild(row);
     }
-  
+
+    // Add the total row at the end
+    const totalRow = document.createElement('tr');
+    totalRow.style.fontWeight = "bold";
+    totalRow.style.backgroundColor = "#f8f9fa"; // Light gray background for emphasis
+
+    const totalLabelCell = document.createElement('td');
+    totalLabelCell.textContent = "Total Population";
+    totalRow.appendChild(totalLabelCell);
+
+    firstVillageYears.forEach(year => {
+        const totalCell = document.createElement('td');
+        totalCell.textContent = totalPopulation[year] || '-';
+        totalRow.appendChild(totalCell);
+    });
+
+    tbody.appendChild(totalRow); // Append total row to the table
+
     table.appendChild(tbody);
-    tableContainer.appendChild(table);
+    tableWrapper.appendChild(table);
+    tableContainer.appendChild(tableWrapper);
     dynamicTableContainer.appendChild(tableContainer);
-  }
-  
+}
+
 });
 
 
