@@ -10,7 +10,7 @@ from .models import Data
 import json
 import geopandas as gpd
 from shapely.geometry import mapping
-from .service import weight_redisturb,normalize_data,rank_process 
+from .service import weight_redisturb,normalize_data,rank_process,process_geometries,fix_geometry
 from shapely.geometry import Polygon, MultiPolygon
 from shapely.validation import make_valid
 import shapely.ops as ops
@@ -93,8 +93,37 @@ def GetRankView(request):
         print('main ans',ans)
         return JsonResponse(ans,safe=False)
 
-# @csrf_exempt
-# def GetVillage_UP()
+@csrf_exempt
+def GetVillage_UP(request):
+    try:
+        try:
+            request_data = json.loads(request.body)
+            villages_list_str=request_data.get('village_name')
+            villages_list=[]
+            villages_list.append(villages_list_str)
+   
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        try:
+            gdf = gpd.read_file('media/shapefile/villages/Basin_Villages.shp')
+
+        except Exception as e:
+            print('erris is ',str(e))
+            return JsonResponse({'error': 'Error reading geographic data'}, status=500)
+
+        # Filter geodataframe
+        print("village_list",villages_list)
+        print("list is ",villages_list[0])
+        filtered_gdf = gdf[gdf['NAME_1'].isin(villages_list)]
+        print("filtered_gdf",filtered_gdf)
+        coordinates = process_geometries(filtered_gdf)
+        print("coor",coordinates)
+        coordinates=[coordinates]
+        return JsonResponse({'coordinates': coordinates},status=200)
+
+    except Exception as e:
+        print("doine",str(e))
+        return JsonResponse({'error': 'Internal server error'}, status=500)
 
 @csrf_exempt
 def GetBoundry(request):
@@ -113,7 +142,7 @@ def GetBoundry(request):
                         coords = [[float(x), float(y)] for x, y in polygon.exterior.coords]
                         multi_coords.append(coords)
                     coordinates.extend(multi_coords)
-                    
+                
             return JsonResponse({'coordinates': coordinates})
         except Exception as e:
             print(str(e))
@@ -234,13 +263,10 @@ def GetBoundry(request):
                     if geometry is not None:
                         process_geometry(geometry)
                 
-                # Ensure we have some coordinates
-                if not coordinates:
-                    return JsonResponse({'error': 'Failed to extract valid coordinates'}, status=500)
-                
                 # For MultiPolygon, ensure proper nesting
                 if len(coordinates) > 1:
                     coordinates = [coordinates]
+                print("cordinates from subdistricvt ",coordinates)
                 
                 return JsonResponse({'coordinates': coordinates})
                 
