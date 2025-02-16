@@ -1,0 +1,383 @@
+<!-- templates/shapefile_viewer.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- Left Column: Controls -->
+        <div class="col-md-3">
+            <div class="dropdown-container mb-4">
+                <select id="categorySelect" class="form-select dropdown-animated mb-2">
+                    <option value="">Select Category</option>
+                    <option value="administrative">Administrative</option>
+                    <option value="watershed">Watershed</option>
+                    <option value="rivers">Rivers</option>
+                    <option value="drains">Drains</option>
+                    <option value="canals">Canals</option>
+                    <option value="household">Household</option>
+                    <option value="roads">Roads</option>
+                    <option value="railways">Railways</option>
+                    <option value="industries">Industries</option>
+                    <option value="stps">STPs</option>
+                </select>
+                <select id="subcategorySelect" class="form-select dropdown-animated mb-2" disabled>
+                    <option value="">Select Subcategory</option>
+                </select>
+                <button id="loadShapefile" class="btn btn-primary animated-button mb-4" disabled>
+                    Plot
+                </button>
+            </div>
+          
+            <div class="style-controls">
+                <div class="mb-3">
+                    <label for="lineColor" class="form-label">Line Color:</label>
+                    <input type="color" id="lineColor" class="form-control" value="#000000">
+                </div>
+            
+                <div class="mb-3">
+                    <label for="fillColor" class="form-label">Fill Color:</label>
+                    <input type="color" id="fillColor" class="form-control" value="#78b4db">
+                </div>
+            
+                <div class="mb-3">
+                    <label for="opacity" class="form-label">Opacity: <span id="opacityValue">0.8</span></label>
+                    <input type="range" id="opacity" class="form-range" min="0.1" max="1" step="0.1" value="0.8">
+                </div>
+            
+                <div class="mb-3">
+                    <label for="weight" class="form-label">Line Weight: <span id="weightValue">2</span></label>
+                    <input type="range" id="weight" class="form-range" min="1" max="10" step="1" value="2">
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Map -->
+        <div class="col-md-9">
+            <div id="map"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #map {
+        height: 600px;
+        width: 100%;
+        border: 1px solid #78b4db;
+        border-radius: 4px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .dropdown-animated {
+        transition: all 0.3s ease-in-out;
+    }
+
+    .dropdown-animated:hover {
+        transform: scale(1.05);
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .animated-button {
+        transition: all 0.3s ease-in-out;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .animated-button:hover {
+        background-color: #0056b3;
+        transform: scale(1.1);
+    }
+
+    .style-controls input[type="color"] {
+        width: 100%;
+        height: 40px;
+        padding: 2px;
+    }
+
+    .info {
+        padding: 6px 8px;
+        font: 14px/16px Arial, Helvetica, sans-serif;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+    }
+
+    .info h4 {
+        margin: 0 0 5px;
+        color: #777;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Global variables
+    let map;
+    let currentLayer = null;
+    let info = null;
+
+    // Category definitions
+    const subcategories = {
+        'administrative': ['district', 'villages'],
+        'watershed': ['varuna', 'basuhi', 'morwa', 'all'],
+        'rivers': ['varuna', 'basuhi', 'morwa'],
+        'drains': ['varuna', 'basuhi', 'morwa'],
+        'canals': ['all'],
+        'household': ['all'],
+        'roads': ['all'],
+        'railways': ['all'],
+        'industries': ['all'],
+        'stps': ['all']
+    };
+
+    // Initialize map
+    function initMap() {
+        map = L.map('map').setView([25.3176, 82.9739], 10); // Centered on Varanasi
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Initialize info control
+        info = L.control();
+        info.onAdd = function(map) {
+            this._div = L.DomUtil.create('div', 'info');
+            this.update();
+            return this._div;
+        };
+        info.update = function(props) {
+            this._div.innerHTML = props ?
+                '<h4>Feature Properties</h4>' +
+                Object.entries(props)
+                    .map(([key, value]) => `<b>${key}:</b> ${value}`)
+                    .join('<br>')
+                : 'Hover over a feature';
+        };
+        info.addTo(map);
+    }
+
+    // Get current style settings
+    function getCurrentStyle() {
+        return {
+            lineColor: document.getElementById('lineColor').value,
+            fillColor: document.getElementById('fillColor').value,
+            opacity: parseFloat(document.getElementById('opacity').value),
+            weight: parseInt(document.getElementById('weight').value)
+        };
+    }
+
+    // Update style display values
+    function updateStyleDisplays() {
+        document.getElementById('opacityValue').textContent = document.getElementById('opacity').value;
+        document.getElementById('weightValue').textContent = document.getElementById('weight').value;
+    }
+
+    // Get style for feature
+    function getFeatureStyle(feature, category) {
+        const style = getCurrentStyle();
+        
+        // special case household
+
+        if (category === 'household') {
+            // Check the specific type of geometry
+            if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
+                return {
+                    color: style.lineColor,
+                    fillColor: style.fillColor,
+                    weight: style.weight,
+                    opacity: 1,
+                    fillOpacity: style.opacity
+                };
+            } 
+            else if (feature.geometry.type === "Point" || feature.geometry.type === "MultiPoint") {
+                return {
+                    radius: 6,
+                    fillColor: style.fillColor,
+                    color: style.lineColor,
+                    weight: Math.max(2, style.weight - 2), // Slightly thinner for points
+                    fillOpacity: style.opacity,
+                    opacity: 1
+                };
+            }
+            else if (feature.geometry.type === "LineString" || feature.geometry.type === "MultiLineString") {
+                return {
+                    color: style.lineColor,
+                    weight: style.weight,
+                    opacity: style.opacity,
+                    lineCap: 'round',
+                    lineJoin: 'round'
+                };
+            }
+        }
+
+
+
+        
+        if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
+            return {
+                color: style.lineColor,
+                fillColor: style.fillColor,
+                weight: style.weight,
+                opacity: 1,
+                fillOpacity: style.opacity
+            };
+        } 
+        else if (feature.geometry.type === "LineString" || feature.geometry.type === "MultiLineString") {
+            let baseStyle = {
+                color: style.lineColor,
+                weight: style.weight,
+                opacity: style.opacity
+            };
+
+            if (category === 'railways') {
+                baseStyle.dashArray = '15, 10';
+            } else if (category === 'rivers') {
+                baseStyle.lineCap = 'round';
+                baseStyle.lineJoin = 'round';
+            } else if (category === 'canals') {
+                baseStyle.dashArray = '20, 10';
+                baseStyle.lineCap = 'round';
+                baseStyle.lineJoin = 'round';
+            }
+
+            return baseStyle;
+        }
+        else if (feature.geometry.type === "Point" || feature.geometry.type === "MultiPoint") {
+            return {
+                radius: 8,
+                fillColor: style.fillColor,
+                color: style.lineColor,
+                weight: style.weight,
+                fillOpacity: style.opacity
+            };
+        }
+    }
+
+    // Feature interaction handlers
+    function highlightFeature(e) {
+        const layer = e.target;
+        const style = getCurrentStyle();
+
+        layer.setStyle({
+            weight: style.weight + 2,
+            color: '#666',
+            fillOpacity: Math.min(style.opacity + 0.2, 1)
+        });
+
+        layer.bringToFront();
+        info.update(layer.feature.properties);
+    }
+
+    function resetHighlight(e) {
+        currentLayer.resetStyle(e.target);
+        info.update();
+    }
+
+    // Apply styles to current layer
+    function applyStyles() {
+        if (!currentLayer) return;
+        
+        const category = document.getElementById('categorySelect').value;
+        currentLayer.eachLayer(function(layer) {
+            layer.setStyle(getFeatureStyle(layer.feature, category));
+        });
+    }
+
+    // Update subcategories dropdown
+    function updateSubcategories() {
+        const category = document.getElementById('categorySelect').value;
+        const subcategorySelect = document.getElementById('subcategorySelect');
+        const loadButton = document.getElementById('loadShapefile');
+
+        if (category) {
+            subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+            subcategories[category].forEach(sub => {
+                subcategorySelect.innerHTML += `<option value="${sub}">${sub.charAt(0).toUpperCase() + sub.slice(1)}</option>`;
+            });
+            subcategorySelect.disabled = false;
+        } else {
+            subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+            subcategorySelect.disabled = true;
+            loadButton.disabled = true;
+        }
+    }
+
+    // Load shapefile data
+    async function loadShapefile() {
+        const category = document.getElementById('categorySelect').value;
+        const subcategory = document.getElementById('subcategorySelect').value;
+        const button = document.getElementById('loadShapefile');
+        const style = getCurrentStyle();
+
+        try {
+            button.disabled = true;
+            button.textContent = 'Loading...';
+
+            if (currentLayer) {
+                map.removeLayer(currentLayer);
+                currentLayer = null;
+            }
+
+            const url = `{% url "mapplot:get_data" %}?category=${category}&subcategory=${subcategory}`;
+            const response = await fetch(url);
+            const geojson = await response.json();
+
+            if (!geojson.features || geojson.features.length === 0) {
+                throw new Error('No feature data received');
+            }
+
+            currentLayer = L.geoJSON(geojson, {
+                style: (feature) => getFeatureStyle(feature, category),
+                onEachFeature: (feature, layer) => {
+                    layer.on({
+                        mouseover: highlightFeature,
+                        mouseout: resetHighlight
+                    });
+                }
+            }).addTo(map);
+
+            map.fitBounds(currentLayer.getBounds());
+
+        } catch (error) {
+            console.error('Error loading shapefile:', error);
+            alert('Failed to load shapefile: ' + error.message);
+        } finally {
+            button.disabled = false;
+            button.textContent = 'Plot';
+        }
+    }
+
+    // Initialize everything when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize map
+        initMap();
+        updateStyleDisplays();
+
+        // Add event listeners
+        document.getElementById('categorySelect').addEventListener('change', updateSubcategories);
+        document.getElementById('subcategorySelect').addEventListener('change', function() {
+            document.getElementById('loadShapefile').disabled = !this.value;
+        });
+        document.getElementById('loadShapefile').addEventListener('click', loadShapefile);
+
+        // Style control event listeners
+        document.getElementById('opacity').addEventListener('input', function() {
+            document.getElementById('opacityValue').textContent = this.value;
+            applyStyles();
+        });
+        document.getElementById('weight').addEventListener('input', function() {
+            document.getElementById('weightValue').textContent = this.value;
+            applyStyles();
+        });
+        document.getElementById('lineColor').addEventListener('input', applyStyles);
+        document.getElementById('fillColor').addEventListener('input', applyStyles);
+    });
+</script>
+{% endblock %}
