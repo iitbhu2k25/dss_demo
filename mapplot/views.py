@@ -98,7 +98,7 @@ def get_shapefile_data(request):
             },
             'drains': {
                 'varuna': os.path.join('shapefile', 'DrainsOutlet', 'Varuna_Drain', 'Varuna_Drain.shp'),
-                'basuhi': os.path.join('shapefile', 'DrainsOutlet', 'Basuhi_drain', 'Basuhi_Drain.shp'),
+                'basuhi': os.path.join('shapefile', 'DrainsOutlet', 'Basuhi_Drain', 'Basuhi_Drain.shp'),
                 'morwa': os.path.join('shapefile', 'DrainsOutlet', 'Morwa_Drain', 'Morwa_Drain.shp')
             },
             'canals': {

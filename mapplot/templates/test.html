@@ -6,7 +6,7 @@
 <div class="container">
     <div class="row">
         <!-- Left Column: Controls -->
-        <div class="col-md-1">
+        <div class="col-md-3">
             <div class="dropdown-container mb-4">
                 <select id="categorySelect" class="form-select dropdown-animated mb-2">
                     <option value="">Select Category</option>
@@ -28,46 +28,32 @@
                     Plot
                 </button>
             </div>
-
+          
             <div class="style-controls">
                 <div class="mb-3">
                     <label for="lineColor" class="form-label">Line Color:</label>
                     <input type="color" id="lineColor" class="form-control" value="#000000">
                 </div>
-
+            
                 <div class="mb-3">
                     <label for="fillColor" class="form-label">Fill Color:</label>
                     <input type="color" id="fillColor" class="form-control" value="#78b4db">
                 </div>
-
+            
                 <div class="mb-3">
                     <label for="opacity" class="form-label">Opacity: <span id="opacityValue">0.8</span></label>
                     <input type="range" id="opacity" class="form-range" min="0.1" max="1" step="0.1" value="0.8">
                 </div>
-
+            
                 <div class="mb-3">
                     <label for="weight" class="form-label">Line Weight: <span id="weightValue">2</span></label>
                     <input type="range" id="weight" class="form-range" min="1" max="10" step="1" value="2">
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="toggleLabels">
-                    <label class="form-check-label" for="toggleLabels">
-                        Show Labels
-                    </label>
-                </div>
-                <div class="mb-3">
-                    <button id="exportMap" class="btn btn-success animated-button">
-                        Export Map
-                    </button>
-                </div>
             </div>
         </div>
 
-
-
-
         <!-- Right Column: Map -->
-        <div class="col-md-2">
+        <div class="col-md-9">
             <div id="map"></div>
         </div>
         <div class="col-md-3" id="feature-info">
@@ -77,24 +63,12 @@
             </div>
         </div>
     </div>
-
 </div>
-
 {% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <style>
-    .row {
-        margin-right: -5000px;
-    }
-
-    .col-md-1 {
-        margin-left: -150px;
-        width: 200px;
-    }
-
     #map {
         height: 600px;
         width: 100%;
@@ -103,21 +77,8 @@
         box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
     }
 
-    #exportMap {
-        background-color: #28a745;
-        width: 100%;
-        margin-top: 20px;
-    }
-
-    #exportMap:hover {
-        background-color: #0b6ddd;
-        transform: scale(1.1);
-    }
-
-
     .dropdown-animated {
         transition: all 0.3s ease-in-out;
-
     }
 
     .dropdown-animated:hover {
@@ -133,20 +94,17 @@
         padding: 10px 15px;
         border-radius: 5px;
         cursor: pointer;
-
     }
 
     .animated-button:hover {
         background-color: #0056b3;
         transform: scale(1.1);
-
     }
 
     .style-controls input[type="color"] {
         width: 10%;
         height: 20px;
         padding: 2px;
-
     }
 
     .info {
@@ -155,101 +113,41 @@
         background: rgba(255, 255, 255, 0.9);
         box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
         border-radius: 5px;
-
     }
 
     .info h4 {
         margin: 0 0 5px;
         color: #af1313;
     }
-
+     
     #feature-info {
-        padding: 0px;
-        width: 300px;
-        background: #6dc1e2;
-        border: 5px solid #0805ca;
-        height: 600px;
-        overflow-y: auto;
-    }
+    padding: 15px;
+    background: #fff;
+    border-left: 1px solid #ddd;
+    height: 100vh;
+    overflow-y: auto;
+}
 
-    .feature-details {
-        margin-top: 10px;
-    }
+.feature-details {
+    margin-top: 10px;
+}
 
-    .feature-details p {
-        margin-bottom: 5px;
-        padding: 5px;
-        border-bottom: 1px solid #eee;
-    }
+.feature-details p {
+    margin-bottom: 5px;
+    padding: 5px;
+    border-bottom: 1px solid #eee;
+}
+
 </style>
 {% endblock %}
 
 {% block extra_js %}
-<!-- <script>// Add these variables at the top with your other global variables
-let labelLayer = null;
-let labelsVisible = false;
-
-// Function to add labels
-function addLabels() {
-    if (!currentLayer || labelLayer) return;
-    
-    labelLayer = L.layerGroup().addTo(map);
-    
-    currentLayer.eachLayer(layer => {
-        const feature = layer.feature;
-        if (feature.properties && (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon" || "Line")) {
-            const center = layer.getBounds().getCenter();
-            const labelText = feature.properties.name || feature.properties.NAME || 
-                            feature.properties.id || feature.properties.ID || 
-                            'Unnamed';
-            
-            const label = L.divIcon({
-                className: 'map-label',
-                html: `<div>${labelText}</div>`,
-                iconSize: [100, 40],
-                iconAnchor: [50, 20]
-            });
-            
-            L.marker(center, {
-                icon: label,
-                zIndexOffset: 1000
-            }).addTo(labelLayer);
-        }
-    });
-}
-
-// Function to remove labels
-function removeLabels() {
-    if (labelLayer) {
-        map.removeLayer(labelLayer);
-        labelLayer = null;
-    }
-}
-
-// Function to toggle labels
-function toggleLabels(showLabels) {
-    labelsVisible = showLabels;
-    if (showLabels) {
-        addLabels();
-    } else {
-        removeLabels();
-    }
-}
-
-// Add this to your existing loadShapefile function after currentLayer is created
-// (after the currentLayer.addTo(map) line):
-if (labelsVisible) {
-    addLabels();
-}</script> -->
-
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     // Global variables
     let map;
     let currentLayer = null;
     let info = null;
-    let activeFeature = null;
 
     // Category definitions
     const subcategories = {
@@ -265,6 +163,9 @@ if (labelsVisible) {
         'stps': ['all']
     };
 
+
+
+    
     // Initialize map
     function initMap() {
         map = L.map('map').setView([25.3176, 82.9739], 10); // Centered on Varanasi
@@ -274,26 +175,21 @@ if (labelsVisible) {
 
         // Initialize info control
         info = L.control();
-        info.onAdd = function (map) {
+        info.onAdd = function(map) {
             this._div = L.DomUtil.create('div', 'info');
             this.update();
             return this._div;
         };
-        info.update = function (props) {
-            const featureContent = document.getElementById('feature-content');
-            if (props) {
-                // Create a formatted display of all properties
-                let content = '<div class="feature-details">';
-                for (const [key, value] of Object.entries(props)) {
-                    content += `<p><strong>${key}:</strong> ${value}</p>`;
-                }
-                content += '</div>';
-                featureContent.innerHTML = content;
-            } else {
-                featureContent.innerHTML = 'Hover over or click a feature to see details';
-            }
-        }
-    };
+        info.update = function(props) {
+            this._div.innerHTML = props ?
+                '<h4>Feature Properties</h4>' +
+                Object.entries(props)
+                    .map(([key, value]) => `<b>${key}:</b> ${value}`)
+                    .join('<br>')
+                : 'Hover over a feature';
+        };
+        info.addTo(map);
+    }
 
     // Get current style settings
     function getCurrentStyle() {
@@ -314,7 +210,7 @@ if (labelsVisible) {
     // Get style for feature
     function getFeatureStyle(feature, category) {
         const style = getCurrentStyle();
-
+        
         // special case household
 
         if (category === 'household') {
@@ -327,7 +223,7 @@ if (labelsVisible) {
                     opacity: 1,
                     fillOpacity: style.opacity
                 };
-            }
+            } 
             else if (feature.geometry.type === "Point" || feature.geometry.type === "MultiPoint") {
                 return {
                     radius: 6,
@@ -350,6 +246,8 @@ if (labelsVisible) {
         }
 
 
+
+        
         if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
             return {
                 color: style.lineColor,
@@ -358,7 +256,7 @@ if (labelsVisible) {
                 opacity: 1,
                 fillOpacity: style.opacity
             };
-        }
+        } 
         else if (feature.geometry.type === "LineString" || feature.geometry.type === "MultiLineString") {
             let baseStyle = {
                 color: style.lineColor,
@@ -405,40 +303,17 @@ if (labelsVisible) {
         info.update(layer.feature.properties);
     }
 
-    function handleFeatureClick(e) {
-        const layer = e.target;
-        info.update(layer.feature.properties);
-
-        // Optional: Add active state styling
-        layer.setStyle({
-            weight: 3,
-            color: '#ff4444',
-            fillOpacity: 0.7
-        });
-
-        // Remove active styling from previously clicked feature
-        if (activeFeature && activeFeature !== layer) {
-            currentLayer.resetStyle(activeFeature);
-        }
-
-        activeFeature = layer;
-    }
-
-
     function resetHighlight(e) {
-        // Only reset if this isn't the actively clicked feature
-        if (!activeFeature || activeFeature !== e.target) {
-            currentLayer.resetStyle(e.target);
-            info.update();
-        }
+        currentLayer.resetStyle(e.target);
+        info.update();
     }
 
     // Apply styles to current layer
     function applyStyles() {
         if (!currentLayer) return;
-
+        
         const category = document.getElementById('categorySelect').value;
-        currentLayer.eachLayer(function (layer) {
+        currentLayer.eachLayer(function(layer) {
             layer.setStyle(getFeatureStyle(layer.feature, category));
         });
     }
@@ -491,8 +366,8 @@ if (labelsVisible) {
                 onEachFeature: (feature, layer) => {
                     layer.on({
                         mouseover: highlightFeature,
-                        mouseout: resetHighlight,
-                        click: handleFeatureClick
+                        mouseout: resetHighlight
+                        
                     });
                 }
             }).addTo(map);
@@ -507,40 +382,31 @@ if (labelsVisible) {
             button.textContent = 'Plot';
         }
     }
-
+    
     // Initialize everything when DOM is loaded
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         // Initialize map
         initMap();
         updateStyleDisplays();
 
         // Add event listeners
         document.getElementById('categorySelect').addEventListener('change', updateSubcategories);
-        document.getElementById('subcategorySelect').addEventListener('change', function () {
+        document.getElementById('subcategorySelect').addEventListener('change', function() {
             document.getElementById('loadShapefile').disabled = !this.value;
         });
         document.getElementById('loadShapefile').addEventListener('click', loadShapefile);
 
         // Style control event listeners
-        document.getElementById('opacity').addEventListener('input', function () {
+        document.getElementById('opacity').addEventListener('input', function() {
             document.getElementById('opacityValue').textContent = this.value;
             applyStyles();
         });
-        document.getElementById('weight').addEventListener('input', function () {
+        document.getElementById('weight').addEventListener('input', function() {
             document.getElementById('weightValue').textContent = this.value;
             applyStyles();
         });
         document.getElementById('lineColor').addEventListener('input', applyStyles);
         document.getElementById('fillColor').addEventListener('input', applyStyles);
     });
-    document.getElementById('toggleLabels').addEventListener('change', function (e) {
-        toggleLabels(e.target.checked);
-    });
-
-
 </script>
-
-
-
-
 {% endblock %}
