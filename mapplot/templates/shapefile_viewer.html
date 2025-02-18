@@ -3,12 +3,12 @@
 {% load static %}
 
 {% block content %}
-<div class="container">
-    <div class="row">
+<div class="map-dashboard-container">
+    <div class="map-dashboard-row">
         <!-- Left Column: Controls -->
-        <div class="col-md-1">
-            <div class="dropdown-container mb-4">
-                <select id="categorySelect" class="form-select dropdown-animated mb-2">
+        <div class="map-control-column">
+            <div class="map-dropdown-container mb-4">
+                <select id="categorySelect" class="map-form-select map-dropdown-animated mb-2">
                     <option value="">Select Category</option>
                     <option value="administrative">Administrative</option>
                     <option value="watershed">Watershed</option>
@@ -21,63 +21,61 @@
                     <option value="industries">Industries</option>
                     <option value="stps">STPs</option>
                 </select>
-                <select id="subcategorySelect" class="form-select dropdown-animated mb-2" disabled>
+                <select id="subcategorySelect" class="map-form-select map-dropdown-animated mb-2" disabled>
                     <option value="">Select Subcategory</option>
                 </select>
-                <button id="loadShapefile" class="btn btn-primary animated-button mb-4" disabled>
+                <button id="loadShapefile" class="map-btn map-btn-primary map-animated-button mb-4" disabled>
                     Plot
                 </button>
             </div>
 
-            <div class="style-controls">
+            <div class="map-style-controls">
                 <div class="mb-3">
-                    <label for="lineColor" class="form-label">Line Color:</label>
-                    <input type="color" id="lineColor" class="form-control" value="#000000">
+                    <label for="lineColor" class="map-form-label">Line Color:</label>
+                    <input type="color" id="lineColor" class="map-color-input" value="#000000">
                 </div>
 
                 <div class="mb-3">
-                    <label for="fillColor" class="form-label">Fill Color:</label>
-                    <input type="color" id="fillColor" class="form-control" value="#78b4db">
+                    <label for="fillColor" class="map-form-label">Fill Color:</label>
+                    <input type="color" id="fillColor" class="map-color-input" value="#78b4db">
                 </div>
 
                 <div class="mb-3">
-                    <label for="opacity" class="form-label">Opacity: <span id="opacityValue">0.8</span></label>
-                    <input type="range" id="opacity" class="form-range" min="0.1" max="1" step="0.1" value="0.8">
+                    <label for="opacity" class="map-form-label">Opacity: <span id="opacityValue">0.8</span></label>
+                    <input type="range" id="opacity" class="map-range" min="0.1" max="1" step="0.1" value="0.8">
                 </div>
 
                 <div class="mb-3">
-                    <label for="weight" class="form-label">Line Weight: <span id="weightValue">2</span></label>
-                    <input type="range" id="weight" class="form-range" min="1" max="10" step="1" value="2">
+                    <label for="weight" class="map-form-label">Line Weight: <span id="weightValue">2</span></label>
+                    <input type="range" id="weight" class="map-range" min="1" max="10" step="1" value="2">
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="toggleLabels">
-                    <label class="form-check-label" for="toggleLabels">
+                <div class="map-form-check">
+                    <input class="map-check-input" type="checkbox" id="toggleLabels">
+                    <label class="map-check-label" for="toggleLabels">
                         Show Labels
                     </label>
                 </div>
                 <div class="mb-3">
-                    <button id="exportMap" class="btn btn-success animated-button">
+                    <button id="exportMap" class="map-btn map-btn-success map-animated-button">
                         Export Map
                     </button>
                 </div>
             </div>
         </div>
 
-
-
-
-        <!-- Right Column: Map -->
-        <div class="col-md-2">
+        <!-- Center Column: Map -->
+        <div class="map-display-column">
             <div id="map"></div>
         </div>
-        <div class="col-md-3" id="feature-info">
+
+        <!-- Right Column: Feature Info -->
+        <div class="map-info-column" id="feature-info">
             <h3>Feature Information</h3>
             <div id="feature-content">
                 Select a feature to see details
             </div>
         </div>
     </div>
-
 </div>
 
 {% endblock %}
@@ -86,13 +84,37 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <style>
-    .row {
-        margin-right: -5000px;
+   
+    .map-dashboard-container {
+        width: 100%;
+        padding: 20px;
+        box-sizing: border-box;
     }
 
-    .col-md-1 {
-        margin-left: -150px;
-        width: 200px;
+    .map-dashboard-row {
+        display: flex;
+        gap: 20px;
+        width: 100%;
+    }
+
+    .map-control-column {
+        flex: 0 0 250px;
+        padding: 15px;
+        margin-left: -210px;
+    }
+
+    .map-display-column {
+        flex: 1;
+    }
+
+    .map-info-column {
+        flex: 0 0 300px;
+        padding: 15px;
+        background: #6dc1e2;
+        border: 5px solid #0805ca;
+        height: 600px;
+        overflow-y: auto;
+        margin-right: -10%;
     }
 
     #map {
@@ -103,50 +125,66 @@
         box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
     }
 
-    #exportMap {
-        background-color: #28a745;
+    .map-form-select {
         width: 100%;
-        margin-top: 20px;
+        padding: 8px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
     }
 
-    #exportMap:hover {
-        background-color: #0b6ddd;
-        transform: scale(1.1);
-    }
-
-
-    .dropdown-animated {
+    .map-dropdown-animated {
         transition: all 0.3s ease-in-out;
-
     }
 
-    .dropdown-animated:hover {
+    .map-dropdown-animated:hover {
         transform: scale(1.05);
         box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
     }
 
-    .animated-button {
-        transition: all 0.3s ease-in-out;
-        background-color: #007bff;
-        color: white;
-        border: none;
+    .map-btn {
+        width: 100%;
         padding: 10px 15px;
         border-radius: 5px;
+        border: none;
         cursor: pointer;
-
+        transition: all 0.3s ease-in-out;
     }
 
-    .animated-button:hover {
-        background-color: #0056b3;
+    .map-btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .map-btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .map-animated-button:hover {
         transform: scale(1.1);
-
+        background-color: #0b6ddd;
     }
 
-    .style-controls input[type="color"] {
-        width: 10%;
-        height: 20px;
+    .map-color-input {
+        width: 20%;
+        height: 35px;
         padding: 2px;
+        border-radius: 4px;
+        margin-top: 5px;
+        display: block;
+    }
 
+    .map-range {
+        width: 100%;
+    }
+
+    .map-form-check {
+        margin: 15px 0;
+    }
+
+    .map-check-input {
+        margin-right: 8px;
     }
 
     .info {
@@ -155,21 +193,11 @@
         background: rgba(255, 255, 255, 0.9);
         box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
         border-radius: 5px;
-
     }
 
     .info h4 {
         margin: 0 0 5px;
         color: #af1313;
-    }
-
-    #feature-info {
-        padding: 0px;
-        width: 300px;
-        background: #6dc1e2;
-        border: 5px solid #0805ca;
-        height: 600px;
-        overflow-y: auto;
     }
 
     .feature-details {
@@ -181,9 +209,12 @@
         padding: 5px;
         border-bottom: 1px solid #eee;
     }
+
+    
+
+
 </style>
 {% endblock %}
-
 {% block extra_js %}
 <!-- <script>// Add these variables at the top with your other global variables
 let labelLayer = null;
@@ -244,6 +275,7 @@ if (labelsVisible) {
 
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
     // Global variables
     let map;
