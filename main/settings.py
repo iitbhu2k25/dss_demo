@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     "waterdemands",
     "stp",
     "leaflet",
-    "mapplot"
+    "mapplot",
+    "watersupply"
 ]
 
 MIDDLEWARE = [
