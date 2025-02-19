@@ -285,39 +285,41 @@ document.addEventListener('DOMContentLoaded', () => {
             //Render graphs for each method
             Object.keys(data.result).forEach(method => {
               const methodData = data.result[method];
+              console.log("methodData hai ",methodData);
+              
             
-              Object.values(methodData).forEach(yearData => {
-                if (yearData) {
-                  delete yearData[2011];  // If present, delete
-                  delete yearData["Growth Percent"]; // If present, delete
-                }
-              });
+              // Object.values(methodData).forEach(yearData => {
+              //   if (yearData) {
+              //     delete yearData[2011];  // If present, delete
+              //     delete yearData["Growth Percent"]; // If present, delete
+              //   }
+              // });
             
-              console.log("method ", method);
-              console.log("methodData ", methodData);
+              // console.log("method ", method);
+              // console.log("methodData ", methodData);
             
-              const canvasId = `graph-${method}`;
-              console.log("Canvas Id ", canvasId);
+              // const canvasId = `graph-${method}`;
+              // console.log("Canvas Id ", canvasId);
             
-              const labels = Object.keys(methodData[Object.keys(methodData)[0]]); // Years
-              console.log("Object.keys(methodData)[0] ", Object.keys(methodData)[0]);
-              console.log("methodData[Object.keys(methodData)[0]]", methodData[Object.keys(methodData)[0]]);
+              // const labels = Object.keys(methodData[Object.keys(methodData)[0]]); // Years
+              // console.log("Object.keys(methodData)[0] ", Object.keys(methodData)[0]);
+              // console.log("methodData[Object.keys(methodData)[0]]", methodData[Object.keys(methodData)[0]]);
             
-              const datasets = Object.entries(methodData).map(([village, yearData]) => {
-                console.log(" Object.values(yearData) ", Object.values(yearData));
-                return {
-                  label: code_to_villagename[village],
-                  data: Object.values(yearData),
-                  borderColor: getRandomColor(),
-                  borderWidth: 2,
-                  fill: false,
-                };
-              });
+              // const datasets = Object.entries(methodData).map(([village, yearData]) => {
+              //   console.log(" Object.values(yearData) ", Object.values(yearData));
+              //   return {
+              //     label: code_to_villagename[village],
+              //     data: Object.values(yearData),
+              //     borderColor: getRandomColor(),
+              //     borderWidth: 2,
+              //     fill: false,
+              //   };
+              // });
             
-              console.log("datasets ", datasets);
-              console.log("labels ", labels);
+              // console.log("datasets ", datasets);
+              // console.log("labels ", labels);
             
-              renderGraph(canvasId, datasets, labels);
+              // renderGraph(canvasId, datasets, labels);
             });
             
             
