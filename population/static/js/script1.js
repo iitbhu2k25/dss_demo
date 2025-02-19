@@ -283,45 +283,66 @@ document.addEventListener('DOMContentLoaded', () => {
             populateTable(data.result, projectionMethod);
 
             //Render graphs for each method
+            let containKeyGrowthPercent = false;
+            //Render graphs for each method
             Object.keys(data.result).forEach(method => {
               const methodData = data.result[method];
-              console.log("methodData hai ",methodData);
+              console.log("Method data, ",methodData);
+              
+              Object.keys(methodData).forEach(key => {
+                if ("Growth Percent" in methodData[key]) {
+                    containKeyGrowthPercent=true
+                } 
+            });
               
             
-              // Object.values(methodData).forEach(yearData => {
-              //   if (yearData) {
-              //     delete yearData[2011];  // If present, delete
-              //     delete yearData["Growth Percent"]; // If present, delete
-              //   }
-              // });
+              Object.values(methodData).forEach(yearData => {
+                if (yearData) {
+                  delete yearData["Growth Percent"]; // If present, delete
+                }
+              });
             
-              // console.log("method ", method);
-              // console.log("methodData ", methodData);
+              console.log("method ", method);
+              console.log("methodData ", methodData);
             
-              // const canvasId = `graph-${method}`;
-              // console.log("Canvas Id ", canvasId);
+              const canvasId = `graph-${method}`;
+              console.log("Canvas Id ", canvasId);
             
-              // const labels = Object.keys(methodData[Object.keys(methodData)[0]]); // Years
-              // console.log("Object.keys(methodData)[0] ", Object.keys(methodData)[0]);
-              // console.log("methodData[Object.keys(methodData)[0]]", methodData[Object.keys(methodData)[0]]);
+              const labels = Object.keys(methodData[Object.keys(methodData)[0]]); // Years
+              console.log("Object.keys(methodData)[0] ", Object.keys(methodData)[0]);
+              console.log("methodData[Object.keys(methodData)[0]]", methodData[Object.keys(methodData)[0]]);
             
-              // const datasets = Object.entries(methodData).map(([village, yearData]) => {
-              //   console.log(" Object.values(yearData) ", Object.values(yearData));
-              //   return {
-              //     label: code_to_villagename[village],
-              //     data: Object.values(yearData),
-              //     borderColor: getRandomColor(),
-              //     borderWidth: 2,
-              //     fill: false,
-              //   };
-              // });
+              const datasets = Object.entries(methodData).map(([village, yearData]) => {
+                console.log(" Object.values(yearData) ", Object.values(yearData));
+                return {
+                  label: code_to_villagename[village],
+                  data: Object.values(yearData),
+                  borderColor: getRandomColor(),
+                  borderWidth: 2,
+                  fill: false,
+                };
+              });
             
-              // console.log("datasets ", datasets);
-              // console.log("labels ", labels);
+              console.log("datasets original", datasets);
+              console.log("labels original ", labels);
             
-              // renderGraph(canvasId, datasets, labels);
+              if(!containKeyGrowthPercent){
+                
+                const datasets2 = datasets.map(dataset => ({
+                  ...dataset, 
+                  data: dataset.data.slice(1) // Remove the 0th index value
+                 }));
+                 labels.shift()
+
+                console.log("datasets2", datasets2);
+                console.log("labels for range years", labels);
+                
+                renderGraph(canvasId, datasets2, labels);
+              }
+              else{
+                renderGraphforSingleYear(canvasId,datasets,labels)
+              }
             });
-            
             
 
           } else {
@@ -727,6 +748,74 @@ function exportTableToCSV(tableId, filename) {
       });
     
       // Save the chart instance for future cleanup
+      chartInstances[canvasId] = chart;
+    }
+
+    function renderGraphforSingleYear(canvasId, datasets, labels) {
+      console.log("Inside renderGraphforSingleYear");
+  
+      const canvas = document.getElementById(canvasId);
+      const container = canvas.parentElement;
+      container.style.display = "block";
+      container.classList.add("active");
+  
+      // Resize canvas
+      canvas.style.width = "100%";
+      canvas.style.height = "350px";
+  
+      // Destroy previous chart instance if exists
+      if (chartInstances[canvasId]) {
+          chartInstances[canvasId].destroy();
+      }
+  
+      // Extract village names as labels for X-axis
+      const villageNames = datasets.map(dataset => dataset.label);
+  
+      // Create two datasets: One for 2011, One for 2020
+      const dataset2011 = {
+          label: "2011 Population",
+          data: datasets.map(dataset => dataset.data[labels.indexOf("2011")]), // Extract 2011 data
+          backgroundColor: "rgba(54, 162, 235, 0.7)", // Blue color
+          borderColor: "rgba(54, 162, 235, 1)",
+          borderWidth: 1,
+      };
+  
+      const dataset2020 = {
+          label: "2020 Population",
+          data: datasets.map(dataset => dataset.data[labels.indexOf("2020")]), // Extract 2020 data
+          backgroundColor: "rgba(255, 99, 132, 0.7)", // Red color
+          borderColor: "rgba(255, 99, 132, 1)",
+          borderWidth: 1,
+      };
+  
+      // Create a grouped bar chart (Histogram)
+      const ctx = canvas.getContext("2d");
+      const chart = new Chart(ctx, {
+          type: "bar",
+          data: {
+              labels: villageNames, // Set village names as X-axis labels
+              datasets: [dataset2011, dataset2020], // Two datasets (2011 & 2020)
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                  legend: { position: "top" },
+              },
+              scales: {
+                  x: {
+                      title: { display: true, text: "Villages" },
+                      stacked: false, // Not stacked, so bars appear side-by-side
+                  },
+                  y: {
+                      title: { display: true, text: "Population" },
+                      stacked: false,
+                  },
+              },
+          },
+      });
+  
+      // Save chart instance for future cleanup
       chartInstances[canvasId] = chart;
     }
     
