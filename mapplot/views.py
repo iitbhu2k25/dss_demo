@@ -145,7 +145,7 @@ def get_shapefile_data(request):
             # print("Sample of coordinates:")
             # for idx, row in gdf.head().iterrows():
             #  print(f"Feature {idx} coordinates:")
-            #  print(row.geometry)
+            # print(row.geometry)
             
             # Convert to WGS84 if needed
             if gdf.crs and gdf.crs != 'EPSG:4326':

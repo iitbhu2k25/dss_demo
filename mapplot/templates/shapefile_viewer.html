@@ -263,12 +263,17 @@
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
+    <!-- for export map below script -->
 <script>
-   
-
 document.getElementById("exportMap").addEventListener("click", async function() {
     // Get the original map element
     const mapElement = document.getElementById("map");
+    
+    // Store the original dimensions and scroll position
+    const originalWidth = mapElement.offsetWidth;
+    const originalHeight = mapElement.offsetHeight;
+    const originalScrollTop = mapElement.scrollTop;
+    const originalScrollLeft = mapElement.scrollLeft;
     
     // Get selection values
     const categorySelect = document.getElementById("categorySelect");
@@ -277,17 +282,27 @@ document.getElementById("exportMap").addEventListener("click", async function() 
     const selectedSubcategory = subcategorySelect.options[subcategorySelect.selectedIndex]?.text || "No Subcategory Selected";
     const timestamp = new Date().toLocaleString();
 
-    // Create a container for the snapshot
+    // Create a container for the snapshot with fixed dimensions
     const snapshotContainer = document.createElement("div");
     snapshotContainer.style.position = "relative";
-    snapshotContainer.style.width = mapElement.offsetWidth + "px";
-    snapshotContainer.style.height = mapElement.offsetHeight + "px";
+    snapshotContainer.style.width = originalWidth + "px";
+    snapshotContainer.style.height = originalHeight + "px";
+    snapshotContainer.style.overflow = "hidden";
 
-    // Clone the map
+    // Clone the map with preserved viewport
     const mapClone = mapElement.cloneNode(true);
     mapClone.style.position = "absolute";
     mapClone.style.top = "0";
     mapClone.style.left = "0";
+    mapClone.style.width = "100%";
+    mapClone.style.height = "100%";
+    mapClone.style.transform = "none";
+    mapClone.style.transformOrigin = "center center";
+    
+    // Set the scroll position to match the original
+    mapClone.scrollTop = originalScrollTop;
+    mapClone.scrollLeft = originalScrollLeft;
+    
     snapshotContainer.appendChild(mapClone);
 
     // Create and add the title overlay
@@ -319,15 +334,27 @@ document.getElementById("exportMap").addEventListener("click", async function() 
     document.body.appendChild(snapshotContainer);
 
     try {
+        // Wait longer for the map to settle
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         // Configure html2canvas options
         const options = {
             useCORS: true,
             allowTaint: true,
-            scrollX: 0,
-            scrollY: 0,
-            windowWidth: mapElement.offsetWidth,
-            windowHeight: mapElement.offsetHeight,
-            scale: 2, // Higher quality output
+            scrollX: -window.scrollX,
+            scrollY: -window.scrollY,
+            windowWidth: originalWidth,
+            windowHeight: originalHeight,
+            scale: 2,
+            onclone: function(clonedDoc) {
+                const clonedMap = clonedDoc.getElementById("map");
+                if (clonedMap) {
+                    // Preserve the viewport state
+                    clonedMap.scrollTop = originalScrollTop;
+                    clonedMap.scrollLeft = originalScrollLeft;
+                    clonedMap.style.transform = "none";
+                }
+            }
         };
 
         // Create the canvas
@@ -349,7 +376,7 @@ document.getElementById("exportMap").addEventListener("click", async function() 
 </script>
 
 
-<!-- <script>// Add these variables at the top with your other global variables
+<script>// Add these variables at the top with your other global variables
 let labelLayer = null;
 let labelsVisible = false;
 
@@ -404,7 +431,7 @@ function toggleLabels(showLabels) {
 // (after the currentLayer.addTo(map) line):
 if (labelsVisible) {
     addLabels();
-}</script> -->
+}</script>
 
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
