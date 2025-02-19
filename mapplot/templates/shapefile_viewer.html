@@ -93,28 +93,31 @@
 
     .map-dashboard-row {
         display: flex;
+        flex-wrap: wrap;
         gap: 20px;
         width: 100%;
     }
 
     .map-control-column {
-        flex: 0 0 250px;
+        flex: 0 0 100%; /* Full width on small screens, 250px fixed otherwise */
+        max-width: 250px; /* Limit maximum width */
         padding: 15px;
         margin-left: -210px;
     }
 
     .map-display-column {
-        flex: 1;
+        flex: 1 0 0; 
     }
 
     .map-info-column {
-        flex: 0 0 300px;
+        flex: 0 0 100%; /* Full width on small screens, 300px fixed otherwise */
+        max-width: 300px; /* Limit maximum width */
         padding: 15px;
         background: #6dc1e2;
         border: 5px solid #0805ca;
         height: 600px;
         overflow-y: auto;
-        margin-right: -10%;
+        margin-right: 0; /* Adjust margin for mobile view */
     }
 
     #map {
@@ -210,12 +213,142 @@
         border-bottom: 1px solid #eee;
     }
 
-    
+   @media (max-width: 1200px) {
+    .map-control-column,
+    .map-info-column {
+        flex: 0 0 200px; /* Adjust columns for medium screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .map-dashboard-row {
+        flex-direction: column; /* Stack columns vertically */
+    }
+
+    .map-control-column,
+    .map-info-column {
+        flex: 1; /* Take full width */
+        padding: 10px;
+    }
+
+    .map-display-column {
+        height: 400px; /* Adjust map height for smaller screens */
+    }
+
+    #map {
+        height: 400px; /* Adjust map height */
+    }
+}
+
+@media (max-width: 480px) {
+    .map-control-column,
+    .map-info-column {
+        flex: 1;
+        padding: 5px; /* Reduce padding */
+    }
+
+    .map-btn {
+        padding: 8px; /* Adjust button size */
+    }
+
+    .map-form-select {
+        font-size: 14px; /* Reduce dropdown font size */
+    }
+}
+
 
 
 </style>
 {% endblock %}
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+   
+
+document.getElementById("exportMap").addEventListener("click", async function() {
+    // Get the original map element
+    const mapElement = document.getElementById("map");
+    
+    // Get selection values
+    const categorySelect = document.getElementById("categorySelect");
+    const subcategorySelect = document.getElementById("subcategorySelect");
+    const selectedCategory = categorySelect.options[categorySelect.selectedIndex]?.text || "No Category Selected";
+    const selectedSubcategory = subcategorySelect.options[subcategorySelect.selectedIndex]?.text || "No Subcategory Selected";
+    const timestamp = new Date().toLocaleString();
+
+    // Create a container for the snapshot
+    const snapshotContainer = document.createElement("div");
+    snapshotContainer.style.position = "relative";
+    snapshotContainer.style.width = mapElement.offsetWidth + "px";
+    snapshotContainer.style.height = mapElement.offsetHeight + "px";
+
+    // Clone the map
+    const mapClone = mapElement.cloneNode(true);
+    mapClone.style.position = "absolute";
+    mapClone.style.top = "0";
+    mapClone.style.left = "0";
+    snapshotContainer.appendChild(mapClone);
+
+    // Create and add the title overlay
+    const titleOverlay = document.createElement("div");
+    titleOverlay.innerHTML = `
+        <div style="
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+        ">
+            <strong>Map Snapshot</strong><br>
+            Category: ${selectedCategory}<br>
+            Subcategory: ${selectedSubcategory}<br>
+            Time: ${timestamp}
+        </div>
+    `;
+    snapshotContainer.appendChild(titleOverlay);
+
+    // Temporarily append the container to the document
+    document.body.appendChild(snapshotContainer);
+
+    try {
+        // Configure html2canvas options
+        const options = {
+            useCORS: true,
+            allowTaint: true,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: mapElement.offsetWidth,
+            windowHeight: mapElement.offsetHeight,
+            scale: 2, // Higher quality output
+        };
+
+        // Create the canvas
+        const canvas = await html2canvas(snapshotContainer, options);
+        
+        // Create and trigger download
+        const link = document.createElement("a");
+        link.download = `Map_Snapshot_${new Date().getTime()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    } catch (error) {
+        console.error("Error creating snapshot:", error);
+        alert("Failed to create snapshot. Please try again.");
+    } finally {
+        // Clean up: remove the temporary container
+        document.body.removeChild(snapshotContainer);
+    }
+});
+</script>
+
+
 <!-- <script>// Add these variables at the top with your other global variables
 let labelLayer = null;
 let labelsVisible = false;
@@ -568,6 +701,9 @@ if (labelsVisible) {
     document.getElementById('toggleLabels').addEventListener('change', function (e) {
         toggleLabels(e.target.checked);
     });
+
+
+
 
 
 </script>

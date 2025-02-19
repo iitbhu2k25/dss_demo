@@ -141,6 +141,12 @@ def get_shapefile_data(request):
             # Read the shapefile
             gdf = gpd.read_file(shapefile_path)
             
+            # Add this to see coordinates in your console
+            # print("Sample of coordinates:")
+            # for idx, row in gdf.head().iterrows():
+            #  print(f"Feature {idx} coordinates:")
+            #  print(row.geometry)
+            
             # Convert to WGS84 if needed
             if gdf.crs and gdf.crs != 'EPSG:4326':
                 logger.info("Converting CRS to EPSG:4326")
@@ -303,3 +309,7 @@ def get_shapefile_data(request):
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}", exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
+    
+    # Add this to your view
+        print(f"Processing shapefile for {category}/{subcategory}")
+        print(f"Coordinate sample: {gdf.geometry.iloc[0]}")
