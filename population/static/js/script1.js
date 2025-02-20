@@ -957,19 +957,35 @@ document.addEventListener("DOMContentLoaded", function () {
           console.log("result = ", data.result); 
           populateTable(data.result, "demographic-attribute"); 
 
+          let containKeyGrowthPercent = false;
+          //Render graphs for each method
           Object.keys(data.result).forEach(method => {
             const methodData = data.result[method];
+            console.log("Method data, ",methodData);
+            
+            Object.keys(methodData).forEach(key => {
+              if ("Growth Percent" in methodData[key]) {
+                  containKeyGrowthPercent=true
+              } 
+          });
+            
+          
+            Object.values(methodData).forEach(yearData => {
+              if (yearData) {
+                delete yearData["Growth Percent"]; // If present, delete
+              }
+            });
+          
             console.log("method ", method);
             console.log("methodData ", methodData);
-            
+          
             const canvasId = `graph-${method}`;
             console.log("Canvas Id ", canvasId);
-            
+          
             const labels = Object.keys(methodData[Object.keys(methodData)[0]]); // Years
-            console.log("Object.keys(methodData)[0] ",Object.keys(methodData)[0]);
+            console.log("Object.keys(methodData)[0] ", Object.keys(methodData)[0]);
             console.log("methodData[Object.keys(methodData)[0]]", methodData[Object.keys(methodData)[0]]);
-            
-
+          
             const datasets = Object.entries(methodData).map(([village, yearData]) => {
               console.log(" Object.values(yearData) ", Object.values(yearData));
               return {
@@ -980,16 +996,26 @@ document.addEventListener("DOMContentLoaded", function () {
                 fill: false,
               };
             });
-            console.log("datasets ", datasets);
-           
-            labels.shift()
-            // Iterate over each key of the datasets object
-            Object.keys(datasets).forEach(key => {
-              // Remove the first element from the data array of each dataset
-              datasets[key].data.shift();  // or datasets[key].data.splice(0, 1);
-            });
+          
+            console.log("datasets original", datasets);
+            console.log("labels original ", labels);
+          
+            if(!containKeyGrowthPercent){
+              
+              const datasets2 = datasets.map(dataset => ({
+                ...dataset, 
+                data: dataset.data.slice(1) // Remove the 0th index value
+               }));
+               labels.shift()
 
-            renderGraph(canvasId, datasets, labels);
+              console.log("datasets2", datasets2);
+              console.log("labels for range years", labels);
+              
+              renderGraph(canvasId, datasets2, labels);
+            }
+            else{
+              renderGraphforSingleYear(canvasId,datasets,labels)
+            }
           });
         }
         
@@ -1013,34 +1039,33 @@ document.addEventListener("DOMContentLoaded", function () {
         dynamicTableContainer.appendChild(errorMessage);
         return;
     }
-
+  
     const tableContainer = document.createElement('div');
     tableContainer.classList.add('mb-5');
-
+  
     const title = document.createElement('h4');
     title.textContent = projectionMethod.replace(/-/g, ' ').toUpperCase();
     tableContainer.appendChild(title);
-
+  
     const tableWrapper = document.createElement('div');
     tableWrapper.style.overflowX = 'auto'; // Allow horizontal scrolling
     tableWrapper.style.maxWidth = '100%'; // Prevent from exceeding container width
-
+  
     const table = document.createElement('table');
     table.classList.add('table', 'table-bordered', 'table-striped');
-
+    table.id = `table-${projectionMethod}`; // Unique ID for the table
+  
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
     headerRow.innerHTML = '<th>Village/Town Name</th>';
-
+  
     const firstVillageData = Object.values(methodData)[0];
     if (!firstVillageData) {
         console.error("First village data is undefined or null.");
         return;
     }
-
+  
     const firstVillageYears = Object.keys(firstVillageData);
-    console.log("firstVillageYears ", firstVillageYears);
-
     firstVillageYears.forEach(year => {
         const th = document.createElement('th');
         th.textContent = year;
@@ -1048,53 +1073,65 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     thead.appendChild(headerRow);
     table.appendChild(thead);
-    console.log("methodData ", methodData);
-
+  
     const tbody = document.createElement('tbody');
     let totalPopulation = {}; // Store total for each year
-
+    
+    console.log("methodDatapopTable", methodData);
+  
+    
+    
     for (const villageCode in methodData) {
-        console.log("VillageCode:", villageCode);
+        console.log("villagecodee ",villageCode);
         
         const row = document.createElement('tr');
         const villageCell = document.createElement('td');
         villageCell.textContent = code_to_villagename[villageCode] || "END";
         row.appendChild(villageCell);
-
+  
         const yearData = methodData[villageCode];
-        console.log("yearData:", yearData);
-
         firstVillageYears.forEach(year => {
             const yearCell = document.createElement('td');
             yearCell.textContent = yearData[year] || '-';
-            
-            // Convert value to integer and add to total population
+  
             let population = parseInt(yearData[year], 10) || 0;
             totalPopulation[year] = (totalPopulation[year] || 0) + population;
-
+  
             row.appendChild(yearCell);
         });
-
+  
         tbody.appendChild(row);
     }
-
+  
     // Add the total row at the end
     const totalRow = document.createElement('tr');
     totalRow.style.fontWeight = "bold";
-    totalRow.style.backgroundColor = "#f8f9fa"; // Light gray background for emphasis
-
+    totalRow.style.backgroundColor = "#f8f9fa";
+  
     const totalLabelCell = document.createElement('td');
     totalLabelCell.textContent = "Total Population";
     totalRow.appendChild(totalLabelCell);
-
+    
+    let prev2TotalPop = 0;
+  
     firstVillageYears.forEach(year => {
-        const totalCell = document.createElement('td');
-        totalCell.textContent = totalPopulation[year] || '-';
-        totalRow.appendChild(totalCell);
+      console.log("yearissss",year);
+      const totalCell = document.createElement('td');
+        if(year!=='Growth Percent'){
+          totalCell.textContent = totalPopulation[year] || '-';
+        }
+        if(year!=='Growth Percent'){
+          totalRow.appendChild(totalCell);
+        }
+        else if(year === 'Growth Percent'){
+          prev2TotalPop=((totalPopulation[firstVillageYears[1]] - totalPopulation[firstVillageYears[0]] ) / totalPopulation[firstVillageYears[0]] ) * 100
+          prev2TotalPop = prev2TotalPop.toFixed(2); //to 2 decimal places
+          totalCell.textContent = prev2TotalPop>0 ? prev2TotalPop : "NA"
+          totalRow.appendChild(totalCell);
+        }
     });
-
-    tbody.appendChild(totalRow); // Append total row to the table
-
+  
+    tbody.appendChild(totalRow);
     table.appendChild(tbody);
     tableWrapper.appendChild(table);
     tableContainer.appendChild(tableWrapper);

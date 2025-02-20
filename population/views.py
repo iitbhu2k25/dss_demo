@@ -550,9 +550,12 @@ def project_population_demographic(state_code, district_code, subdistrict_code, 
             one_year = {}                      
             one_year[2011] = value #populating 2011 population of village to result dict
             t = target_year - base_year
+            growth_percent = 0
             
             population_of_target_year = value + (value * t * (annual_birth_rate-annual_death_rate)) + (t * (annual_emigration_rate - annual_immigration_rate))
             one_year[target_year] = math.floor((population_of_target_year))
+            growth_percent = ((one_year[target_year] - value) / value) * 100
+            one_year["Growth Percent"] = round(growth_percent, 2)
 
             
             res[key] = one_year
