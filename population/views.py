@@ -540,30 +540,7 @@ def project_population_exponential(state_code, district_code, subdistrict_code, 
     result['exponential-growth'] = res
                 
 def project_population_demographic(state_code, district_code, subdistrict_code, result, village_2011_population, base_year, target_year, target_year_range, annual_birth_rate, annual_death_rate,annual_emigration_rate,annual_immigration_rate):
-    # population_1951_to_2011 = []
-    # print(f"Hello iam  inside project_population_exponential")
-    # if state_code and district_code and subdistrict_code:
-    #     query = PopulationDataYear.objects.filter(
-    #         state_code=state_code, district_code=district_code, subdistrict_code=subdistrict_code
-    #     )
-    #     data = query.values(
-    #         'population_1951', 'population_1961', 'population_1971', 'population_1981',
-    #         'population_1991', 'population_2001', 'population_2011'
-    #     )
-        
-    #     if data.exists():
-    #         record = data[0]
-    #         population_1951_to_2011 = [record.get(f'population_{year}', None) for year in [1951, 1961, 1971, 1981, 1991, 2001, 2011]]
-    #     else:
-    #         print("No data found for the given state, district, and subdistrict codes.")
-    #         return
-    
-    # if len(population_1951_to_2011) < 7:
-    #     print("Insufficient data for population projection.")
-    #     return
-    
-
-
+ 
     res={}
             
     if target_year:
@@ -577,17 +554,6 @@ def project_population_demographic(state_code, district_code, subdistrict_code, 
             population_of_target_year = value + (value * t * (annual_birth_rate-annual_death_rate)) + (t * (annual_emigration_rate - annual_immigration_rate))
             one_year[target_year] = math.floor((population_of_target_year))
 
-            # growth_percent = 0
-
-            # try:
-            #     if value != '' and population_of_target_year != '':
-            #         value_int = int(value)
-            #         target_year_int = int(population_of_target_year)
-            #         growth_percent = ((target_year_int - value_int) / value_int) * 100
-            # except (ValueError, TypeError, ZeroDivisionError):
-            #     growth_percent = 0  # If conversion fails or division by zero occurs, set to 0
-
-            # one_year["Growth Percent"] = round(growth_percent, 2)
             
             res[key] = one_year
 
@@ -752,6 +718,12 @@ def calculate_demographic_projection(request):
             print(f"Annual Death Rate: {annual_death_rate}")
             print(f"Annual Emigration Rate: {annual_emigration_rate}")
             print(f"Annual Immigration Rate: {annual_immigration_rate}")
+
+
+            annual_birth_rate = annual_birth_rate/10000
+            annual_death_rate = annual_death_rate/10000
+            annual_emigration_rate = annual_emigration_rate/10000
+            annual_immigration_rate = annual_immigration_rate/10000
 
 
 

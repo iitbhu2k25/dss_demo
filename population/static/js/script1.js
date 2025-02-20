@@ -763,30 +763,22 @@ function exportTableToCSV(tableId, filename) {
       canvas.style.width = "100%";
       canvas.style.height = "350px";
   
-      // Destroy previous chart instance if exists
+      // Destroy previous chart instance if it exists
       if (chartInstances[canvasId]) {
           chartInstances[canvasId].destroy();
       }
   
-      // Extract village names as labels for X-axis
+      // Extract village names as X-axis labels
       const villageNames = datasets.map(dataset => dataset.label);
   
-      // Create two datasets: One for 2011, One for 2020
-      const dataset2011 = {
-          label: "2011 Population",
-          data: datasets.map(dataset => dataset.data[labels.indexOf("2011")]), // Extract 2011 data
-          backgroundColor: "rgba(54, 162, 235, 0.7)", // Blue color
-          borderColor: "rgba(54, 162, 235, 1)",
+      // Create dynamic datasets based on available years in labels
+      const newDatasets = labels.map((year, index) => ({
+          label: `${year} Population`,
+          data: datasets.map(dataset => dataset.data[index]), // Get data dynamically
+          backgroundColor: getRandomColor(), // Random color for each year
+          borderColor: getRandomColor(),
           borderWidth: 1,
-      };
-  
-      const dataset2020 = {
-          label: "2020 Population",
-          data: datasets.map(dataset => dataset.data[labels.indexOf("2020")]), // Extract 2020 data
-          backgroundColor: "rgba(255, 99, 132, 0.7)", // Red color
-          borderColor: "rgba(255, 99, 132, 1)",
-          borderWidth: 1,
-      };
+      }));
   
       // Create a grouped bar chart (Histogram)
       const ctx = canvas.getContext("2d");
@@ -794,7 +786,7 @@ function exportTableToCSV(tableId, filename) {
           type: "bar",
           data: {
               labels: villageNames, // Set village names as X-axis labels
-              datasets: [dataset2011, dataset2020], // Two datasets (2011 & 2020)
+              datasets: newDatasets, // Datasets for all available years
           },
           options: {
               responsive: true,
@@ -805,7 +797,7 @@ function exportTableToCSV(tableId, filename) {
               scales: {
                   x: {
                       title: { display: true, text: "Villages" },
-                      stacked: false, // Not stacked, so bars appear side-by-side
+                      stacked: false, // Show bars side by side
                   },
                   y: {
                       title: { display: true, text: "Population" },
@@ -817,8 +809,7 @@ function exportTableToCSV(tableId, filename) {
   
       // Save chart instance for future cleanup
       chartInstances[canvasId] = chart;
-    }
-    
+  }
 
   
   
