@@ -3,12 +3,14 @@
 {% load static %}
 
 {% block content %}
+
 <div class="map-dashboard-container">
     <div class="map-dashboard-row">
         <!-- Left Column: Controls -->
         <div class="map-control-column">
             <div class="map-dropdown-container mb-4">
                 <select id="categorySelect" class="map-form-select map-dropdown-animated mb-2">
+
                     <option value="">Select Category</option>
                     <option value="administrative">Administrative</option>
                     <option value="watershed">Watershed</option>
@@ -30,12 +32,13 @@
             </div>
 
             <div class="map-style-controls">
-                <div class="mb-3">
+
+                <div class="mb-3" style = "font-size: 12px; margin-top: -30px">
                     <label for="lineColor" class="map-form-label">Line Color:</label>
                     <input type="color" id="lineColor" class="map-color-input" value="#000000">
                 </div>
 
-                <div class="mb-3">
+                <div class="mb-3"style = "font-size: 12px;">
                     <label for="fillColor" class="map-form-label">Fill Color:</label>
                     <input type="color" id="fillColor" class="map-color-input" value="#78b4db">
                 </div>
@@ -55,17 +58,34 @@
                         Show Labels
                     </label>
                 </div>
-                <div class="mb-3">
-                    <button id="exportMap" class="map-btn map-btn-success map-animated-button">
+                <div class="mb-3" style="display: flex; flex-direction: column; gap: 5px; width: 200px; font-size: 12px;">
+                    <label for="mapTitle" style="font-size: 12px;">Map Title:</label>
+                    <input type="text" id="mapTitle" class="form-control" placeholder="Enter title..." style="height: 25px; font-size: 12px; padding: 2px;">
+                
+                    <label for="exportFormat" style="font-size: 12px;">Export Format:</label>
+                    <select id="exportFormat" class="form-control" style="height: 25px; font-size: 12px; padding: 2px;">
+                        <option value="pdf">PDF</option>
+                        <option value="svg">SVG</option>
+                        <option value="jpg">JPG</option>
+                        <option value="png">PNG</option>
+                        <option value="tif">TIFF</option>
+                    </select>
+                
+                    <button id="exportMap" class="map-btn map-btn-success map-animated-button" 
+                        style="height: 30px; font-size: 12px; padding: 2px 5px; margin-top: 5px;">
                         Export Map
                     </button>
                 </div>
+                
+                
             </div>
         </div>
 
         <!-- Center Column: Map -->
         <div class="map-display-column">
             <div id="map"></div>
+
+            <div id="coordinates">Ltitiude and Longtitude</div>
         </div>
 
         <!-- Right Column: Feature Info -->
@@ -84,7 +104,23 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <style>
-   
+    #coordinates {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 2.5px 5px;
+        border-radius: 5px;
+        font-size: 8px;
+        pointer-events: none;
+        /* Prevents blocking mouse events */
+        white-space: nowrap;
+        z-index: 1000;
+        /* Ensures it's above the map */
+        transform: translateX(10px) translateY(10px);
+        /* Offsets slightly */
+    }
+
+
     .map-dashboard-container {
         width: 100%;
         padding: 20px;
@@ -93,7 +129,7 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        
+
     }
 
     .map-dashboard-row {
@@ -105,26 +141,31 @@
     }
 
     .map-control-column {
-        flex: 0 0 100%; /* Full width on small screens, 250px fixed otherwise */
-        max-width: 250px; /* Limit maximum width */ 
+        flex: 0 0 100%;
+        /* Full width on small screens, 250px fixed otherwise */
+        max-width: 250px;
+        /* Limit maximum width */
         padding: 15px;
         margin-left: 0;
     }
 
     .map-display-column {
-        flex: 1 0 0; 
+        flex: 1 0 0;
     }
 
     .map-info-column {
-        flex: 0 0 100%; /* Full width on small screens, 300px fixed otherwise */
-        max-width: 300px; /* Limit maximum width */
+        flex: 0 0 100%;
+        /* Full width on small screens, 300px fixed otherwise */
+        max-width: 300px;
+        /* Limit maximum width */
         min-height: 300px;
         padding: 15px;
         background: #6dc1e2;
         border: 5px solid #15da82;
         height: 600px;
         overflow-y: auto;
-        margin-right: 0; /* Adjust margin for mobile view */
+        margin-right: 0;
+        /* Adjust margin for mobile view */
         border-radius: 6px;
         font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
@@ -188,17 +229,21 @@
         margin-bottom: 3px;
         display: block;
     }
-    .map-form-label{
+
+    .map-form-label {
         font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
-    #categorySelect{
+
+    #categorySelect {
         font-family: Verdana, Geneva, Tahoma, sans-serif;
-        
+
     }
-    #subcategorySelect{
+
+    #subcategorySelect {
         font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
-    .map-check-label{
+
+    .map-check-label {
         font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
 
@@ -221,7 +266,7 @@
         background: rgba(255, 255, 255, 0.9);
         box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
         border-radius: 5px;
-        
+
     }
 
     .info h4 {
@@ -239,48 +284,58 @@
         border-bottom: 1px solid #eee;
     }
 
-   @media (max-width: 1200px) {
-    .map-control-column,
-    .map-info-column {
-        flex: 0 0 200px; /* Adjust columns for medium screens */
-    }
-}
+    @media (max-width: 1200px) {
 
-@media (max-width: 768px) {
-    .map-dashboard-row {
-        flex-direction: column; /* Stack columns vertically */
+        .map-control-column,
+        .map-info-column {
+            flex: 0 0 200px;
+            /* Adjust columns for medium screens */
+        }
     }
 
-    .map-control-column,
-    .map-info-column {
-        flex: 1; /* Take full width */
-        padding: 10px;
+    @media (max-width: 768px) {
+        .map-dashboard-row {
+            flex-direction: column;
+            /* Stack columns vertically */
+        }
+
+        .map-control-column,
+        .map-info-column {
+            flex: 1;
+            /* Take full width */
+            padding: 10px;
+        }
+
+        .map-display-column {
+            height: 400px;
+            /* Adjust map height for smaller screens */
+        }
+
+        #map {
+            height: 400px;
+            /* Adjust map height */
+        }
     }
 
-    .map-display-column {
-        height: 400px; /* Adjust map height for smaller screens */
-    }
+    @media (max-width: 480px) {
 
-    #map {
-        height: 400px; /* Adjust map height */
-    }
-}
+        .map-control-column,
+        .map-info-column {
+            flex: 1;
+            padding: 5px;
+            /* Reduce padding */
+        }
 
-@media (max-width: 480px) {
-    .map-control-column,
-    .map-info-column {
-        flex: 1;
-        padding: 5px; /* Reduce padding */
-    }
+        .map-btn {
+            padding: 8px;
+            /* Adjust button size */
+        }
 
-    .map-btn {
-        padding: 8px; /* Adjust button size */
+        .map-form-select {
+            font-size: 14px;
+            /* Reduce dropdown font size */
+        }
     }
-
-    .map-form-select {
-        font-size: 14px; /* Reduce dropdown font size */
-    }
-}
 
 
 
@@ -301,123 +356,101 @@
 <script>
     // for export script 
     document.getElementById("exportMap").addEventListener("click", async function () {
-        const mapElement = document.getElementById("map");
+    const mapElement = document.getElementById("map");
+    const exportFormat = document.getElementById("exportFormat").value;
+    const mapTitle = document.getElementById("mapTitle").value || "Untitled Map";
+    
+    const categorySelect = document.getElementById("categorySelect");
+    const subcategorySelect = document.getElementById("subcategorySelect");
+    const selectedCategory = categorySelect.options[categorySelect.selectedIndex]?.text || "No Category Selected";
+    const selectedSubcategory = subcategorySelect.options[subcategorySelect.selectedIndex]?.text || "No Subcategory Selected";
+    const timestamp = new Date().toLocaleString();
 
-        // Get selection values
-        const categorySelect = document.getElementById("categorySelect");
-        const subcategorySelect = document.getElementById("subcategorySelect");
-        const selectedCategory = categorySelect.options[categorySelect.selectedIndex]?.text || "No Category Selected";
-        const selectedSubcategory = subcategorySelect.options[subcategorySelect.selectedIndex]?.text || "No Subcategory Selected";
-        const timestamp = new Date().toLocaleString();
+    try {
+        // Capture map as canvas using html2canvas
+        const mapCanvas = await html2canvas(mapElement, {
+            useCORS: true,
+            allowTaint: true,
+            scale: 2,
+            backgroundColor: '#ffffff',
+            logging: false,
+            removeContainer: false
+        });
 
-        try {
-            // Get map container dimensions
-            const mapWidth = mapElement.offsetWidth;
-            const mapHeight = mapElement.offsetHeight;
+        // Convert canvas to image data
+        const mapImage = mapCanvas.toDataURL("image/png", 1.0);
 
-            // Capture map with html2canvas
-            const mapCanvas = await html2canvas(mapElement, {
-                useCORS: true,
-                allowTaint: true,
-                scale: 2,
-                width: mapWidth,
-                height: mapHeight,
-                backgroundColor: '#ffffff',
-                logging: false,
-                removeContainer: false
-            });
-
-            // Create PDF with the captured dimensions
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({
-                orientation: mapWidth > mapHeight ? 'landscape' : 'portrait',
-                unit: 'mm',
-                format: 'a4'
-            });
-
-            // Get PDF dimensions
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-
-            // Calculate dimensions to maintain aspect ratio
-            const mapAspectRatio = mapWidth / mapHeight;
-            const pageAspectRatio = pageWidth / pageHeight;
-
-            let finalWidth = pageWidth - 20;
-            let finalHeight = (finalWidth / mapAspectRatio);
-
-            if (finalHeight > (pageHeight * 0.65)) {
-                finalHeight = pageHeight * 0.65;
-                finalWidth = finalHeight * mapAspectRatio;
-            }
-
-            // Center the map horizontally
-            const xOffset = (pageWidth - finalWidth) / 2;
-
-            // Add borders
-            pdf.setDrawColor(30, 144, 255);
-            pdf.setLineWidth(1);
-            pdf.rect(xOffset - 1, 9, finalWidth + 2, finalHeight + 2);
-
-            pdf.setDrawColor(0, 128, 0);
-            pdf.setLineWidth(0.5);
-            pdf.rect(xOffset - 2, 8, finalWidth + 4, finalHeight + 4);
-
-            // Add map image
-            const mapImage = mapCanvas.toDataURL('image/png', 1.0);
-            pdf.addImage(mapImage, 'PNG', xOffset, 10, finalWidth, finalHeight);
-
-            // Add metadata section
-            const dividerY = finalHeight + 20;
-            pdf.setDrawColor(70, 130, 180);
-            pdf.setLineWidth(0.5);
-
-
-            // Add title and metadata
-            pdf.setFont("helvetica");
-            pdf.setTextColor(0, 0, 0);
-
-            const textY = dividerY + 10;
-            pdf.setFontSize(16);
-            pdf.text("Map Export Report", pageWidth / 2, textY, { align: "center" });
-
-            // Metadata in row format
-            pdf.setFontSize(12);
-            const startX = 20;
-            const spacing = 80; // Adjust spacing for alignment
-            let currentY = textY + 10;
-
-            pdf.text(`Category: ${selectedCategory}`, startX, currentY);
-            pdf.text(`Subcategory: ${selectedSubcategory}`, startX + spacing, currentY);
-            pdf.text(`Generated: ${timestamp}`, startX + 2 * spacing, currentY);
-
-            currentY += 10; // Move down for the next row
-
-
-            // Data Type Legends in Row Format
-            pdf.setFontSize(11);
-            pdf.setFont("helvetica", "bold");
-            pdf.setFont("helvetica", "normal");
-
-            const dataTypes = [
-                "Point",
-                "Polygon",
-                "Line",
-                "Multipolygon",
-                "Multiline",
-                "Line String"
-            ];
-
-
-
-            // Save PDF
-            pdf.save(`Map_Export_${new Date().getTime()}.pdf`);
-
-        } catch (error) {
-            console.error("Error creating PDF:", error);
-            alert("Error details: " + error.message);
+        // Handle different export formats
+        switch (exportFormat) {
+            case "pdf":
+                exportAsPDF(mapImage, mapTitle, selectedCategory, selectedSubcategory, timestamp);
+                break;
+            case "jpg":
+                exportAsImage(mapCanvas, "image/jpeg", "jpg", mapTitle);
+                break;
+            case "png":
+                exportAsImage(mapCanvas, "image/png", "png", mapTitle);
+                break;
+            case "tif":
+                exportAsImage(mapCanvas, "image/tiff", "tif", mapTitle);
+                break;
+            case "svg":
+                exportAsSVG(mapElement, mapTitle);
+                break;
+            default:
+                alert("Invalid export format selected.");
         }
-    });
+    } catch (error) {
+        console.error("Error exporting map:", error);
+        alert("Error details: " + error.message);
+    }
+});
+
+// Function to export as PDF
+function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp) {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(18);
+    pdf.text(mapTitle, pageWidth / 2, 15, { align: "center" });
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(12);
+    pdf.text(`Category: ${category}`, 20, 30);
+    pdf.text(`Subcategory: ${subcategory}`, 20, 40);
+    pdf.text(`Generated: ${timestamp}`, 20, 50);
+
+    pdf.addImage(mapImage, 'PNG', 20, 60, pageWidth - 40, (pageHeight - 80));
+    pdf.save(`${mapTitle.replace(/\s+/g, "_")}.pdf`);
+}
+
+// Function to export as JPG, PNG, or TIFF
+function exportAsImage(canvas, mimeType, ext, mapTitle) {
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL(mimeType, 1.0);
+    link.download = `${mapTitle.replace(/\s+/g, "_")}.${ext}`;
+    link.click();
+}
+
+// Function to export as SVG
+function exportAsSVG(mapElement, mapTitle) {
+    const svgElement = mapElement.querySelector("svg");
+    if (!svgElement) {
+        alert("SVG export not supported for this map.");
+        return;
+    }
+    
+    const svgData = new XMLSerializer().serializeToString(svgElement);
+    const blob = new Blob([svgData], { type: "image/svg+xml" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${mapTitle.replace(/\s+/g, "_")}.svg`;
+    link.click();
+}
 
 </script>
 
@@ -508,7 +541,7 @@ if (labelsVisible) {
         'rivers': ['varuna', 'basuhi', 'morwa'],
         'drains': ['varuna', 'basuhi', 'morwa'],
         'canals': ['all'],
-        'household': ['all'],
+        'household': ['all', 'District', 'subdistrict', 'village'],
         'roads': ['all'],
         'railways': ['all'],
         'industries': ['all'],
@@ -518,9 +551,41 @@ if (labelsVisible) {
     // Initialize map
     function initMap() {
         map = L.map('map').setView([25.3176, 82.9739], 10); // Centered on Varanasi
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        // Basemap Layers
+        var satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+            attribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>'
+        });
+
+        var terrain = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
+        });
+
+        var traffic = L.tileLayer('https://{s}.google.com/vt/lyrs=m@221097413,traffic&x={x}&y={y}&z={z}', {
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+            attribution: '&copy; <a href="https://www.google.com/maps">Google Traffic</a>'
+        });
+
+        var noBasemap = L.layerGroup(); // Empty Layer (No Basemap)
+
+        // Add default basemap
+        satellite.addTo(map);
+
+        // Add Layer Control
+        var baseMaps = {
+            "Satellite": satellite,
+            "No Basemap": noBasemap,
+            "Terrain": terrain,
+            "Traffic": traffic
+        };
+
+        L.control.layers(baseMaps).addTo(map);
+
+        // Hover Event: Update Coordinates
+        map.on('mousemove', function (e) {
+            document.getElementById('coordinates').innerHTML =
+                `Lat: ${e.latlng.lat.toFixed(5)}, Lng: ${e.latlng.lng.toFixed(5)}`;
+        });
 
         // Add Scale Control
         L.control.scale().addTo(map);
@@ -706,7 +771,7 @@ if (labelsVisible) {
             info.update();
         }
     }
- 
+
     function applyStyles() {
         if (!currentLayer) return;
 
@@ -813,31 +878,31 @@ if (labelsVisible) {
 {% endblock %}
 
 
-// when click hover not worked for that { 
-    // let isHovering = false;
+// when click hover not worked for that {
+// let isHovering = false;
 
-    // function highlightFeature(e) {
-    //     if (isHovering) return;
-    //     isHovering = true;
+// function highlightFeature(e) {
+// if (isHovering) return;
+// isHovering = true;
 
-    //     const layer = e.target;
-    //     const style = getCurrentStyle();
+// const layer = e.target;
+// const style = getCurrentStyle();
 
-    //     layer.setStyle({
-    //         weight: style.weight + 2,
-    //         color: '#666',
-    //         fillOpacity: Math.min(style.opacity + 0.2, 1)
-    //     });
+// layer.setStyle({
+// weight: style.weight + 2,
+// color: '#666',
+// fillOpacity: Math.min(style.opacity + 0.2, 1)
+// });
 
-    //     layer.bringToFront();
-    //     info.update(layer.feature.properties);
-    // }
+// layer.bringToFront();
+// info.update(layer.feature.properties);
+// }
 
-    // // Add an event listener to reset the flag when another element is clicked
-    // document.addEventListener('click', (e) => {
-    //     if (e.target !== layer) {
-    //         isHovering = false;
-    //     }
-    // });
-    // Apply styles to current layer
-//    } 
+// // Add an event listener to reset the flag when another element is clicked
+// document.addEventListener('click', (e) => {
+// if (e.target !== layer) {
+// isHovering = false;
+// }
+// });
+// Apply styles to current layer
+// }
