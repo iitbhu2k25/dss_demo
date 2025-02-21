@@ -33,12 +33,12 @@
 
             <div class="map-style-controls">
 
-                <div class="mb-3" style = "font-size: 12px; margin-top: -30px">
+                <div class="mb-3" style="font-size: 12px; margin-top: -30px">
                     <label for="lineColor" class="map-form-label">Line Color:</label>
                     <input type="color" id="lineColor" class="map-color-input" value="#000000">
                 </div>
 
-                <div class="mb-3"style = "font-size: 12px;">
+                <div class="mb-3" style="font-size: 12px;">
                     <label for="fillColor" class="map-form-label">Fill Color:</label>
                     <input type="color" id="fillColor" class="map-color-input" value="#78b4db">
                 </div>
@@ -58,10 +58,12 @@
                         Show Labels
                     </label>
                 </div>
-                <div class="mb-3" style="display: flex; flex-direction: column; gap: 5px; width: 200px; font-size: 12px;">
+                <div class="mb-3"
+                    style="display: flex; flex-direction: column; gap: 5px; width: 200px; font-size: 12px;">
                     <label for="mapTitle" style="font-size: 12px;">Map Title:</label>
-                    <input type="text" id="mapTitle" class="form-control" placeholder="Enter title..." style="height: 25px; font-size: 12px; padding: 2px;">
-                
+                    <input type="text" id="mapTitle" class="form-control" placeholder="Enter title..."
+                        style="height: 25px; font-size: 12px; padding: 2px;">
+
                     <label for="exportFormat" style="font-size: 12px;">Export Format:</label>
                     <select id="exportFormat" class="form-control" style="height: 25px; font-size: 12px; padding: 2px;">
                         <option value="pdf">PDF</option>
@@ -70,14 +72,14 @@
                         <option value="png">PNG</option>
                         <option value="tif">TIFF</option>
                     </select>
-                
-                    <button id="exportMap" class="map-btn map-btn-success map-animated-button" 
+
+                    <button id="exportMap" class="map-btn map-btn-success map-animated-button"
                         style="height: 30px; font-size: 12px; padding: 2px 5px; margin-top: 5px;">
                         Export Map
                     </button>
                 </div>
-                
-                
+
+
             </div>
         </div>
 
@@ -337,9 +339,6 @@
         }
     }
 
-
-
-
     .compass {
         background: rgba(14, 97, 190, 0.8);
         padding: 10px;
@@ -356,105 +355,130 @@
 <script>
     // for export script 
     document.getElementById("exportMap").addEventListener("click", async function () {
-    const mapElement = document.getElementById("map");
-    const exportFormat = document.getElementById("exportFormat").value;
-    const mapTitle = document.getElementById("mapTitle").value || "Untitled Map";
-    
-    const categorySelect = document.getElementById("categorySelect");
-    const subcategorySelect = document.getElementById("subcategorySelect");
-    const selectedCategory = categorySelect.options[categorySelect.selectedIndex]?.text || "No Category Selected";
-    const selectedSubcategory = subcategorySelect.options[subcategorySelect.selectedIndex]?.text || "No Subcategory Selected";
-    const timestamp = new Date().toLocaleString();
+        const mapElement = document.getElementById("map");
+        const exportFormat = document.getElementById("exportFormat").value;
+        const mapTitle = document.getElementById("mapTitle").value || "Untitled Map";
 
-    try {
-        // Capture map as canvas using html2canvas
-        const mapCanvas = await html2canvas(mapElement, {
-            useCORS: true,
-            allowTaint: true,
-            scale: 2,
-            backgroundColor: '#ffffff',
-            logging: false,
-            removeContainer: false
-        });
+        const categorySelect = document.getElementById("categorySelect");
+        const subcategorySelect = document.getElementById("subcategorySelect");
+        const selectedCategory = categorySelect.options[categorySelect.selectedIndex]?.text || "No Category Selected";
+        const selectedSubcategory = subcategorySelect.options[subcategorySelect.selectedIndex]?.text || "No Subcategory Selected";
+        const timestamp = new Date().toLocaleString();
 
-        // Convert canvas to image data
-        const mapImage = mapCanvas.toDataURL("image/png", 1.0);
+        try {
+            // Capture map as canvas using html2canvas
+            const mapCanvas = await html2canvas(mapElement, {
+                useCORS: true,
+                allowTaint: true,
+                scale: 2,
+                backgroundColor: '#ffffff',
+                logging: false,
+                removeContainer: false
+            });
 
-        // Handle different export formats
-        switch (exportFormat) {
-            case "pdf":
-                exportAsPDF(mapImage, mapTitle, selectedCategory, selectedSubcategory, timestamp);
-                break;
-            case "jpg":
-                exportAsImage(mapCanvas, "image/jpeg", "jpg", mapTitle);
-                break;
-            case "png":
-                exportAsImage(mapCanvas, "image/png", "png", mapTitle);
-                break;
-            case "tif":
-                exportAsImage(mapCanvas, "image/tiff", "tif", mapTitle);
-                break;
-            case "svg":
-                exportAsSVG(mapElement, mapTitle);
-                break;
-            default:
-                alert("Invalid export format selected.");
+            // Convert canvas to image data
+            const mapImage = mapCanvas.toDataURL("image/png", 1.0);
+
+            // Handle different export formats
+            switch (exportFormat) {
+                case "pdf":
+                    exportAsPDF(mapImage, mapTitle, selectedCategory, selectedSubcategory, timestamp);
+                    break;
+                case "jpg":
+                    exportAsImage(mapCanvas, "image/jpeg", "jpg", mapTitle);
+                    break;
+                case "png":
+                    exportAsImage(mapCanvas, "image/png", "png", mapTitle);
+                    break;
+                case "tif":
+                    exportAsImage(mapCanvas, "image/tiff", "tif", mapTitle);
+                    break;
+                case "svg":
+                    exportAsSVG(mapElement, mapTitle);
+                    break;
+                default:
+                    alert("Invalid export format selected.");
+            }
+        } catch (error) {
+            console.error("Error exporting map:", error);
+            alert("Error details: " + error.message);
         }
-    } catch (error) {
-        console.error("Error exporting map:", error);
-        alert("Error details: " + error.message);
+    });
+
+    // Function to export as PDF
+    function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp) {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        // Title at the top
+        pdf.setFont("Times New Roman", "bold");
+        pdf.setFontSize(18);
+        pdf.text(mapTitle, pageWidth / 2, 15, { align: "center" });
+
+        // Load image and maintain aspect ratio
+        const img = new Image();
+        img.src = mapImage;
+        img.onload = function () {
+            const imgWidth = img.width;
+            const imgHeight = img.height;
+
+            // Calculate scaled dimensions while maintaining aspect ratio
+            const maxImgWidth = pageWidth - 40;
+            const maxImgHeight = pageHeight - 100;
+            let newWidth = maxImgWidth;
+            let newHeight = (imgHeight * maxImgWidth) / imgWidth;
+
+            if (newHeight > maxImgHeight) {
+                newHeight = maxImgHeight;
+                newWidth = (imgWidth * maxImgHeight) / imgHeight;
+            }
+
+            const xPos = (pageWidth - newWidth) / 2;
+            const yPos = 25; // Just below the title
+
+            pdf.addImage(mapImage, 'PNG', xPos, yPos, newWidth, newHeight);
+
+            // Add text below the map
+            const textYPos = yPos + newHeight + 10;
+            pdf.setFont("Times New Roman", "Bold");
+            pdf.setFontSize(12);
+            pdf.text(`Category: ${category}`, 20, textYPos);
+            pdf.text(`Subcategory: ${subcategory}`, 20, textYPos + 5);
+            pdf.text(`Generated: ${timestamp}`, 20, textYPos + 10);
+
+            pdf.save(`${mapTitle.replace(/\s+/g, "_")}.pdf`);
+        };
     }
-});
 
-// Function to export as PDF
-function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp) {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(18);
-    pdf.text(mapTitle, pageWidth / 2, 15, { align: "center" });
-
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(12);
-    pdf.text(`Category: ${category}`, 20, 30);
-    pdf.text(`Subcategory: ${subcategory}`, 20, 40);
-    pdf.text(`Generated: ${timestamp}`, 20, 50);
-
-    pdf.addImage(mapImage, 'PNG', 20, 60, pageWidth - 40, (pageHeight - 80));
-    pdf.save(`${mapTitle.replace(/\s+/g, "_")}.pdf`);
-}
-
-// Function to export as JPG, PNG, or TIFF
-function exportAsImage(canvas, mimeType, ext, mapTitle) {
-    const link = document.createElement("a");
-    link.href = canvas.toDataURL(mimeType, 1.0);
-    link.download = `${mapTitle.replace(/\s+/g, "_")}.${ext}`;
-    link.click();
-}
-
-// Function to export as SVG
-function exportAsSVG(mapElement, mapTitle) {
-    const svgElement = mapElement.querySelector("svg");
-    if (!svgElement) {
-        alert("SVG export not supported for this map.");
-        return;
+    // Function to export as JPG, PNG, or TIFF
+    function exportAsImage(canvas, mimeType, ext, mapTitle) {
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL(mimeType, 1.0);
+        link.download = `${mapTitle.replace(/\s+/g, "_")}.${ext}`;
+        link.click();
     }
-    
-    const svgData = new XMLSerializer().serializeToString(svgElement);
-    const blob = new Blob([svgData], { type: "image/svg+xml" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `${mapTitle.replace(/\s+/g, "_")}.svg`;
-    link.click();
-}
+
+    // Function to export as SVG
+    function exportAsSVG(mapElement, mapTitle) {
+        const svgElement = mapElement.querySelector("svg");
+        if (!svgElement) {
+            alert("SVG export not supported for this map.");
+            return;
+        }
+
+        const svgData = new XMLSerializer().serializeToString(svgElement);
+        const blob = new Blob([svgData], { type: "image/svg+xml" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${mapTitle.replace(/\s+/g, "_")}.svg`;
+        link.click();
+    }
 
 </script>
-
-
 <!-- <script>// Add these variables at the top with your other global variables
 let labelLayer = null;
 let labelsVisible = false;
