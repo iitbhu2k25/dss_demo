@@ -95,15 +95,7 @@ DATABASES = {
 }
 
 
-LEAFLET_CONFIG = {
-    'DEFAULT_CENTER': (0.0, 0.0),
-    'DEFAULT_ZOOM': 2,
-    'MIN_ZOOM': 3,
-    'MAX_ZOOM': 18,
-    'TILES': [('OpenStreetMap', 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        'attribution': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    })],
-}
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
