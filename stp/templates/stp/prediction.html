@@ -1,4 +1,17 @@
 {% extends "./base.html" %} {% block content %}
+<div
+  id="loading-container"
+  style="
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+  "
+>
+  <img src="/static/earth.gif" alt="Loading..." />
+</div>
 <div class="container-fluid py-4">
   <div class="row g-5">
     <div class="col-md-8">
@@ -410,7 +423,23 @@
   #results-box {
     border: none;
   }
+  #loading-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+  }
 
+  #loading-container img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
   /* .card:hover {
         transform: translateY(-2px);
     } */
@@ -497,6 +526,15 @@
   let currentBoundary = null;
   let map;
 
+  function showLoader() {
+    document.getElementById("loading-container").style.display = "block";
+  }
+
+  // Function to hide the loader
+  function hideLoader() {
+    document.getElementById("loading-container").style.display = "none";
+  }
+
   // Map initialization
   function initMap() {
     map = L.map("map").setView([20.5937, 78.9629], 5);
@@ -509,7 +547,7 @@
     try {
       const response = await fetch("/stp/get_states/");
       const states = await response.json();
-      console.log("state is ",states)
+      console.log("state is ", states);
 
       // Clear existing options except the default one
       stateDropdown.innerHTML = '<option value="">--Choose a State--</option>';
@@ -540,31 +578,34 @@
 
   // Load default boundary
   async function loadDefaultBoundary() {
-  try {
-    const response = await fetch("/stp/get_boundary/");
-    const featureCollection = await response.json();
+    try {
+      showLoader();
+      const response = await fetch("/stp/get_boundary/");
+      const featureCollection = await response.json();
 
-    if (featureCollection.features && map) {
-      clearBoundary();
-      
-      currentBoundary = L.geoJSON(featureCollection, {
-        style: {
-          color: "#76ba1b",
-          weight: 2,
-          opacity: 1,
-          fillColor: "#76ba1b",
-          fillOpacity: 0.2,
-        }
-      }).addTo(map);
+      if (featureCollection.features && map) {
+        clearBoundary();
 
-      map.fitBounds(currentBoundary.getBounds(), {
-        padding: [50, 50],
-      });
+        currentBoundary = L.geoJSON(featureCollection, {
+          style: {
+            color: "#76ba1b",
+            weight: 2,
+            opacity: 1,
+            fillColor: "#76ba1b",
+            fillOpacity: 0.2,
+          },
+        }).addTo(map);
+
+        map.fitBounds(currentBoundary.getBounds(), {
+          padding: [50, 50],
+        });
+      }
+    } catch (error) {
+      console.error("Error loading default boundary:", error);
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
     }
-  } catch (error) {
-    console.error("Error loading default boundary:", error);
   }
-}
 
   // Initialize map on page load
   document.addEventListener("DOMContentLoaded", function () {
@@ -597,6 +638,7 @@
     if (!selectedLocation.state) return;
 
     try {
+      showLoader();
       const boundaryResponse = await fetch("/stp/get_boundary/", {
         method: "POST",
         headers: {
@@ -608,24 +650,26 @@
 
       const boundaryData = await boundaryResponse.json();
       if (boundaryData.features && map) {
-      clearBoundary();
-      
-      currentBoundary = L.geoJSON(boundaryData, {
-        style: {
-          color: "#76ba1b",
-          weight: 2,
-          opacity: 1,
-          fillColor: "#76ba1b",
-          fillOpacity: 0.2,
-        }
-      }).addTo(map);
+        clearBoundary();
 
-      map.fitBounds(currentBoundary.getBounds(), {
-        padding: [50, 50],
-      });
-    }
+        currentBoundary = L.geoJSON(boundaryData, {
+          style: {
+            color: "#76ba1b",
+            weight: 2,
+            opacity: 1,
+            fillColor: "#76ba1b",
+            fillOpacity: 0.2,
+          },
+        }).addTo(map);
+
+        map.fitBounds(currentBoundary.getBounds(), {
+          padding: [50, 50],
+        });
+      }
     } catch (error) {
       console.error("Error updating boundary:", error);
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
     }
   }
   // Location Selection Handlers
@@ -727,6 +771,7 @@
     container.innerHTML = "";
 
     try {
+      showLoader();
       const response = await fetch("/stp/get_districts/", {
         method: "POST",
         headers: {
@@ -765,6 +810,8 @@
     } catch (error) {
       console.error("Error fetching districts:", error);
       alert("Failed to load districts. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
     }
   }
   async function updateSubDistricts() {
@@ -774,6 +821,7 @@
     if (selectedLocation.districts.length === 0) return;
 
     try {
+      showLoader();
       const response = await fetch("/stp/get_sub_districts/", {
         method: "POST",
         headers: {
@@ -812,6 +860,8 @@
     } catch (error) {
       console.error("Error fetching sub-districts:", error);
       alert("Failed to load sub-districts. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
     }
   }
 
@@ -823,6 +873,7 @@
     if (selectedLocation.subDistricts.length === 0) return;
 
     try {
+      showLoader();
       const response = await fetch("/stp/get_villages/", {
         method: "POST",
         headers: {
@@ -863,6 +914,8 @@
     } catch (error) {
       console.error("Error fetching villages:", error);
       alert("Failed to load villages. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
     }
   }
   // Category Selection Handler
@@ -893,6 +946,7 @@
   async function submitForm(event) {
     event.preventDefault();
     try {
+      showLoader();
       const response = await fetch("/stp/table/", {
         method: "POST",
         headers: {
@@ -909,6 +963,8 @@
     } catch (error) {
       console.error("Error submitting form:", error);
       alert("Failed to submit form. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
     }
   }
 
@@ -965,6 +1021,7 @@
   async function ranking(event) {
     event.preventDefault();
     try {
+      showLoader();
       const response = await fetch("/stp/get_rankings/", {
         method: "POST",
         headers: {
@@ -981,6 +1038,8 @@
     } catch (error) {
       console.error("Error during ranking:", error);
       alert("Failed to process ranking. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
     }
   }
 
@@ -988,6 +1047,7 @@
   async function ranking(event) {
     event.preventDefault();
     try {
+      showLoader();
       const response = await fetch("/stp/get_rankings/", {
         method: "POST",
         headers: {
@@ -1004,6 +1064,8 @@
     } catch (error) {
       console.error("Error during ranking:", error);
       alert("Failed to process ranking. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
     }
   }
 
@@ -1206,6 +1268,7 @@
   async function submitForm(event) {
     event.preventDefault();
     try {
+      showLoader();
       const response = await fetch("/stp/table/", {
         method: "POST",
         headers: {
@@ -1222,6 +1285,8 @@
     } catch (error) {
       console.error("Error submitting form:", error);
       alert("Failed to submit form. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
     }
   }
 </script>

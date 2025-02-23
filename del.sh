@@ -15,7 +15,4 @@ docker volume rm $(docker volume ls -q)
 echo "Removing all networks..."
 docker network rm $(docker network ls -q)
 
-echo "Pruning the system..."
-docker system prune -a -f --volumes
-
 echo "Docker cleanup completed!"
