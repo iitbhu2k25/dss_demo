@@ -11,4 +11,6 @@ urlpatterns = [
     path('get_rankings/',GetRankView, name='get_rank'),
     path('get_boundary/',GetBoundry, name='get_default_boundary'),
     path('get_village_boundary/',GetVillage_UP,name='village_boundry')
+
+    
 ]
