@@ -58,27 +58,28 @@
                         Show Labels
                     </label>
                 </div>
-                <div class="mb-3"
-                    style="display: flex; flex-direction: column; gap: 5px; width: 200px; font-size: 12px;">
-                    <label for="mapTitle" style="font-size: 12px;">Map Title:</label>
-                    <input type="text" id="mapTitle" class="form-control" placeholder="Enter title..."
-                        style="height: 25px; font-size: 12px; padding: 2px;">
-
-                    <label for="exportFormat" style="font-size: 12px;">Export Format:</label>
-                    <select id="exportFormat" class="form-control" style="height: 25px; font-size: 12px; padding: 2px;">
-                        <option value="pdf">PDF</option>
-                        <option value="svg">SVG</option>
-                        <option value="jpg">JPG</option>
-                        <option value="png">PNG</option>
-                        <option value="tif">TIFF</option>
-                    </select>
-
+                <div class="export-container" style="width: 200px; font-size: 12px; position: relative;">
                     <button id="exportMap" class="map-btn map-btn-success map-animated-button"
-                        style="height: 30px; font-size: 12px; padding: 2px 5px; margin-top: 5px;">
+                        style="height: 30px; font-size: 12px; padding: 2px 5px; width: 100%;">
                         Export Map
                     </button>
+                
+                    <div id="exportOptions" class="export-options">
+                        <label for="mapTitle" style="font-size: 12px;">Map Title:</label>
+                        <input type="text" id="mapTitle" class="form-control" placeholder="Enter title..."
+                            style="height: 25px; font-size: 12px; padding: 2px;">
+                
+                        <label for="exportFormat" style="font-size: 12px;">Export Format:</label>
+                        <select id="exportFormat" class="form-control" style="height: 25px; font-size: 12px; padding: 2px;">
+                            <option value="pdf">PDF</option>
+                            <option value="svg">SVG</option>
+                            <option value="jpg">JPG</option>
+                            <option value="png">PNG</option>
+                            <option value="tif">TIFF</option>
+                        </select>
+                    </div>
                 </div>
-
+                
 
             </div>
         </div>
@@ -87,7 +88,7 @@
         <div class="map-display-column">
             <div id="map"></div>
 
-            <div id="coordinates">Ltitiude and Longtitude</div>
+            <div id="coordinates">Latitude: 0, Longitude: 0</div>
         </div>
 
         <!-- Right Column: Feature Info -->
@@ -105,6 +106,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
 <style>
     #coordinates {
         position: absolute;
@@ -112,7 +114,7 @@
         color: white;
         padding: 2.5px 5px;
         border-radius: 5px;
-        font-size: 8px;
+        font-size: 12px;
         pointer-events: none;
         /* Prevents blocking mouse events */
         white-space: nowrap;
@@ -350,8 +352,14 @@
 {% endblock %}
 {% block extra_js %}
 
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
+
+
+
 <script>
     // for export script 
     document.getElementById("exportMap").addEventListener("click", async function () {
@@ -415,7 +423,7 @@
 
         // Title at the top
         pdf.setFont("Times New Roman", "bold");
-        pdf.setFontSize(18);
+        pdf.setFontSize(24);
         pdf.text(mapTitle, pageWidth / 2, 15, { align: "center" });
 
         // Load image and maintain aspect ratio
@@ -437,7 +445,9 @@
             }
 
             const xPos = (pageWidth - newWidth) / 2;
-            const yPos = 25; // Just below the title
+            const yPos = 20; // Just below the title
+
+
 
             pdf.addImage(mapImage, 'PNG', xPos, yPos, newWidth, newHeight);
 
@@ -477,8 +487,40 @@
         link.download = `${mapTitle.replace(/\s+/g, "_")}.svg`;
         link.click();
     }
+     
+
+    document.getElementById("exportMap").addEventListener("click", async function () {
+        const mapElement = document.getElementById("map");
+    
+        // Ensure map is fully loaded
+        map.invalidateSize();
+        
+        // Reset transformations of shapefile layers
+        document.querySelectorAll(".leaflet-overlay-pane, .leaflet-marker-pane").forEach(el => {
+            el.style.transform = "none";
+        });
+    
+        setTimeout(async () => {
+            const mapCanvas = await html2canvas(mapElement, {
+                useCORS: true,
+                allowTaint: true,
+                scale: 2,
+                backgroundColor: '#ffffff',
+                logging: false,
+                removeContainer: false
+            });
+    
+            const mapImage = mapCanvas.toDataURL("image/png", 1.0);
+            exportAsPDF(mapImage, mapTitle, selectedCategory, selectedSubcategory, timestamp);
+        }, 1000); // Delay for rendering
+    });
+    
+
 
 </script>
+
+
+
 <!-- <script>// Add these variables at the top with your other global variables
 let labelLayer = null;
 let labelsVisible = false;
@@ -559,7 +601,8 @@ if (labelsVisible) {
     let activeFeature = null;
 
     // Category definitions
-    const subcategories = {
+   // Category definitions
+   const subcategories = {
         'administrative': ['district', 'villages'],
         'watershed': ['varuna', 'basuhi', 'morwa', 'all'],
         'rivers': ['varuna', 'basuhi', 'morwa'],
@@ -574,7 +617,7 @@ if (labelsVisible) {
 
     // Initialize map
     function initMap() {
-        map = L.map('map').setView([25.3176, 82.9739], 10); // Centered on Varanasi
+        map = L.map('map').setView([22.3511, 78.6677], 4); // Centered on Varanasi
         // Basemap Layers
         var satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -593,7 +636,7 @@ if (labelsVisible) {
         var noBasemap = L.layerGroup(); // Empty Layer (No Basemap)
 
         // Add default basemap
-        satellite.addTo(map);
+        traffic.addTo(map);
 
         // Add Layer Control
         var baseMaps = {
@@ -608,7 +651,7 @@ if (labelsVisible) {
         // Hover Event: Update Coordinates
         map.on('mousemove', function (e) {
             document.getElementById('coordinates').innerHTML =
-                `Lat: ${e.latlng.lat.toFixed(5)}, Lng: ${e.latlng.lng.toFixed(5)}`;
+                `Lat: ${e.latlng.lat.toFixed(5)}, Long: ${e.latlng.lng.toFixed(5)}`;
         });
 
         // Add Scale Control
@@ -619,7 +662,7 @@ if (labelsVisible) {
             onAdd: function (map) {
                 var img = L.DomUtil.create('img');
                 img.src = '/static/images/compass.png'; // Change this to your local path
-                img.style.width = '100px';
+                img.style.width = '80px';
                 return img;
             }
         });
