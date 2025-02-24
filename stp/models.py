@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.gis.db import models as modelss
+from django.contrib.gis.db import models as gis_models
 
 class State(models.Model):
     state_id=models.IntegerField()
@@ -55,16 +55,17 @@ class Weight(models.Model):
         app_label = 'stp'
 
 # now we here i make the spatial table
-class Stp_subdis(modelss.Model):
-    state_code=modelss.IntegerField()
-    state_name=modelss.CharField(max_length=255)
-    dist_code=modelss.IntegerField()
-    dist_name=modelss.CharField(max_length=255)
-    subdis_nam=modelss.CharField(max_length=255)
-    subdis_cod=modelss.IntegerField()
-    geometry = modelss.GeometryField()
+class Stp_subdis(gis_models.Model):
+    state_code=gis_models.IntegerField()
+    state_name=gis_models.CharField(max_length=255)
+    dist_code=gis_models.IntegerField()
+    dist_name=gis_models.CharField(max_length=255)
+    subdis_nam=gis_models.CharField(max_length=255)
+    subdis_cod=gis_models.IntegerField()
+    geometry = gis_models.GeometryField()
     def __str__(self):
         return f"{self.state_name},{self.state_code}"
 
-  
+
+
     

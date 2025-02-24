@@ -22,12 +22,13 @@ from django.urls import path, include
 
 urlpatterns = [
     path("", include("home.urls")),
-    path("admin/", admin.site.urls),
-    path("mapshow/", include("mapshow.urls")),    
+    path("admin/", admin.site.urls),   
     path("population/", include("population.urls")),
     path("waterdemand/",include("waterdemands.urls")),
     path("sewage/",include("seawage.urls")),
     path("stp/",include("stp.urls")),
-     path('mapplot/', include('mapplot.urls')),  
-     path('watersupply/', include('watersupply.urls')),
+    path('mapplot/', include('mapplot.urls')),  
+    path('watersupply/', include('watersupply.urls')),
+    path('visuall/',include("visuall.urls"))
+
 ]
