@@ -105,7 +105,12 @@ def get_shapefile_data(request):
                 'all': os.path.join('shapefile', 'Canals', 'Canals.shp')
             },
             'household': {
-                'all': os.path.join('shapefile', 'Households', 'Households.shp')
+                'All': os.path.join('shapefile', 'Households', 'All', 'Households.shp'),
+                'Bhadohi': os.path.join('shapefile', 'Households', 'Bhadohi','Bhadohi', 'Households_Bhadohi.shp'),
+                'Jaunpur': os.path.join('shapefile', 'Households', 'Jaunpur', 'Jaunpur', 'Households_Jaunpur.shp'),
+                'Pratapgarh': os.path.join('shapefile', 'Households', 'Pratapgarh', 'Pratapgarh', 'Households_Pratapgarh.shp'),
+                'Prayajraj': os.path.join('shapefile', 'Households', 'Prayajraj', 'Prayajraj', 'Households_Prayagraj.shp'),
+                'Varanasi': os.path.join('shapefile', 'Households', 'Varanasi', 'Varanasi', 'Households_varanasi.shp')
             },
             'railways': {
                 'all': os.path.join('shapefile', 'Railways', 'Railways.shp')

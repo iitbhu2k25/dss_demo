@@ -193,6 +193,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listener for projection method dropdown
     calculateBtn.addEventListener('click', function (e) {
       e.preventDefault();
+      let targetYear = parseInt(targetYearInput.value, 10);
+      let start = parseInt(targetYearRangeStart.value, 10);
+      let end = parseInt(targetYearRangeEnd.value, 10);
+  
+      if (!isNaN(targetYear) && (targetYear < 2012 || targetYear > 2100)) {
+          alert("Please enter a valid year between 2012 and 2100.");
+          return;
+      }
+  
+      if (!isNaN(start) && !isNaN(end) && (end < start || start < 2012 || start > 2100 || end < 2012 || end > 2100)) {
+        alert("End year must be greater than the start year and both years must be between 2012 and 2100.");
+        return;
+      }
+    
       const selectedValue = projectionDropdown.value;
 
       projectionItems.forEach(item => {
@@ -240,6 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (yearSelection === 'single') {
         targetYear = targetYearInput.value;
+       
       } else if (yearSelection === 'range') {
         targetYearRange = {
           start: targetYearRangeStart.value,

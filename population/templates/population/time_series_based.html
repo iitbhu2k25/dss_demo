@@ -57,38 +57,35 @@
       <div class="form-group col-5 mb-3">
         <label class="mb-2">Select Target Year:</label>
         <div class="d-flex align-items-center flex-wrap gap-3">
-            
-            <!-- Single Year Option -->
-            <div class="d-flex align-items-center">
-                <input type="radio" id="single-year-option" name="year_selection" value="single" class="me-2" checked onclick="toggleYearInputs()">
-                <label for="single-year-option" class="me-2 mb-0">Single Year:</label>
-                <input type="number" id="target-year" name="target_year" class="form-control form-control-sm"
-                    placeholder="Enter year (e.g., 2025)" style="width: 200px;"
-                    min="2000" max="2100"
-                    oninput="validateSingleYear(this)">
-                <small id="single-year-error" class="text-danger" style="display: none; margin-left: 10px;">Invalid range! (2000-2100)</small>
+          <!-- Single Year Option -->
+          <div class="d-flex align-items-center">
+            <input type="radio" id="single-year-option" name="year_selection" value="single" class="me-2" checked>
+            <label for="single-year-option" class="me-2 mb-0">Single Year:</label>
+            <input type="number" id="target-year" name="target_year" class="form-control form-control-sm"
+              placeholder="Enter year (e.g., 2025)" style="max-width: 175px;"
+              onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+              oninput="this.value = this.value.replace(/[^0-9]/g, '' ) " >
+          </div>
+
+          <!-- Range Year Option -->
+          <div class="d-flex align-items-center">
+            <input type="radio" id="range-year-option" name="year_selection" value="range" class="me-2">
+            <label for="range-year-option" class="me-2 mb-0">Range of Years:</label>
+            <div class="input-group input-group-sm" style="max-width: 450px;">
+              <input type="number" id="target-year-range-start" name="target_year_start" class="form-control"
+                placeholder="Start Year (e.g., 2020)" style="min-width: 120px;"
+                onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '')" disabled>
+              <span class="input-group-text">to</span>
+              <input type="number" id="target-year-range-end" name="target_year_end" class="form-control"
+                placeholder="End Year (e.g., 2030)" style="min-width: 120px;"
+                onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '')" disabled>
             </div>
-    
-            <!-- Range Year Option -->
-            <div class="d-flex align-items-center">
-                <input type="radio" id="range-year-option" name="year_selection" value="range" class="me-2" onclick="toggleYearInputs()">
-                <label for="range-year-option" class="me-2 mb-0">Range of Years:</label>
-                <div class="input-group input-group-sm" style="max-width: 500px;">
-                    <input type="number" id="target-year-range-start" name="target_year_start" class="form-control"
-                        placeholder="Start Year (e.g., 2020)" style="width: 150px;"
-                        min="2000" max="2100"
-                        oninput="validateYearRange()" disabled>
-                    <span class="input-group-text">to</span>
-                    <input type="number" id="target-year-range-end" name="target_year_end" class="form-control"
-                        placeholder="End Year (e.g., 2030)" style="width: 150px;"
-                        min="2000" max="2100"
-                        oninput="validateYearRange()" disabled>
-                </div>
-                <small id="range-year-error" class="text-danger" style="display: none; margin-left: 10px;">Invalid range! (2000-2100, Start ≤ End)</small>
-            </div>
-    
+          </div>
+
         </div>
-    </div>
+      </div>
 
 
       <div class="form-group col-12 col-md-8 mb-3">
@@ -184,55 +181,6 @@
   </form>
 
 </div>
-<script>
-  function toggleYearInputs() {
-      let singleYearInput = document.getElementById("target-year");
-      let rangeStartInput = document.getElementById("target-year-range-start");
-      let rangeEndInput = document.getElementById("target-year-range-end");
-  
-      if (document.getElementById("single-year-option").checked) {
-          singleYearInput.disabled = false;
-          rangeStartInput.disabled = true;
-          rangeEndInput.disabled = true;
-          rangeStartInput.value = "";
-          rangeEndInput.value = "";
-          document.getElementById("range-year-error").style.display = "none";
-      } else {
-          singleYearInput.disabled = true;
-          singleYearInput.value = "";
-          rangeStartInput.disabled = false;
-          rangeEndInput.disabled = false;
-          document.getElementById("single-year-error").style.display = "none";
-      }
-  }
-  
-  function validateSingleYear(input) {
-      let year = parseInt(input.value, 10);
-      let errorMsg = document.getElementById("single-year-error");
-  
-      if (year < 2000 || year > 2100) {
-          errorMsg.style.display = "inline"; // Show error message
-      } else {
-          errorMsg.style.display = "none"; // Hide error message
-      }
-  }
-  
-  function validateYearRange() {
-      let startYear = parseInt(document.getElementById("target-year-range-start").value, 10);
-      let endYear = parseInt(document.getElementById("target-year-range-end").value, 10);
-      let errorMsg = document.getElementById("range-year-error");
-  
-      if (isNaN(startYear) || isNaN(endYear)) {
-          errorMsg.style.display = "none"; // Hide error if fields are empty
-          return;
-      }
-  
-      if (startYear < 2000 || startYear > 2100 || endYear < 2000 || endYear > 2100 || startYear > endYear) {
-          errorMsg.style.display = "inline"; // Show error message
-      } else {
-          errorMsg.style.display = "none"; // Hide error message
-      }
-  }
-  </script>
+
 
 {%endblock%}
