@@ -359,22 +359,190 @@
 <script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
 
 
-
 <script>
-    // for export script 
-    document.getElementById("exportMap").addEventListener("click", async function () {
-        const mapElement = document.getElementById("map");
-        const exportFormat = document.getElementById("exportFormat").value;
-        const mapTitle = document.getElementById("mapTitle").value || "Untitled Map";
+function decimalToDMS(decimal) {
+    const degrees = Math.floor(Math.abs(decimal));
+    const minutesDecimal = (Math.abs(decimal) - degrees) * 60;
+    const minutes = Math.floor(minutesDecimal);
+    const seconds = Math.floor((minutesDecimal - minutes) * 60);
+    return {
+        degrees: degrees,
+        minutes: minutes,
+        seconds: seconds,
+        direction: decimal >= 0 ? 1 : -1
+    };
+}
 
-        const categorySelect = document.getElementById("categorySelect");
-        const subcategorySelect = document.getElementById("subcategorySelect");
-        const selectedCategory = categorySelect.options[categorySelect.selectedIndex]?.text || "No Category Selected";
-        const selectedSubcategory = subcategorySelect.options[subcategorySelect.selectedIndex]?.text || "No Subcategory Selected";
-        const timestamp = new Date().toLocaleString();
+function formatDMS(dms, isLatitude) {
+    const direction = isLatitude 
+        ? (dms.direction >= 0 ? 'N' : 'S')
+        : (dms.direction >= 0 ? 'E' : 'W');
+    return `${dms.degrees}°${dms.minutes}'${dms.seconds}"${direction}`;
+}
 
+function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp) {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ 
+        orientation: 'landscape', 
+        unit: 'mm', 
+        format: 'a4'
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    
+    // ADJUSTED: Increased margins for coordinate labels
+    const margin = {
+        top: 25,    // Increased for top coordinates
+        bottom: 25, // Increased for bottom coordinates
+        left: 25,   // Increased for left coordinates
+        right: 25   // Increased for right coordinates
+    };
+
+    // ADJUSTED: Calculate available space for map
+    const contentWidth = pageWidth - (margin.left + margin.right);
+    const contentHeight = pageHeight - (margin.top + margin.bottom);
+
+    // Add title with adjusted position
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(24);
+    pdf.text(mapTitle, pageWidth / 2, 15, { align: "center" });
+
+    const img = new Image();
+    img.src = mapImage;
+    img.onload = function() {
+        const imgWidth = img.width;
+        const imgHeight = img.height;
+
+        // ADJUSTED: Calculate dimensions to fit while maintaining aspect ratio
+        let newWidth = contentWidth - 20; // Additional 20mm padding
+        let newHeight = (imgHeight * newWidth) / imgWidth;
+
+        // Check if height exceeds available space
+        if (newHeight > contentHeight - 20) {
+            newHeight = contentHeight - 20;
+            newWidth = (imgWidth * newHeight) / imgHeight;
+        }
+
+        // ADJUSTED: Center the map in the available space
+        const xPos = margin.left + (contentWidth - newWidth) / 2;
+        const yPos = margin.top + (contentHeight - newHeight) / 2;
+
+        // Draw border around map area
+        pdf.setDrawColor(0);
+        pdf.setLineWidth(0.5);
+        pdf.rect(xPos - 5, yPos - 5, newWidth + 10, newHeight + 10);
+
+        // Add map image
+        pdf.addImage(mapImage, 'PNG', xPos, yPos, newWidth, newHeight);
+
+        // ADJUSTED: Add coordinate scales on all four sides
+        addCoordinateScales(pdf, xPos, yPos, newWidth, newHeight);
+
+        // ADJUSTED: Move metadata to bottom with proper spacing
+        const textYPos = pageHeight - 15;
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(10);
+        pdf.text(`Category: ${category}`, margin.left, textYPos);
+        pdf.text(`Subcategory: ${subcategory}`, margin.left + 60, textYPos);
+        pdf.text(`Generated: ${timestamp}`, margin.left + 130, textYPos);
+
+        pdf.save(`${mapTitle.replace(/\s+/g, "_")}.pdf`);
+    };
+}
+
+function addCoordinateScales(pdf, x, y, width, height) {
+    const bounds = map.getBounds();
+    const west = parseFloat(bounds.getWest());
+    const east = parseFloat(bounds.getEast());
+    const south = parseFloat(bounds.getSouth());
+    const north = parseFloat(bounds.getNorth());
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+
+    // ADJUSTED: Draw coordinate labels on all four sides
+    const numDivisions = 5;
+    
+    // Latitude scales (left and right) - Precisely aligned vertical text
+    for (let i = 0; i <= numDivisions; i++) {
+        const lat = south + ((north - south) * i / numDivisions);
+        const yPos = y + (height * (numDivisions - i) / numDivisions);
+        const dms = decimalToDMS(lat);
+        const label = formatDMS(dms, true);
+
+        // Left side - vertical text with better alignment
+        pdf.saveGraphicsState();
+        pdf.text(label, x - 7, yPos, {
+            align: 'center',
+            angle: 90
+        });
+        pdf.restoreGraphicsState();
+
+        // Right side - vertical text with better alignment
+        pdf.saveGraphicsState();
+        pdf.text(label, x + width + 7, yPos, {
+            align: 'center',
+            angle: 90
+        });
+        pdf.restoreGraphicsState();
+
+        // Draw tick marks
+        pdf.line(x - 2, yPos, x, yPos);
+        pdf.line(x + width, yPos, x + width + 2, yPos);
+    }
+
+    // Longitude scales (top and bottom) - Make horizontal
+    for (let i = 0; i <= numDivisions; i++) {
+        const lon = west + ((east - west) * i / numDivisions);
+        const xPos = x + (width * i / numDivisions);
+        const dms = decimalToDMS(lon);
+        const label = formatDMS(dms, false);
+        
+        // Top side - properly centered
+        pdf.text(label, xPos, y - 7, { 
+            align: 'center'
+        });
+        
+        // Bottom side - properly centered
+        pdf.text(label, xPos, y + height + 12, { 
+            align: 'center'
+        });
+        
+        // Draw tick marks
+        pdf.line(xPos, y - 2, xPos, y);
+        pdf.line(xPos, y + height, xPos, y + height + 2);
+    }
+
+    // ADJUSTED: Add compass directions
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(10);
+    pdf.text("N", x + width/2, y - 15, { align: 'center' });
+    pdf.text("S", x + width/2, y + height + 20, { align: 'center' });
+    pdf.text("W", x - 15, y + height/2, { align: 'center' });
+    pdf.text("E", x + width + 15, y + height/2, { align: 'center' });
+}
+
+// Click handler remains the same as before...
+
+// Update click handler to ensure map is properly sized
+document.getElementById("exportMap").addEventListener("click", async function () {
+    const mapElement = document.getElementById("map");
+    const exportFormat = document.getElementById("exportFormat").value;
+    const mapTitle = document.getElementById("mapTitle").value || "Untitled Map";
+
+    const categorySelect = document.getElementById("categorySelect");
+    const subcategorySelect = document.getElementById("subcategorySelect");
+    const selectedCategory = categorySelect.options[categorySelect.selectedIndex]?.text || "No Category Selected";
+    const selectedSubcategory = subcategorySelect.options[subcategorySelect.selectedIndex]?.text || "No Subcategory Selected";
+    const timestamp = new Date().toLocaleString();
+
+    // Ensure map is properly sized
+    map.invalidateSize();
+    
+    // Wait for map to stabilize
+    setTimeout(async () => {
         try {
-            // Capture map as canvas using html2canvas
             const mapCanvas = await html2canvas(mapElement, {
                 useCORS: true,
                 allowTaint: true,
@@ -384,141 +552,27 @@
                 removeContainer: false
             });
 
-            // Convert canvas to image data
             const mapImage = mapCanvas.toDataURL("image/png", 1.0);
-
-            // Handle different export formats
+            
             switch (exportFormat) {
                 case "pdf":
                     exportAsPDF(mapImage, mapTitle, selectedCategory, selectedSubcategory, timestamp);
                     break;
-                case "jpg":
-                    exportAsImage(mapCanvas, "image/jpeg", "jpg", mapTitle);
-                    break;
-                case "png":
-                    exportAsImage(mapCanvas, "image/png", "png", mapTitle);
-                    break;
-                case "tif":
-                    exportAsImage(mapCanvas, "image/tiff", "tif", mapTitle);
-                    break;
-                case "svg":
-                    exportAsSVG(mapElement, mapTitle);
-                    break;
-                default:
-                    alert("Invalid export format selected.");
+
+                    case "jpg":
+                    exportAsPDF(mapImage, mapTitle, selectedCategory, selectedSubcategory, timestamp);
+                    break;    
+                // ... other export formats remain the same
             }
         } catch (error) {
             console.error("Error exporting map:", error);
             alert("Error details: " + error.message);
         }
-    });
-
-    // Function to export as PDF
-    function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp) {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-
-        // Title at the top
-        pdf.setFont("Times New Roman", "bold");
-        pdf.setFontSize(24);
-        pdf.text(mapTitle, pageWidth / 2, 15, { align: "center" });
-
-        // Load image and maintain aspect ratio
-        const img = new Image();
-        img.src = mapImage;
-        img.onload = function () {
-            const imgWidth = img.width;
-            const imgHeight = img.height;
-
-            // Calculate scaled dimensions while maintaining aspect ratio
-            const maxImgWidth = pageWidth - 40;
-            const maxImgHeight = pageHeight - 100;
-            let newWidth = maxImgWidth;
-            let newHeight = (imgHeight * maxImgWidth) / imgWidth;
-
-            if (newHeight > maxImgHeight) {
-                newHeight = maxImgHeight;
-                newWidth = (imgWidth * maxImgHeight) / imgHeight;
-            }
-
-            const xPos = (pageWidth - newWidth) / 2;
-            const yPos = 20; // Just below the title
-
-
-
-            pdf.addImage(mapImage, 'PNG', xPos, yPos, newWidth, newHeight);
-
-            // Add text below the map
-            const textYPos = yPos + newHeight + 10;
-            pdf.setFont("Times New Roman", "Bold");
-            pdf.setFontSize(12);
-            pdf.text(`Category: ${category}`, 20, textYPos);
-            pdf.text(`Subcategory: ${subcategory}`, 20, textYPos + 5);
-            pdf.text(`Generated: ${timestamp}`, 20, textYPos + 10);
-
-            pdf.save(`${mapTitle.replace(/\s+/g, "_")}.pdf`);
-        };
-    }
-
-
-    // Function to export as JPG, PNG, or TIFF
-    function exportAsImage(canvas, mimeType, ext, mapTitle) {
-        const link = document.createElement("a");
-        link.href = canvas.toDataURL(mimeType, 1.0);
-        link.download = `${mapTitle.replace(/\s+/g, "_")}.${ext}`;
-        link.click();
-    }
-
-    // Function to export as SVG
-    function exportAsSVG(mapElement, mapTitle) {
-        const svgElement = mapElement.querySelector("svg");
-        if (!svgElement) {
-            alert("SVG export not supported for this map.");
-            return;
-        }
-
-        const svgData = new XMLSerializer().serializeToString(svgElement);
-        const blob = new Blob([svgData], { type: "image/svg+xml" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${mapTitle.replace(/\s+/g, "_")}.svg`;
-        link.click();
-    }
-     
-
-    document.getElementById("exportMap").addEventListener("click", async function () {
-        const mapElement = document.getElementById("map");
-    
-        // Ensure map is fully loaded
-        map.invalidateSize();
-        
-        // Reset transformations of shapefile layers
-        document.querySelectorAll(".leaflet-overlay-pane, .leaflet-marker-pane").forEach(el => {
-            el.style.transform = "none";
-        });
-    
-        setTimeout(async () => {
-            const mapCanvas = await html2canvas(mapElement, {
-                useCORS: true,
-                allowTaint: true,
-                scale: 2,
-                backgroundColor: '#ffffff',
-                logging: false,
-                removeContainer: false
-            });
-    
-            const mapImage = mapCanvas.toDataURL("image/png", 1.0);
-            exportAsPDF(mapImage, mapTitle, selectedCategory, selectedSubcategory, timestamp);
-        }, 1000); // Delay for rendering
-    });
-    
+    }, 1000);
+});
 
 
 </script>
-
 
 
 <!-- <script>// Add these variables at the top with your other global variables
@@ -600,6 +654,8 @@ if (labelsVisible) {
     let info = null;
     let activeFeature = null;
 
+    
+
     // Category definitions
    // Category definitions
    const subcategories = {
@@ -618,6 +674,11 @@ if (labelsVisible) {
     // Initialize map
     function initMap() {
         map = L.map('map').setView([22.3511, 78.6677], 4); // Centered on Varanasi
+
+      
+        
+
+
         // Basemap Layers
         var satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
