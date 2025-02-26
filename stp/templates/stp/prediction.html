@@ -1,0 +1,1293 @@
+{% extends "./base.html" %} {% block content %}
+<div
+  id="loading-container"
+  style="
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+  "
+>
+  <img src="/static/earth.gif" alt="Loading..." />
+</div>
+<div class="container-fluid py-4">
+  <div class="row g-5">
+    <div class="col-md-8">
+      <!-- Location Selection Section -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header text-white" id="card-header-property1">
+          <h3 class="mb-0">
+            <i class="fas fa-map-marker-alt me-2"></i>Location Selection
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="state-dropdown" class="form-label fw-bold"
+                  >State:</label
+                >
+                <select
+                  id="state-dropdown"
+                  class="form-select form-select-sm border-primary"
+                >
+                  <option value="">--Choose a State--</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="district-dropdown" class="form-label fw-bold"
+                  >District:</label
+                >
+                <div class="dropdown w-100">
+                  <button
+                    class="btn btn-outline-primary btn-sm dropdown-toggle w-100"
+                    type="button"
+                    id="districtDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    --Choose Districts--
+                  </button>
+                  <ul
+                    class="dropdown-menu w-100 p-2 shadow-sm"
+                    id="districtCheckboxesContainer"
+                    style="
+                      max-height: 200px;
+                      overflow-y: auto;
+                      position: absolute;
+                      z-index: 9999;
+                    "
+                  ></ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="sub_district-dropdown" class="form-label fw-bold"
+                  >Sub-District:</label
+                >
+                <div class="dropdown w-100">
+                  <button
+                    class="btn btn-outline-primary btn-sm dropdown-toggle w-100"
+                    type="button"
+                    id="subDistrictDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    --Choose Sub-Districts--
+                  </button>
+                  <ul
+                    class="dropdown-menu w-100 p-2 shadow-sm"
+                    id="subDistrictCheckboxesContainer"
+                    style="
+                      max-height: 200px;
+                      overflow-y: auto;
+                      position: absolute;
+                      z-index: 9999;
+                    "
+                  ></ul>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label
+                  for="village"
+                  id="villageLabel"
+                  class="form-label fw-bold"
+                  >Village:</label
+                >
+                <div class="dropdown w-100">
+                  <button
+                    class="btn btn-outline-primary btn-sm dropdown-toggle w-100"
+                    type="button"
+                    id="villageDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    --Choose a Village--
+                  </button>
+                  <ul
+                    class="dropdown-menu w-100 p-2 shadow-sm"
+                    id="villageCheckboxesContainer"
+                    style="
+                      max-height: 200px;
+                      overflow-y: auto;
+                      position: absolute;
+                      z-index: 9999;
+                    "
+                  ></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories Section -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header text-white" id="card-header-property2">
+          <h3 class="mb-0"><i class="fas fa-list-ul me-2"></i>Categories</h3>
+        </div>
+        <div class="card-body" id="categories-card">
+          <div class="row g-3">
+            <div class="col-md-6 border-end">
+              <div class="d-grid gap-2">
+                <div class="form-check custom-checkbox">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="check1"
+                    name="option1"
+                  />
+                  <label class="form-check-label" for="check1">
+                    <i class="fas fa-water text-primary me-2"></i>Sewage Gap
+                  </label>
+                </div>
+                <div class="form-check custom-checkbox">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="check2"
+                    name="option2"
+                  />
+                  <label class="form-check-label" for="check2">
+                    <i class="fas fa-temperature-high text-danger me-2"></i>Mean
+                    Temperature
+                  </label>
+                </div>
+                <div class="form-check custom-checkbox">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="check3"
+                    name="option3"
+                  />
+                  <label class="form-check-label" for="check3">
+                    <i class="fas fa-cloud-rain text-info me-2"></i>Mean
+                    Rainfall
+                  </label>
+                </div>
+                <div class="form-check custom-checkbox">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="check4"
+                    name="option4"
+                  />
+                  <label class="form-check-label" for="check4">
+                    <i class="fas fa-users text-success me-2"></i>Number of
+                    Tourists
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-grid gap-2">
+                <div class="form-check custom-checkbox">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="check5"
+                    name="option5"
+                  />
+                  <label class="form-check-label" for="check5">
+                    <i class="fas fa-landmark text-warning me-2"></i>Number of
+                    ASI Sites
+                  </label>
+                </div>
+                <div class="form-check custom-checkbox">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="check6"
+                    name="option6"
+                  />
+                  <label class="form-check-label" for="check6">
+                    <i class="fas fa-chart-line text-primary me-2"></i>GDDP at
+                    Current Price
+                  </label>
+                </div>
+                <div class="form-check custom-checkbox">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="check7"
+                    name="option7"
+                  />
+                  <label class="form-check-label" for="check7">
+                    <i class="fas fa-tint text-info me-2"></i>Water Quality
+                    Index
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="button"
+        id="submit-button1"
+        class="btn btn-primary btn-lg w-30 mb-2 shadow-sm"
+        onclick="submitForm(event)"
+      >
+        <!--Submit class="fas fa-search me-2" style="padding: none;"-->Submit
+      </button>
+
+      <!-- Table Section -->
+      <div class="card shadow-sm mt-4">
+        <div class="card-header text-dark" id="results-box-head">
+          <h3 class="mb-0"><i class="fas fa-table me-2"></i>Results</h3>
+        </div>
+        <div class="card-body" id="results-box">
+          <div
+            class="table-responsive"
+            style="max-height: 200px; overflow-y: auto"
+          >
+            <table class="table table-striped">
+              <thead class="table-blue">
+                <tr id="headerRow"></tr>
+              </thead>
+              <tbody id="tableBody">
+                <!-- Your table rows go here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="btn btn-primary btn-sm m-1 mt-4 text-xl-center"
+        id="showBoundariesButton"
+        style="
+          width: 140px;
+          height: 60px;
+          font-size: 18px;
+          border-radius: 30px;
+          background-color: #76ba1b;
+          border: none;
+        "
+        onclick="ranking(event)"
+      >
+        Ranking
+      </button>
+    </div>
+
+    <!-- Map Section -->
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header text-white" id="map-view-header">
+          <h3 class="mb-0"><i class="fas fa-map me-2"></i>Map View</h3>
+        </div>
+        <div
+          class="card-body p-0"
+          style="border: 1px solid #55565b; border-top: none"
+        >
+          <div id="map" style="height: calc(100vh - 100px)"></div>
+        </div>
+      </div>
+    </div>
+    <canvas id="myBarChart" width="auto" , height="100px"></canvas>
+  </div>
+</div>
+
+<style>
+  #myBarChart {
+    display: none;
+    /* Hide canvas initially */
+  }
+
+  /* Custom Styles */
+  .form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+
+  .form-check-label {
+    cursor: pointer;
+    transform: translateY(-7px);
+    font-family: Montserrat;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  /* .form-check-label:hover {
+        background-color: #f8f9fa;
+    } */
+
+  .form-check-input:checked + .form-check-label {
+    background-color: #e9ecef;
+  }
+
+  .dropdown-menu {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .dropdown-item {
+    padding: 8px 16px;
+  }
+  /*
+    #state-dropdown, #district-dropdown, #sub_district-dropdown {
+        border: none;
+        background: #D3D4D9;
+    }
+*/
+  .mb-0 {
+    font-size: 22px;
+    font-family: Lexend Deca;
+    background-color: none;
+    color: #55565b;
+    padding: 7px 0px 7px 0px;
+  }
+
+  #card-header-property1 {
+    border-radius: 15px 15px 0px 0px;
+    background-color: none;
+    border: 1px solid royalblue;
+    border-bottom: none;
+  }
+  #card-header-property2 {
+    border-radius: 15px 15px 0px 0px;
+    background-color: none;
+    border: 1px solid green;
+    border-bottom: none;
+  }
+  .card {
+    border: none;
+    transition: transform 0.2s ease;
+  }
+
+  .card-body {
+    border-radius: 0px 0px 15px 15px;
+    border: 1px solid royalblue;
+    border-top: none;
+  }
+
+  #map-view-header {
+    background: none;
+    border-radius: 15px 15px 0px 0px;
+    color: black;
+    border: 1px solid #55565b;
+    border-bottom: none;
+  }
+  #submit-button1 {
+    font-size: 18px;
+    border-radius: 30px;
+    border: none;
+    overflow: hidden;
+    background-color: #76ba1b;
+    text-align: center;
+    width: 140px;
+    height: 60px;
+    position: relative;
+  }
+  #submit-button1:before {
+    content: "";
+    border-radius: 50%;
+    position: absolute;
+    overflow: hidden;
+    width: 120px;
+    height: 120px;
+    background-color: white;
+    opacity: 0;
+    left: 15px;
+    top: -29px;
+    transform: scale(1.7, 1.7);
+    transition: 0.7s;
+  }
+  #submit-button1:active:before {
+    transform: scale(0, 0);
+    opacity: 1;
+    transition: 0s;
+  }
+  #categories-card {
+    border: 1px solid green;
+    border-top: none;
+  }
+  #results-box-head {
+    border: none;
+    background: #e0e0e0;
+  }
+
+  #results-box {
+    border: none;
+  }
+  #loading-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+  }
+
+  #loading-container img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  /* .card:hover {
+        transform: translateY(-2px);
+    } */
+
+  .table td.editable {
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  .ol-popup {
+    background-color: white;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #cccccc;
+    bottom: 12px;
+    left: -50px;
+    min-width: 280px;
+  }
+
+  /* .table td.editable:hover {
+        background-color: #f8f9fa;
+    } */
+
+  .table td.editable::after {
+    content: "✎";
+    position: absolute;
+    right: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  /* .table td.editable:hover::after {
+        opacity: 0.5;
+    } */
+
+  /* Animation for loading states */
+  .loading {
+    position: relative;
+    opacity: 0.7;
+  }
+
+  .loading::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    animation: loading 1.5s infinite;
+  }
+
+  @keyframes loading {
+    0% {
+      transform: translateX(-100%);
+    }
+
+    100% {
+      transform: translateX(100%);
+    }
+  }
+</style>
+{% endblock %} {% block extra_js %}
+<script>
+  // Global variables
+  let myBarChart;
+  let tableData = [];
+  let selectedLocation = {
+    state: null,
+    stateId: null,
+    districts: [], // Will store district IDs
+    districtNames: [], // Will store district names for display
+    subDistricts: [], // Will store subdistrict IDs
+    subDistrictNames: [], // Will store subdistrict names for display
+    villages: [], // Will store village IDs
+    villageNames: [], // Will store village names for display
+  };
+  let selectedCategories = [];
+  let currentBoundary = null;
+  let map;
+
+  function showLoader() {
+    document.getElementById("loading-container").style.display = "block";
+  }
+
+  // Function to hide the loader
+  function hideLoader() {
+    document.getElementById("loading-container").style.display = "none";
+  }
+
+  // Map initialization
+  function initMap() {
+    map = L.map("map").setView([20.5937, 78.9629], 5);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors",
+    }).addTo(map);
+  }
+  async function loadStates() {
+    const stateDropdown = document.getElementById("state-dropdown");
+    try {
+      const response = await fetch("/stp/get_states/");
+      const states = await response.json();
+      console.log("state is ", states);
+
+      // Clear existing options except the default one
+      stateDropdown.innerHTML = '<option value="">--Choose a State--</option>';
+
+      // Add new state options
+      states.forEach((state) => {
+        const option = document.createElement("option");
+        option.value = state.id;
+        option.textContent = state.name;
+        stateDropdown.appendChild(option);
+      });
+    } catch (error) {
+      console.error("Error fetching states:", error);
+      alert("Failed to load states. Please refresh the page.");
+    }
+  }
+
+  // Clear existing boundary
+  function clearBoundary() {
+    if (currentBoundary) {
+      map.removeLayer(currentBoundary);
+      currentBoundary = null;
+    }
+    if (map.popup) {
+      map.removeLayer(map.popup);
+    }
+  }
+
+  // Load default boundary
+  async function loadDefaultBoundary() {
+    try {
+      showLoader();
+      const response = await fetch("/stp/get_boundary/");
+      const featureCollection = await response.json();
+
+      if (featureCollection.features && map) {
+        clearBoundary();
+
+        currentBoundary = L.geoJSON(featureCollection, {
+          style: {
+            color: "#76ba1b",
+            weight: 2,
+            opacity: 1,
+            fillColor: "#76ba1b",
+            fillOpacity: 0.2,
+          },
+        }).addTo(map);
+
+        map.fitBounds(currentBoundary.getBounds(), {
+          padding: [50, 50],
+        });
+      }
+    } catch (error) {
+      console.error("Error loading default boundary:", error);
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
+    }
+  }
+
+  // Initialize map on page load
+  document.addEventListener("DOMContentLoaded", function () {
+    // Add Leaflet CSS
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    document.head.appendChild(link);
+
+    // Add Leaflet JS
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.onload = function () {
+      initMap();
+      loadDefaultBoundary();
+    };
+    document.head.appendChild(script);
+
+    // Initialize form elements (which now includes loading states)
+    initializeFormElements();
+  });
+  // Utility Functions
+  function getCSRFToken() {
+    return document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
+  }
+
+  // Update boundary on map
+  async function updateBoundaryOnMap() {
+    clearBoundary();
+    if (!selectedLocation.state) return;
+
+    try {
+      showLoader();
+      const boundaryResponse = await fetch("/stp/get_boundary/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify(selectedLocation),
+      });
+
+      const boundaryData = await boundaryResponse.json();
+      if (boundaryData.features && map) {
+        clearBoundary();
+
+        currentBoundary = L.geoJSON(boundaryData, {
+          style: {
+            color: "#76ba1b",
+            weight: 2,
+            opacity: 1,
+            fillColor: "#76ba1b",
+            fillOpacity: 0.2,
+          },
+        }).addTo(map);
+
+        map.fitBounds(currentBoundary.getBounds(), {
+          padding: [50, 50],
+        });
+      }
+    } catch (error) {
+      console.error("Error updating boundary:", error);
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
+    }
+  }
+  // Location Selection Handlers
+  async function handleDistrictSelection(event) {
+    const districtId = event.target.getAttribute("data-id");
+    const districtName = event.target.value;
+    const districtButton = document.getElementById("districtDropdown");
+    const subDistrictButton = document.getElementById("subDistrictDropdown");
+
+    if (event.target.checked) {
+      selectedLocation.districts.push(districtId);
+      selectedLocation.districtNames.push(districtName);
+    } else {
+      const index = selectedLocation.districts.indexOf(districtId);
+      if (index > -1) {
+        selectedLocation.districts.splice(index, 1);
+        selectedLocation.districtNames.splice(index, 1);
+      }
+      // Clear sub-districts and villages
+      selectedLocation.subDistricts = [];
+      selectedLocation.subDistrictNames = [];
+      selectedLocation.villages = [];
+      selectedLocation.villageNames = [];
+    }
+
+    // Update button texts
+    districtButton.textContent =
+      selectedLocation.districtNames.length > 0
+        ? selectedLocation.districtNames.join(", ")
+        : "--Choose Districts--";
+    subDistrictButton.textContent = "--Choose Sub-Districts--";
+
+    // Reset and update dependent dropdowns
+    document.getElementById("subDistrictCheckboxesContainer").innerHTML = "";
+    document.getElementById("villageCheckboxesContainer").innerHTML = "";
+
+    if (selectedLocation.districts.length > 0) {
+      await updateSubDistricts();
+      subDistrictButton.disabled = false;
+    } else {
+      subDistrictButton.disabled = true;
+    }
+
+    await updateBoundaryOnMap();
+  }
+
+  // Update subdistrict selection handler
+  async function handleSubDistrictSelection(event) {
+    const subDistrictId = event.target.getAttribute("data-id");
+    const subDistrictName = event.target.value;
+    const subDistrictButton = document.getElementById("subDistrictDropdown");
+
+    if (event.target.checked) {
+      selectedLocation.subDistricts.push(subDistrictId);
+      selectedLocation.subDistrictNames.push(subDistrictName);
+    } else {
+      const index = selectedLocation.subDistricts.indexOf(subDistrictId);
+      if (index > -1) {
+        selectedLocation.subDistricts.splice(index, 1);
+        selectedLocation.subDistrictNames.splice(index, 1);
+      }
+      // Clear villages
+      selectedLocation.villages = [];
+      selectedLocation.villageNames = [];
+    }
+
+    // Update button text
+    subDistrictButton.textContent =
+      selectedLocation.subDistrictNames.length > 0
+        ? selectedLocation.subDistrictNames.join(", ")
+        : "--Choose Sub-Districts--";
+
+    await updateVillages();
+    await updateBoundaryOnMap();
+  }
+
+  // Update village selection handler
+  async function handleVillageSelection(event) {
+    const villageId = event.target.getAttribute("data-id");
+    const villageName = event.target.value;
+
+    if (event.target.checked) {
+      selectedLocation.villages.push(villageId);
+      selectedLocation.villageNames.push(villageName);
+    } else {
+      const index = selectedLocation.villages.indexOf(villageId);
+      if (index > -1) {
+        selectedLocation.villages.splice(index, 1);
+        selectedLocation.villageNames.splice(index, 1);
+      }
+    }
+
+    await updateBoundaryOnMap();
+  }
+  // Location Dropdown Updates
+  async function updateDistricts(stateId) {
+    const container = document.getElementById("districtCheckboxesContainer");
+    const districtButton = document.getElementById("districtDropdown");
+    container.innerHTML = "";
+
+    try {
+      showLoader();
+      const response = await fetch("/stp/get_districts/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({ state: stateId }),
+      });
+
+      const districts = await response.json();
+
+      districts.forEach((district) => {
+        const listItem = document.createElement("li");
+        listItem.classList.add("form-check");
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.classList.add("form-check-input");
+        checkbox.id = `district-${district.id}`;
+        checkbox.value = district.name;
+        checkbox.setAttribute("data-id", district.id);
+
+        const label = document.createElement("label");
+        label.classList.add("form-check-label");
+        label.htmlFor = `district-${district.id}`;
+        label.textContent = district.name;
+
+        checkbox.addEventListener("change", handleDistrictSelection);
+
+        listItem.appendChild(checkbox);
+        listItem.appendChild(label);
+        container.appendChild(listItem);
+      });
+
+      districtButton.disabled = false;
+    } catch (error) {
+      console.error("Error fetching districts:", error);
+      alert("Failed to load districts. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
+    }
+  }
+  async function updateSubDistricts() {
+    const container = document.getElementById("subDistrictCheckboxesContainer");
+    container.innerHTML = "";
+
+    if (selectedLocation.districts.length === 0) return;
+
+    try {
+      showLoader();
+      const response = await fetch("/stp/get_sub_districts/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({
+          districts: selectedLocation.districts,
+        }),
+      });
+
+      const subDistricts = await response.json();
+
+      subDistricts.forEach((subDistrict) => {
+        const listItem = document.createElement("li");
+        listItem.classList.add("form-check");
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.classList.add("form-check-input");
+        checkbox.id = `subdistrict-${subDistrict.id}`;
+        checkbox.value = subDistrict.name;
+        checkbox.setAttribute("data-id", subDistrict.id); // Added data-id attribute
+
+        const label = document.createElement("label");
+        label.classList.add("form-check-label");
+        label.htmlFor = `subdistrict-${subDistrict.id}`;
+        label.textContent = subDistrict.name;
+
+        checkbox.addEventListener("change", handleSubDistrictSelection);
+
+        listItem.appendChild(checkbox);
+        listItem.appendChild(label);
+        container.appendChild(listItem);
+      });
+    } catch (error) {
+      console.error("Error fetching sub-districts:", error);
+      alert("Failed to load sub-districts. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
+    }
+  }
+
+  // Fix for updateVillages()
+  async function updateVillages() {
+    const container = document.getElementById("villageCheckboxesContainer");
+    container.innerHTML = "";
+
+    if (selectedLocation.subDistricts.length === 0) return;
+
+    try {
+      showLoader();
+      const response = await fetch("/stp/get_villages/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({
+          state: selectedLocation.stateId, // Changed to stateId
+          districts: selectedLocation.districts,
+          subDistricts: selectedLocation.subDistricts,
+        }),
+      });
+
+      const villages = await response.json();
+
+      villages.forEach((village) => {
+        const listItem = document.createElement("li");
+        listItem.classList.add("form-check");
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.classList.add("form-check-input");
+        checkbox.id = `village-${village.id}`;
+        checkbox.value = village.name;
+        checkbox.setAttribute("data-id", village.id); // Added data-id attribute
+
+        const label = document.createElement("label");
+        label.classList.add("form-check-label");
+        label.htmlFor = `village-${village.id}`;
+        label.textContent = village.name;
+
+        checkbox.addEventListener("change", handleVillageSelection);
+
+        listItem.appendChild(checkbox);
+        listItem.appendChild(label);
+        container.appendChild(listItem);
+      });
+    } catch (error) {
+      console.error("Error fetching villages:", error);
+      alert("Failed to load villages. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
+    }
+  }
+  // Category Selection Handler
+  function updateSelectedList() {
+    selectedCategories = [];
+    for (let i = 1; i <= 7; i++) {
+      const checkbox = document.getElementById(`check${i}`);
+      if (checkbox.checked) {
+        selectedCategories.push(getCategoryName(i));
+      }
+    }
+  }
+
+  function getCategoryName(index) {
+    const categories = {
+      1: "sewage_gap",
+      2: "mean_temperature",
+      3: "mean_rainfall",
+      4: "number_of_tourists",
+      5: "number_of_asi_sites",
+      6: "gdp_at_current_prices",
+      7: "water_quality_index",
+    };
+    return categories[index];
+  }
+
+  // Form submission and table handling
+  async function submitForm(event) {
+    event.preventDefault();
+    try {
+      showLoader();
+      const response = await fetch("/stp/table/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({
+          main_data: selectedLocation,
+          categories: selectedCategories,
+        }),
+      });
+      const data = await response.json();
+      updateTable(data);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Failed to submit form. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
+    }
+  }
+
+  // Initialize form elements and attach event listeners
+  function initializeFormElements() {
+    const stateDropdown = document.getElementById("state-dropdown");
+    const districtButton = document.getElementById("districtDropdown");
+    const subDistrictButton = document.getElementById("subDistrictDropdown");
+
+    // Load states immediately
+    loadStates();
+
+    // State Dropdown Change Event
+    stateDropdown.addEventListener("change", async function () {
+      const stateId = this.value;
+      selectedLocation.stateId = stateId;
+      selectedLocation.state = this.options[this.selectedIndex].text;
+
+      // Reset all selections
+      selectedLocation.districts = [];
+      selectedLocation.districtNames = [];
+      selectedLocation.subDistricts = [];
+      selectedLocation.subDistrictNames = [];
+      selectedLocation.villages = [];
+      selectedLocation.villageNames = [];
+
+      // Reset buttons and containers
+      districtButton.textContent = "--Choose Districts--";
+      subDistrictButton.textContent = "--Choose Sub-Districts--";
+
+      document.getElementById("districtCheckboxesContainer").innerHTML = "";
+      document.getElementById("subDistrictCheckboxesContainer").innerHTML = "";
+      document.getElementById("villageCheckboxesContainer").innerHTML = "";
+
+      districtButton.disabled = !stateId;
+      subDistrictButton.disabled = true;
+
+      if (stateId) {
+        await updateDistricts(stateId);
+        await updateBoundaryOnMap();
+      } else {
+        clearBoundary();
+      }
+    });
+    // Initialize category checkboxes
+    for (let i = 1; i <= 7; i++) {
+      const checkbox = document.getElementById(`check${i}`);
+      checkbox.checked = false;
+      checkbox.addEventListener("change", updateSelectedList);
+    }
+    updateSelectedList();
+  }
+  // Rankings chart handling
+  async function ranking(event) {
+    event.preventDefault();
+    try {
+      showLoader();
+      const response = await fetch("/stp/get_rankings/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({ tableData }),
+      });
+
+      if (!response.ok) throw new Error("Network response was not ok");
+
+      const data = await response.json();
+      updateBarChart(data);
+    } catch (error) {
+      console.error("Error during ranking:", error);
+      alert("Failed to process ranking. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
+    }
+  }
+
+  // Rankings chart handling
+  async function ranking(event) {
+    event.preventDefault();
+    try {
+      showLoader();
+      const response = await fetch("/stp/get_rankings/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({ tableData }),
+      });
+
+      if (!response.ok) throw new Error("Network response was not ok");
+
+      const data = await response.json();
+      updateBarChart(data);
+    } catch (error) {
+      console.error("Error during ranking:", error);
+      alert("Failed to process ranking. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
+    }
+  }
+
+  function updateBarChart(data) {
+    const canvas = document.getElementById("myBarChart");
+    canvas.style.display = "block";
+    const ctx = canvas.getContext("2d");
+
+    if (myBarChart) {
+      myBarChart.destroy();
+    }
+
+    myBarChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: data.map((item) => item.name),
+        datasets: [
+          {
+            label: "Rank",
+            data: data.map((item) => item.rank),
+            backgroundColor: data.map(() => generateRandomColor(0.2)),
+            borderColor: data.map(() => generateRandomColor(1)),
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            ticks: {
+              maxRotation: 45,
+              minRotation: 45,
+            },
+          },
+          y: {
+            beginAtZero: true,
+          },
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: "top",
+          },
+          title: {
+            display: true,
+            text: "Location Rankings",
+          },
+        },
+      },
+    });
+  }
+
+  function generateRandomColor(alpha) {
+    const r = Math.floor(Math.random() * 256);
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  // Table update functions
+  function updateTable(data) {
+    tableData = [...data];
+    const headerRow = document.getElementById("headerRow");
+    const tableBody = document.getElementById("tableBody");
+
+    // Clear existing content
+    headerRow.innerHTML = "";
+    tableBody.innerHTML = "";
+
+    // Add headers
+    if (data.length > 0) {
+      Object.keys(data[0]).forEach((key) => {
+        const th = document.createElement("th");
+        th.textContent = key
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase());
+        headerRow.appendChild(th);
+      });
+
+      // Add data rows with editable cells
+      data.forEach((row, rowIndex) => {
+        const tr = document.createElement("tr");
+        Object.entries(row).forEach(([key, value]) => {
+          const td = document.createElement("td");
+          td.className = "editable";
+          td.dataset.field = key;
+          td.dataset.rowIndex = rowIndex;
+          td.dataset.originalValue = value;
+
+          td.textContent = formatCellValue(value, key);
+          addEditableCell(td);
+          tr.appendChild(td);
+        });
+        tableBody.appendChild(tr);
+      });
+    } else {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = "100%";
+      td.textContent = "No data available";
+      td.className = "text-center";
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+    }
+  }
+
+  function formatCellValue(value, field) {
+    if (typeof value !== "number") return value;
+
+    if (field.includes("temperature") || field.includes("rainfall")) {
+      return value.toFixed(2);
+    } else if (field.includes("percentage")) {
+      return value.toFixed(1) + "%";
+    } else {
+      return value.toLocaleString();
+    }
+  }
+
+  function addEditableCell(cell) {
+    cell.addEventListener("dblclick", function (e) {
+      if (this.querySelector("input")) return;
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = this.dataset.originalValue;
+      input.className = "form-control form-control-sm";
+
+      const originalContent = this.innerHTML;
+      this.innerHTML = "";
+      this.appendChild(input);
+      input.focus();
+
+      const handleUpdate = () => {
+        const newValue = input.value;
+        const field = this.dataset.field;
+        const rowIdx = parseInt(this.dataset.rowIndex);
+
+        try {
+          const processedValue = validateAndProcessValue(newValue, field);
+          tableData[rowIdx][field] = processedValue;
+          this.dataset.originalValue = processedValue;
+          this.textContent = formatCellValue(processedValue, field);
+        } catch (error) {
+          alert(error.message);
+          this.innerHTML = originalContent;
+        }
+      };
+
+      input.addEventListener("blur", handleUpdate);
+      input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") input.blur();
+      });
+    });
+  }
+
+  function validateAndProcessValue(value, field) {
+    if (field.includes("temperature") || field.includes("rainfall")) {
+      const number = parseFloat(value);
+      if (isNaN(number)) {
+        throw new Error(
+          `Please enter a valid number for ${field.replace(/_/g, " ")}`
+        );
+      }
+      return number;
+    }
+
+    if (
+      field.includes("tourists") ||
+      field.includes("sites") ||
+      field.includes("gap")
+    ) {
+      const number = parseInt(value);
+      if (isNaN(number) || !Number.isInteger(number)) {
+        throw new Error(
+          `Please enter a valid whole number for ${field.replace(/_/g, " ")}`
+        );
+      }
+      if (number < 0) {
+        throw new Error(`${field.replace(/_/g, " ")} cannot be negative`);
+      }
+      return number;
+    }
+
+    if (field.includes("gdp")) {
+      const number = parseFloat(value);
+      if (isNaN(number)) {
+        throw new Error("Please enter a valid number for GDP");
+      }
+      if (number < 0) {
+        throw new Error("GDP cannot be negative");
+      }
+      return number;
+    }
+
+    return value;
+  }
+
+  // Form submission handler
+  async function submitForm(event) {
+    event.preventDefault();
+    try {
+      showLoader();
+      const response = await fetch("/stp/table/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({
+          main_data: selectedLocation,
+          categories: selectedCategories,
+        }),
+      });
+      const data = await response.json();
+      updateTable(data);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Failed to submit form. Please try again.");
+    } finally {
+      hideLoader(); // Hide loading GIF after request completes
+    }
+  }
+</script>
+{% endblock %}
