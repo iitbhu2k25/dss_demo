@@ -17,6 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from authentication.views import login_view  # Import your custom login view
 
 
 
@@ -29,6 +30,7 @@ urlpatterns = [
     path("stp/",include("stp.urls")),
     path('mapplot/', include('mapplot.urls')),  
     path('watersupply/', include('watersupply.urls')),
-    path('visuall/',include("visuall.urls"))
-
+    path('visuall/',include("visuall.urls")),
+    path("accounts/login/", login_view, name='login'),
+    path('confident/', include('confident.urls'))
 ]

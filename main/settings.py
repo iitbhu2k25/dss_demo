@@ -36,6 +36,8 @@ INSTALLED_APPS = [
     "mapplot",
     "watersupply",
     "visuall",
+    "authentication",
+    "confident",
 ]
 
 MIDDLEWARE = [
@@ -83,6 +85,8 @@ DATABASES = {
     }
 }
 
+# Authentication settings
+LOGIN_URL = '/accounts/login/'  # Where to send users if they need to log in
 
 
 # Password validation
@@ -137,3 +141,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+
+SESSION_COOKIE_AGE = 1
