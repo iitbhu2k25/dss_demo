@@ -145,4 +145,4 @@ SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
 
-SESSION_COOKIE_AGE = 1
+SESSION_COOKIE_AGE = 10

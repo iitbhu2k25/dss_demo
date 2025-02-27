@@ -1209,8 +1209,8 @@
 
   #coordinates {
     position: absolute;
-    bottom: 10px;
-    left: 10px;
+    bottom: 2px;
+    left: 70px;
     background: rgba(0, 0, 0, 0.7);
     color: white;
     padding: 5px 10px;
@@ -1593,13 +1593,13 @@
     };
 
     // Add default basemap
-    baseLayers.streets.addTo(map);
+    baseLayers.traffic.addTo(map);
 
     // Add Scale Control
     L.control
       .scale({
         imperial: false,
-        position: "bottomright",
+        position: "bottomleft",
       })
       .addTo(map);
 
