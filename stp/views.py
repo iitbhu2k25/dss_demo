@@ -108,6 +108,7 @@ def GetVillage_UP(request):
 def GetBoundry(request):
     if request.method == 'GET':
         try:
+            print("try to get all the polygon")
             states_polygon= Stp_subdis.objects.all()
             features = []
             for poly in states_polygon:
