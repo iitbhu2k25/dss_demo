@@ -222,7 +222,12 @@
             transition: color 0.3s;
         }
         
-        .custom-dropdown {
+        .select-wrapper {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .select-wrapper .custom-dropdown {
             width: 100%;
             padding: 12px 15px;
             border-radius: 8px;
@@ -240,15 +245,27 @@
             padding-right: 30px;
         }
         
-        .custom-dropdown:hover {
+        .select-wrapper .custom-dropdown:hover {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
         }
         
-        .custom-dropdown:focus {
+        .select-wrapper .custom-dropdown:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+        
+        .select-wrapper label {
+            position: absolute;
+            background: white;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--primary-color);
+            padding: 0 5px;
+            left: 12px;
+            top: -8px;
+            z-index: 1;
         }
         
         .modern-dropdown {
@@ -660,7 +677,7 @@
             transform: translateY(-5px);
         }
         
-        .year-badge {
+        .layer-badge {
             display: inline-block;
             padding: 5px 12px;
             background: var(--primary-color);
@@ -755,7 +772,7 @@
             }
         }
         
-        .year-tooltip {
+        .data-tooltip {
             position: absolute;
             bottom: 130px;
             left: 50%;
@@ -772,7 +789,7 @@
             z-index: 1000;
         }
         
-        .year-tooltip.show {
+        .data-tooltip.show {
             opacity: 1;
             transform: translateX(-50%) translateY(-10px);
         }
@@ -999,11 +1016,100 @@
                 bottom: 80px;
             }
         }
+        
+        /* New styles for improved dropdowns */
+        .select-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .select-wrapper::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid var(--primary-color);
+            pointer-events: none;
+        }
+        
+        .disabled-section {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .disabled-section::after {
+            content: "Select category first";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .disabled-section:hover::after {
+            opacity: 1;
+        }
+        
+        /* New loader animation */
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(52, 152, 219, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Data availability indicator */
+        .data-indicator {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 5px;
+            font-size: 12px;
+            color: var(--success-color);
+        }
+        
+        .data-indicator i {
+            margin-right: 5px;
+        }
+        
+        .data-indicator.no-data {
+            color: var(--danger-color);
+        }
+        
+        /* Loading state for selects */
+        .select-wrapper.loading::after {
+            content: "";
+            border: 2px solid rgba(52, 152, 219, 0.3);
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            width: 15px;
+            height: 15px;
+            animation: spin 1s linear infinite;
+        }
+        
+        .select-wrapper.loading .custom-dropdown {
+            background-image: none;
+        }
     </style>
 </head>
 <body>
-    {% include 'header.html' %}
-    {% include 'navbar.html' %}
     <div class="app-container">
         <header>
             <div class="container-fluid">
@@ -1030,22 +1136,29 @@
                     
                     <div class="control-section">
                         <div class="section-title">
-                            <i class="fas fa-calendar-alt"></i> Select Year
+                            <i class="fas fa-database"></i> Data Selection
                         </div>
-                        <div class="year-selector">
-                            <select class="form-select custom-dropdown" id="year-dropdown">
-                                <option value="" disabled selected>Select a year</option>
-                                <option value="2011">2011</option>
-                                <option value="2012">2012</option>
-                                <option value="2013">2013</option>
-                                <option value="2014">2014</option>
-                                <option value="2015">2015</option>
-                                <option value="2016">2016</option>
-                                <option value="2017">2017</option>
-                                <option value="2018">2018</option>
-                                <option value="2019">2019</option>
-                                <option value="2020">2020</option>
+                        
+                        <!-- Category Selection -->
+                        <div class="select-wrapper" id="category-wrapper">
+                            <label>Category</label>
+                            <select class="custom-dropdown" id="category-dropdown">
+                                <option value="" disabled selected>Loading categories...</option>
                             </select>
+                            <div class="data-indicator" id="category-indicator" style="display: none;">
+                                <i class="fas fa-check-circle"></i> Categories loaded
+                            </div>
+                        </div>
+                        
+                        <!-- Raster Files Selection -->
+                        <div class="select-wrapper disabled-section" id="raster-wrapper">
+                            <label>Raster File</label>
+                            <select class="custom-dropdown" id="raster-dropdown" disabled>
+                                <option value="" disabled selected>Select a category first</option>
+                            </select>
+                            <div class="data-indicator" id="raster-indicator" style="display: none;">
+                                <i class="fas fa-check-circle"></i> <span id="raster-count">0</span> files available
+                            </div>
                         </div>
                     </div>
                     
@@ -1202,7 +1315,7 @@
                     </div>
                     
                     <div class="info-panel">
-                        <div class="year-badge" id="current-year-display">No Year Selected</div>
+                        <div class="layer-badge" id="current-layer-display">No Data Loaded</div>
                         <div>
                             <small>Coordinates:</small>
                             <div id="coordinates-display">0.00000, 0.00000</div>
@@ -1231,7 +1344,7 @@
                         </div>
                     </div>
                     
-                    <div class="year-tooltip" id="year-tooltip">Loading data for 2020</div>
+                    <div class="data-tooltip" id="data-tooltip">Loading data...</div>
                     
                     <div class="coordinates-tooltip" id="coordinates-tooltip">
                         Lat: 20.5937, Lng: 78.9629<br>
@@ -1241,7 +1354,7 @@
                     <div class="loader" id="loader">
                         <div class="d-flex align-items-center">
                             <div class="spinner-border" role="status"></div>
-                            <span>Loading raster data...</span>
+                            <span>Loading data...</span>
                         </div>
                     </div>
                 </div>
@@ -1254,7 +1367,7 @@
                 <div class="notification-title">Success</div>
             </div>
             <div class="notification-body" id="notification-text">
-                Raster data loaded successfully.
+                Data loaded successfully.
             </div>
         </div>
     </div>
@@ -1318,6 +1431,8 @@
             let currentRasterLayer = null;
             let gridLines = [];
             let mapRotation = 0;
+            let currentCategory = null;
+            let currentRasterFile = null;
             
             // Drawing layer
             const drawnItems = new L.FeatureGroup();
@@ -1328,6 +1443,9 @@
             const gridToggle = document.getElementById('grid-toggle');
             const legendToggle = document.getElementById('legend-toggle');
             const coordTooltip = document.getElementById('coordinates-tooltip');
+            const categoryDropdown = document.getElementById('category-dropdown');
+            const rasterDropdown = document.getElementById('raster-dropdown');
+            const rasterWrapper = document.getElementById('raster-wrapper');
             
             // Hide coordinate tooltip by default
             coordTooltip.style.display = 'none';
@@ -1353,13 +1471,6 @@
                     });
                     gridLines = [];
                 }
-            });
-            
-            // Rotation control
-            document.getElementById('rotation-control').addEventListener('click', function() {
-                mapRotation = (mapRotation + 45) % 360;
-                document.querySelector('.map-container').style.transform = `rotate(${mapRotation}deg)`;
-                document.querySelector('.compass-rose').style.transform = `rotate(${-mapRotation}deg)`;
             });
             
             // Function to add coordinate grid lines
@@ -1422,12 +1533,12 @@
             }
             
             // Update legend with color scale
-            function updateLegend(year) {
+            function updateLegend(category) {
                 const legendContent = document.getElementById('legend-content');
                 legendContent.innerHTML = '';
                 
-                // Generate color scale based on selected year
-                const colors = generateColorScale(year);
+                // Generate color scale based on selected category
+                const colors = getColorScaleForCategory(category);
                 
                 // Add items to legend
                 colors.forEach((color, index) => {
@@ -1441,26 +1552,47 @@
                     legendContent.appendChild(legendItem);
                 });
                 
-                // Add year to legend
-                const yearItem = document.createElement('div');
-                yearItem.className = 'legend-item';
-                yearItem.innerHTML = `<div style="font-weight: 600; margin-top: 10px;">Year: ${year}</div>`;
-                legendContent.appendChild(yearItem);
+                // Add category to legend
+                const categoryItem = document.createElement('div');
+                categoryItem.className = 'legend-item';
+                categoryItem.innerHTML = `<div style="font-weight: 600; margin-top: 10px;">Category: ${category}</div>`;
+                legendContent.appendChild(categoryItem);
+                
+                // Adjust legend title based on category
+                document.querySelector('.legend-title').textContent = `${category} Legend`;
             }
             
-            // Generate color scale based on year
-            function generateColorScale(year) {
-                // Base hue value that changes with year
-                const baseHue = ((parseInt(year) - 2010) * 30) % 360;
-                
-                // Generate a 5-color scale with varying saturation and lightness
-                return [
-                    `hsl(${baseHue}, 90%, 30%)`,
-                    `hsl(${baseHue}, 80%, 45%)`,
-                    `hsl(${baseHue}, 70%, 60%)`,
-                    `hsl(${baseHue}, 60%, 75%)`,
-                    `hsl(${baseHue}, 50%, 90%)`
-                ];
+            // Get color scale based on category
+            function getColorScaleForCategory(category) {
+                // Different color scales for different categories
+                switch (category) {
+                    case 'Rainfall':
+                        return ['#d4f1f9', '#89c4f4', '#59abe3', '#2980b9', '#1a5276'];
+                    case 'Temperature':
+                        return ['#f9e79f', '#f4d03f', '#f39c12', '#d35400', '#a93226'];
+                    case 'Population':
+                        return ['#d5f5e3', '#7dcea0', '#27ae60', '#196f3d', '#145a32'];
+                    case 'Vegetation':
+                        return ['#fcf3cf', '#a9dfbf', '#52be80', '#229954', '#145a32'];
+                    case 'Air Quality':
+                        return ['#ebf5fb', '#aed6f1', '#5dade2', '#3498db', '#21618c'];
+                    case 'Water Resources':
+                        return ['#eafaf1', '#abebc6', '#58d68d', '#2ecc71', '#186a3b'];
+                    case 'Soil Health':
+                        return ['#fef9e7', '#f9e79f', '#f4d03f', '#f1c40f', '#b7950b'];
+                    case 'Land Use':
+                        return ['#f4ecf7', '#d7bde2', '#a569bd', '#8e44ad', '#6c3483'];
+                    default:
+                        // Default blue scale for unknown categories
+                        return ['#d4e6f1', '#7fb3d5', '#2980b9', '#1a5276', '#154360'];
+                }
+            }
+            
+            // Get color for a raster value
+            function getColorForValue(value, category) {
+                const colors = getColorScaleForCategory(category);
+                const colorIndex = Math.min(4, Math.floor(value / 25));
+                return colors[colorIndex];
             }
             
             // Show notification
@@ -1495,96 +1627,290 @@
                 }, 4000);
             }
             
-            // Function to fetch and display raster data
-            function fetchRasterData(year) {
+            // Function to fetch categories from the backend
+            async function fetchCategories() {
+                document.getElementById('loader').classList.add('active');
+                const categoryWrapper = document.getElementById('category-wrapper');
+                categoryWrapper.classList.add('loading');
+                
+                try {
+                    const response = await fetch("/visuall/categories/");
+                    
+                    if (!response.ok) {
+                        throw new Error(`API responded with status ${response.status}`);
+                    }
+                    
+                    // Parse the JSON response
+                    const data = await response.json();
+                    console.log("Backend categories response:", data);
+                    
+                    // Clear existing options
+                    categoryDropdown.innerHTML = '';
+                    
+                    // Add default option
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'Select a category';
+                    defaultOption.disabled = true;
+                    defaultOption.selected = true;
+                    categoryDropdown.appendChild(defaultOption);
+                    
+                    // Add categories from API response
+                    data.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        categoryDropdown.appendChild(option);
+                    });
+                    
+                    // Show indicator
+                    document.getElementById('category-indicator').style.display = 'flex';
+                    
+                    // Hide loader
+                    document.getElementById('loader').classList.remove('active');
+                    categoryWrapper.classList.remove('loading');
+                    
+                    // Show success notification
+                    showNotification('Success', 'Categories loaded successfully', 'success');
+                    
+                } catch (error) {
+                    console.error('Error fetching categories:', error);
+                    
+                    // Hide loader
+                    document.getElementById('loader').classList.remove('active');
+                    categoryWrapper.classList.remove('loading');
+                    
+                    // Show error notification
+                    showNotification('Error', `Failed to load categories: ${error.message}`, 'error');
+                    
+                    // Add some fallback categories for demo
+                    const fallbackCategories = [
+                        'Rainfall', 'Temperature', 'Population', 'Vegetation', 
+                        'Air Quality', 'Water Resources', 'Soil Health', 'Land Use'
+                    ];
+                    
+                    // Clear existing options
+                    categoryDropdown.innerHTML = '';
+                    
+                    // Add default option
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'Select a category';
+                    defaultOption.disabled = true;
+                    defaultOption.selected = true;
+                    categoryDropdown.appendChild(defaultOption);
+                    
+                    // Add fallback categories
+                    fallbackCategories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        categoryDropdown.appendChild(option);
+                    });
+                    
+                    // Show indicator with warning
+                    const indicator = document.getElementById('category-indicator');
+                    indicator.style.display = 'flex';
+                    indicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Using demo categories';
+                    indicator.style.color = '#f39c12';
+                }
+            }
+            
+            // Function to fetch raster files for a selected category
+            async function fetchRasterFiles(category) {
+                // Show loading state
+                const rasterWrapper = document.getElementById('raster-wrapper');
+                rasterWrapper.classList.add('loading');
+                rasterDropdown.disabled = true;
+                
                 // Show loader
                 document.getElementById('loader').classList.add('active');
                 
-                // Show year tooltip
-                const yearTooltip = document.getElementById('year-tooltip');
-                yearTooltip.textContent = `Loading data for ${year}`;
-                yearTooltip.classList.add('show');
+                // Show data tooltip
+                const dataTooltip = document.getElementById('data-tooltip');
+                dataTooltip.textContent = `Loading raster files for ${category}...`;
+                dataTooltip.classList.add('show');
+                
+                try {
+                    // API endpoint for fetching raster files
+                    const response = await fetch(`/visuall/raster_data/${category}/`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`API responded with status ${response.status}`);
+                    }
+                    
+                    // Parse the response
+                    const data = await response.json();
+                    console.log("Raster files response:", data);
+                    
+                    // Enable the dropdown
+                    rasterDropdown.disabled = false;
+                    rasterWrapper.classList.remove('disabled-section');
+                    
+                    // Clear existing options
+                    rasterDropdown.innerHTML = '';
+                    
+                    // Add default option
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'Select a raster file';
+                    defaultOption.disabled = true;
+                    defaultOption.selected = true;
+                    rasterDropdown.appendChild(defaultOption);
+                    
+                    // Add raster files from API response
+                    data.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = file.id || file;
+                        option.textContent = file.name || file;
+                        rasterDropdown.appendChild(option);
+                    });
+                    
+                    // Update indicator
+                    const indicator = document.getElementById('raster-indicator');
+                    indicator.style.display = 'flex';
+                    document.getElementById('raster-count').textContent = data.length;
+                    
+                    // Hide loading states
+                    document.getElementById('loader').classList.remove('active');
+                    rasterWrapper.classList.remove('loading');
+                    dataTooltip.classList.remove('show');
+                    
+                    // Show success notification
+                    showNotification('Files Available', `${data.length} raster files found for ${category}`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error fetching raster files:', error);
+                    
+                    // Hide loading states
+                    document.getElementById('loader').classList.remove('active');
+                    rasterWrapper.classList.remove('loading');
+                    dataTooltip.classList.remove('show');
+                    
+                    // Show error notification
+                    showNotification('Error', `Failed to load raster files: ${error.message}`, 'error');
+                    
+                    // Enable the dropdown anyway for demo
+                    rasterDropdown.disabled = false;
+                    rasterWrapper.classList.remove('disabled-section');
+                    
+                    // Clear existing options
+                    rasterDropdown.innerHTML = '';
+                    
+                    // Add default option
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'Select a raster file';
+                    defaultOption.disabled = true;
+                    defaultOption.selected = true;
+                    rasterDropdown.appendChild(defaultOption);
+                    
+                    // Add some dummy files for demo
+                    const dummyFiles = [
+                        `${category}_2020.tif`, 
+                        `${category}_2021.tif`, 
+                        `${category}_2022.tif`, 
+                        `${category}_2023.tif`,
+                        `${category}_annual_mean.tif`
+                    ];
+                    
+                    dummyFiles.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = file;
+                        option.textContent = file;
+                        rasterDropdown.appendChild(option);
+                    });
+                    
+                    // Update indicator
+                    const indicator = document.getElementById('raster-indicator');
+                    indicator.style.display = 'flex';
+                    indicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Using sample files';
+                    indicator.style.color = '#f39c12';
+                    document.getElementById('raster-count').textContent = dummyFiles.length;
+                }
+            }
+            
+            // Function to fetch and display raster data
+            async function fetchRasterData(category, filename) {
+                // Show loader
+                document.getElementById('loader').classList.add('active');
+                
+                // Show data tooltip
+                const dataTooltip = document.getElementById('data-tooltip');
+                dataTooltip.textContent = `Loading ${filename}...`;
+                dataTooltip.classList.add('show');
                 
                 // Update UI
-                document.getElementById('current-year-display').textContent = `Year: ${year}`;
+                document.getElementById('current-layer-display').textContent = `${category}: ${filename}`;
                 
                 // Center map on India
                 map.setView(INDIA_CENTER, INDIA_ZOOM);
                 
                 // API endpoint for fetching raster data
-                const apiUrl = `https://api.example.com/india/raster`;
+                const apiUrl = `/visuall/raster_data/${category}/${filename}/`;
                 
-                // Prepare request data
-                const requestData = {
-                    year: year,
-                    format: 'geojson',
-                    resolution: 'medium'
-                };
-                
-                // Fetch raster data using POST method
-                fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(requestData)
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`API responded with status ${response.status}`);
-                        }
-                        return response.json(); // Or response.blob() if returning raw raster data
-                    })
-                    .then(data => {
-                        // Remove existing raster layer if any
-                        if (currentRasterLayer) {
-                            map.removeLayer(currentRasterLayer);
-                        }
-                        
-                        // Create and add the raster layer to the map
-                        currentRasterLayer = createRasterLayer(data, year);
-                        currentRasterLayer.addTo(map);
-                        
-                        // Hide year tooltip
-                        yearTooltip.classList.remove('show');
-                        
-                        // Update legend
-                        updateLegend(year);
-                        
-                        // Clear previous grid lines
-                        if (gridToggle.checked) {
-                            addCoordinateGrid();
-                        }
-                        
-                        // Hide loader
-                        document.getElementById('loader').classList.remove('active');
-                        
-                        // Show success notification
-                        showNotification('Success', `Raster data for ${year} loaded successfully`, 'success');
-                        
-                        // Create pulse effect
-                        createPulseEffect();
-                    })
-                    .catch(error => {
-                        console.error('Error fetching raster data:', error);
-                        
-                        // Hide loader
-                        document.getElementById('loader').classList.remove('active');
-                        
-                        // Hide year tooltip
-                        yearTooltip.classList.remove('show');
-                        
-                        // Show error notification
-                        showNotification('Error', `Failed to load raster data: ${error.message}`, 'error');
-                        
-                        // Fallback to demo mode
-                        simulateRasterLayer(year);
-                    });
+                try {
+                    const response = await fetch(apiUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`API responded with status ${response.status}`);
+                    }
+                    
+                    // Parse the response
+                    const data = await response.json();
+                    console.log("Raster data response:", data);
+                    
+                    // Remove existing raster layer if any
+                    if (currentRasterLayer) {
+                        map.removeLayer(currentRasterLayer);
+                    }
+                    
+                    // Create and add the raster layer to the map
+                    currentRasterLayer = createRasterLayer(data, category);
+                    currentRasterLayer.addTo(map);
+                    
+                    // Update state variables
+                    currentCategory = category;
+                    currentRasterFile = filename;
+                    
+                    // Hide data tooltip
+                    dataTooltip.classList.remove('show');
+                    
+                    // Update legend
+                    updateLegend(category);
+                    
+                    // Clear previous grid lines
+                    if (gridToggle.checked) {
+                        addCoordinateGrid();
+                    }
+                    
+                    // Hide loader
+                    document.getElementById('loader').classList.remove('active');
+                    
+                    // Show success notification
+                    showNotification('Success', `Raster data for ${filename} loaded successfully`, 'success');
+                    
+                    // Create pulse effect
+                    createPulseEffect();
+                } catch (error) {
+                    console.error('Error fetching raster data:', error);
+                    
+                    // Hide loader
+                    document.getElementById('loader').classList.remove('active');
+                    
+                    // Hide data tooltip
+                    dataTooltip.classList.remove('show');
+                    
+                    // Show error notification
+                    showNotification('Error', `Failed to load raster data: ${error.message}`, 'error');
+                    
+                    // Fallback to demo mode
+                    simulateRasterLayer(category, filename);
+                }
             }
             
             // Create a raster layer from the API response data
-            function createRasterLayer(data, year) {
+            function createRasterLayer(data, category) {
                 // The implementation depends on the format of your raster data
                 // Here are several common approaches:
                 
@@ -1595,7 +1921,7 @@
                             // Style based on raster value
                             const value = feature.properties.value;
                             return {
-                                fillColor: getColorForValue(value, year),
+                                fillColor: getColorForValue(value, category),
                                 weight: 0,
                                 opacity: 1,
                                 color: 'transparent',
@@ -1613,7 +1939,7 @@
                 if (data.tileUrl) {
                     return L.tileLayer(data.tileUrl, {
                         opacity: 0.7,
-                        attribution: `India Raster Data ${year}`
+                        attribution: `India Raster Data - ${category}`
                     });
                 }
                 
@@ -1627,7 +1953,7 @@
                     
                     return L.imageOverlay(data.imageUrl, bounds, {
                         opacity: 0.7,
-                        attribution: `India Raster Data ${year}`
+                        attribution: `India Raster Data - ${category}`
                     });
                 }
                 
@@ -1638,18 +1964,18 @@
                         format: 'image/png',
                         transparent: true,
                         version: '1.1.0',
-                        attribution: `India Raster Data ${year}`
+                        attribution: `India Raster Data - ${category}`
                     });
                 }
                 
                 // Fallback to simulation if data format is not recognized
-                return simulateRasterLayer(year);
+                return simulateRasterLayer(category);
             }
             
             // Simulate a raster layer for demo or fallback purposes
-            function simulateRasterLayer(year) {
+            function simulateRasterLayer(category, filename) {
                 // Create a simple grid overlay for demonstration
-                const colors = generateColorScale(year);
+                const colorScale = getColorScaleForCategory(category);
                 const gridSize = 0.5; // Grid cell size in degrees
                 const features = [];
                 
@@ -1659,16 +1985,50 @@
                         // Skip cells outside approximate India boundary (simplified)
                         if (!isInIndia(lat, lng)) continue;
                         
-                        // Generate a random value influenced by the year
-                        const baseValue = Math.sin(lat * 0.1) * Math.cos(lng * 0.1) * 50 + 50;
-                        const yearFactor = ((parseInt(year) - 2010) / 10);
-                        let value = baseValue + yearFactor * 20 * Math.random();
+                        // Generate a random value based on category
+                        let value;
+                        if (category === 'Rainfall') {
+                            value = Math.sin(lat * 0.1) * Math.cos(lng * 0.1) * 50 + 50;
+                        } else if (category === 'Temperature') {
+                            value = Math.cos(lat * 0.1) * Math.sin(lng * 0.1) * 40 + 60;
+                        } else if (category === 'Population') {
+                            value = (40 - Math.abs(lat - 23)) * (Math.random() * 0.5 + 0.75);
+                        } else if (category === 'Vegetation') {
+                            value = Math.sin(lat * 0.15) * Math.cos(lng * 0.15) * 30 + 60;
+                        } else if (category === 'Air Quality') {
+                            value = 100 - (Math.sin(lat * 0.2) * Math.cos(lng * 0.2) * 30 + 50);
+                        } else if (category === 'Water Resources') {
+                            value = Math.cos(lat * 0.12) * Math.sin(lng * 0.12) * 45 + 55;
+                        } else if (category === 'Soil Health') {
+                            value = Math.sin(lat * 0.08) * Math.cos(lng * 0.08) * 40 + 60;
+                        } else if (category === 'Land Use') {
+                            value = Math.cos(lat * 0.14) * Math.sin(lng * 0.14) * 35 + 65;
+                        } else {
+                            // Default pattern for other categories
+                            value = Math.sin(lat * 0.2) * Math.cos(lng * 0.2) * 50 + 50;
+                        }
+                        
+                        // Modify pattern based on filename to show different patterns for different files
+                        if (filename && filename.includes('2020')) {
+                            value = value * 0.8;
+                        } else if (filename && filename.includes('2021')) {
+                            value = value * 0.9;
+                        } else if (filename && filename.includes('2022')) {
+                            value = value * 1.1;
+                        } else if (filename && filename.includes('2023')) {
+                            value = value * 1.2;
+                        } else if (filename && filename.includes('mean')) {
+                            // Smoother pattern for mean data
+                            value = Math.cos(lat * 0.05) * Math.sin(lng * 0.05) * 40 + 60;
+                        }
+                        
                         value = Math.max(0, Math.min(100, value));
                         
                         features.push({
                             type: 'Feature',
                             properties: {
-                                value: value
+                                value: value,
+                                filename: filename || 'simulated'
                             },
                             geometry: {
                                 type: 'Polygon',
@@ -1686,8 +2046,18 @@
                     }
                 }
                 
+                // Update UI
+                document.getElementById('current-layer-display').textContent = `${category}: ${filename || 'Simulated Data'}`;
+                
+                // Update state variables
+                currentCategory = category;
+                currentRasterFile = filename || 'simulated';
+                
+                // Update legend
+                updateLegend(category);
+                
                 // Create GeoJSON layer
-                return L.geoJSON({
+                const layer = L.geoJSON({
                     type: 'FeatureCollection',
                     features: features
                 }, {
@@ -1695,7 +2065,7 @@
                         const value = feature.properties.value;
                         const colorIndex = Math.min(4, Math.floor(value / 25));
                         return {
-                            fillColor: colors[colorIndex],
+                            fillColor: colorScale[colorIndex],
                             weight: 0,
                             opacity: 1,
                             color: 'transparent',
@@ -1703,9 +2073,20 @@
                         };
                     },
                     onEachFeature: function(feature, layer) {
-                        layer.bindPopup(`Value: ${feature.properties.value.toFixed(2)}`);
+                        layer.bindPopup(`${category} Value: ${feature.properties.value.toFixed(2)}<br>File: ${feature.properties.filename}`);
                     }
                 });
+                
+                // Remove existing layer if any
+                if (currentRasterLayer) {
+                    map.removeLayer(currentRasterLayer);
+                }
+                
+                // Add new layer to map
+                currentRasterLayer = layer;
+                currentRasterLayer.addTo(map);
+                
+                return layer;
             }
             
             // Helper function to check if a point is roughly within India's boundaries
@@ -1718,13 +2099,6 @@
                 if (lat < 8 && lng > 77) return false; // Parts of Indian Ocean
                 
                 return true;
-            }
-            
-            // Get color for a raster value
-            function getColorForValue(value, year) {
-                const colors = generateColorScale(year);
-                const colorIndex = Math.min(4, Math.floor(value / 25));
-                return colors[colorIndex];
             }
             
             // Create pulse effect for new raster data
@@ -1758,11 +2132,26 @@
                 }, 1500);
             }
             
-            // Year dropdown change event
-            document.getElementById('year-dropdown').addEventListener('change', function(e) {
-                const year = e.target.value;
-                if (year) {
-                    fetchRasterData(year);
+            // Category dropdown change event
+            categoryDropdown.addEventListener('change', function(e) {
+                const category = e.target.value;
+                if (category) {
+                    currentCategory = category;
+                    fetchRasterFiles(category);
+                    
+                    // Reset raster dropdown
+                    rasterDropdown.innerHTML = '<option value="" disabled selected>Loading raster files...</option>';
+                    
+                    // Show notification
+                    showNotification('Category Selected', `Category changed to ${category}`, 'info');
+                }
+            });
+            
+            // Raster file dropdown change event
+            rasterDropdown.addEventListener('change', function(e) {
+                const filename = e.target.value;
+                if (filename && currentCategory) {
+                    fetchRasterData(currentCategory, filename);
                 }
             });
             
@@ -2038,12 +2427,17 @@
                 document.getElementById('coordinates-tooltip').style.display = 'none';
             });
             
+            // Rotation control
+            document.getElementById('rotation-control').addEventListener('click', function() {
+                mapRotation = (mapRotation + 45) % 360;
+                document.querySelector('.map-container').style.transform = `rotate(${mapRotation}deg)`;
+                document.querySelector('.compass-rose').style.transform = `rotate(${-mapRotation}deg)`;
+            });
+            
             // Download raster map functionality
             document.getElementById('download-btn').addEventListener('click', function() {
-                const selectedYear = document.getElementById('year-dropdown').value;
-                
-                if (!selectedYear) {
-                    showNotification('Error', 'Please select a year first', 'error');
+                if (!currentCategory || !currentRasterFile) {
+                    showNotification('Error', 'Please select a category and raster file first', 'error');
                     return;
                 }
                 
@@ -2057,7 +2451,7 @@
                     // Create a simulated download link
                     const link = document.createElement('a');
                     link.href = '#';
-                    link.download = `India_Raster_${selectedYear}.tif`;
+                    link.download = `India_${currentCategory}_${currentRasterFile}`;
                     link.click();
                     
                     // Reset button
@@ -2065,7 +2459,7 @@
                     this.disabled = false;
                     
                     // Show success notification
-                    showNotification('Download Complete', `Raster map for ${selectedYear} downloaded successfully`, 'success');
+                    showNotification('Download Complete', `${currentRasterFile} downloaded successfully`, 'success');
                     
                 }, 1500);
             });
@@ -2094,6 +2488,9 @@
             
             // Initialize with coordinate grid
             addCoordinateGrid();
+            
+            // Fetch categories when the page loads
+            fetchCategories();
             
             // Adjust for mobile screens on load
             function adjustForScreenSize() {
