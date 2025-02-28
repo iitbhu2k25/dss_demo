@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (subdistrictCode) {
         fetch(`/population/get-villages/${stateCode}/${districtCode}/${subdistrictCode}/`)
           .then(response => response.json())
-          .then(villages => populateTownVillage(villages, 'village_code', 'region_name', 'population_2011'))
+          .then(villages => populateTownVillage(villages,'subdistrict_code', 'village_code', 'region_name', 'population_2011'))
           .catch(error => console.error('Error fetching villages:', error));
           
       }
@@ -71,25 +71,52 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // Populate town/village container
-  function populateTownVillage(data, valueKey, textKey, populationKey) {
+  function populateTownVillage(data,sdcode, vcode,rcode, pcode) {
     // console.log("Data hai ", data);
-   
+    // scode
+    // vcode-valueKey
+    // rcode = textkey
+    // pcode = populationKey
     
     const container = document.getElementById('town-village-container');
     container.innerHTML = ''; // Clear previous checkboxes
-  
+    let totalPop=0
     data.forEach(item => {
+      // console.log("I am insideh");
+      console.log("item hai g ", item);
+      
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
-      checkbox.value = item[valueKey];
-      checkbox.id = `village-${item[valueKey]}`;
+      checkbox.value = item[vcode];
+      checkbox.id = `village-${item[vcode]}`;
       checkbox.className = 'village-checkbox';
-      villagePopulations[item[valueKey]] = item[populationKey];
-      code_to_villagename[item[valueKey]] = item[textKey];
+      villagePopulations[item[vcode]] = item[pcode];
+      code_to_villagename[item[vcode]] = item[rcode];
+      // console.log(`vcode ${vcode}`);
+      // console.log(`pcode ${pcode}`);
+      // console.log(`rcode ${rcode}`);
+      // console.log(`item[vcode] ${item[vcode]}`);
+      // console.log(`item[pcode] ${item[pcode]}` );
+      // console.log(`item[rcode] ${item[rcode]}`);
+      
+      
+      
+      // console.log(`villagePopulations[item[vcode]] ${item[vcode]} = item[pcode] ${item[pcode]}`);
+      // console.log(`code_to_villagename[item[vcode]] ${item[vcode]} = item[rcode] ${item[rcode]}`);
+      
+      
+      if(item[sdcode]>0 && item[vcode]===0 ){
+        totalPop += item[pcode]
+      }
+      // console.log("item[populationKey] - ",item[populationKey]);
+      // console.log("item[textKey] - ",item[textKey]);
+      
+      
+      
   
       const label = document.createElement('label');
       label.htmlFor = checkbox.id;
-      label.textContent = item[textKey];
+      label.textContent = item[rcode];
   
       const div = document.createElement('div');
       div.appendChild(checkbox);
@@ -100,7 +127,16 @@ document.addEventListener('DOMContentLoaded', () => {
       // Add event listener to update selected villages
       checkbox.addEventListener('change', updateSelectedVillages);
     });
+    if(totalPop>0){
+      villagePopulations[0] = totalPop;
+    }
+
+    console.log("Total popu ", totalPop);
+    console.log("villagePopulations[0] ", villagePopulations[0]);
+    
+    
   }
+  
   
   // Reset town/village container
   function resetTownVillage() {
@@ -130,22 +166,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     selectedContainer.innerHTML = '';
     checkboxes.forEach(checkbox => {
-      console.log("Checkbox: ", checkbox); 
-      
-      
+      // console.log("Checkbox: ", checkbox);      
       const label = document.querySelector(`label[for="${checkbox.id}"]`);
-      // console.log("Label: ", label);
-      
+  
       const div = document.createElement('div');
-      const villageId = checkbox.id.split("-")[1]; // Get the village ID from the checkbox ID
+      const villageId = checkbox.id.split("-")[1]; 
       
       // Get the population for the village from the villagePopulations object
       const population = villagePopulations[villageId] || 0; // Default to 0 if not found
       totalPopulation += population; // Add to total population
 
-      // Add the village name and population next to each other
-      div.textContent = `${label.textContent} (Population of 2011: ${population})`;
-      selectedContainer.appendChild(div);
+      //Handling the All name
+      const subdistrict = document.getElementById("subdistrict");
+      const selectedSubdistrictName = subdistrict.options[subdistrict.selectedIndex].text;
+
+      const district = document.getElementById("district");
+      const selectedDistrictName = district.options[district.selectedIndex].text;
+
+      if(label.textContent === " All " || label.textContent.includes("Subdistrict") ){
+        // Add the village name and population next to each other(if All in subdistrict or district)
+          div.textContent = `${label.textContent === " All " ? selectedSubdistrictName:selectedDistrictName  } (Population of 2011: ${population})`;
+          selectedContainer.appendChild(div);
+      }
+      else{
+        // Add the village name and population next to each other
+        div.textContent = `${label.textContent} (Population of 2011: ${population})`;
+        selectedContainer.appendChild(div);
+      }
+      
+      
     });
     totalPopulationContainer.textContent = `Total Population: ${totalPopulation}`;
     
@@ -236,8 +285,11 @@ document.addEventListener('DOMContentLoaded', () => {
       
     });
 
+    let alertShown = false;
+
     // Function to handle projection logic
     function handleProjection(projectionMethod) {
+      if (alertShown) return; // Prevent multiple alerts
       const state = document.getElementById('state').value;
       const district = document.getElementById('district').value;
       const subdistrict = document.getElementById('subdistrict').value;
@@ -262,12 +314,18 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       }
 
-      // Validate inputs
+        // Validate inputs
       if (!state || selectedVillages.length === 0 || !projectionMethod ||
         (!targetYear && (!targetYearRange || !targetYearRange.start || !targetYearRange.end))) {
+          
+        alertShown = true; // Prevent further alerts
         alert('Please fill out all required fields.');
+
+        setTimeout(() => { alertShown = false; }, 1000); // Reset alert flag after 1 sec
         return;
       }
+
+      alertShown = false; // Reset after validation
 
 
       const requestData = {
@@ -302,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
             //Render graphs for each method
             Object.keys(data.result).forEach(method => {
               const methodData = data.result[method];
-              console.log("Method data, ",methodData);
+              // console.log("Method data, ",methodData);
               
               Object.keys(methodData).forEach(key => {
                 if ("Growth Percent" in methodData[key]) {
@@ -317,15 +375,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
               });
             
-              console.log("method ", method);
-              console.log("methodData ", methodData);
+              // console.log("method ", method);
+              // console.log("methodData ", methodData);
             
               const canvasId = `graph-${method}`;
-              console.log("Canvas Id ", canvasId);
+              // console.log("Canvas Id ", canvasId);
             
               const labels = Object.keys(methodData[Object.keys(methodData)[0]]); // Years
-              console.log("Object.keys(methodData)[0] ", Object.keys(methodData)[0]);
-              console.log("methodData[Object.keys(methodData)[0]]", methodData[Object.keys(methodData)[0]]);
+              // console.log("Object.keys(methodData)[0] ", Object.keys(methodData)[0]);
+              // console.log("methodData[Object.keys(methodData)[0]]", methodData[Object.keys(methodData)[0]]);
             
               const datasets = Object.entries(methodData).map(([village, yearData]) => {
                 console.log(" Object.values(yearData) ", Object.values(yearData));
@@ -338,8 +396,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
               });
             
-              console.log("datasets original", datasets);
-              console.log("labels original ", labels);
+              // console.log("datasets original", datasets);
+              // console.log("labels original ", labels);
             
               if(!containKeyGrowthPercent){
                 
@@ -349,12 +407,14 @@ document.addEventListener('DOMContentLoaded', () => {
                  }));
                  labels.shift()
 
-                console.log("datasets2", datasets2);
-                console.log("labels for range years", labels);
+                // console.log("datasets2 for range of years", datasets2);
+                // console.log("labels for range years", labels);
                 
                 renderGraph(canvasId, datasets2, labels);
               }
               else{
+                // console.log("datasets original for a single year", datasets);
+                // console.log("labels original for a single year", labels);
                 renderGraphforSingleYear(canvasId,datasets,labels)
               }
             });

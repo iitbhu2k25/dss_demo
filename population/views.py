@@ -11,7 +11,7 @@ from django.db.models import Q
 
 def project_population_arithmetic(state_code, district_code, subdistrict_code, result, village_2011_population, base_year, projection_method, target_year, target_year_range):
     population_1951_to_2011 = []
-    print(f"Hello iam  inside project_population")
+    print(f"Hello iam  inside project_population_arithmetic")
     if state_code and district_code and subdistrict_code:
         query = PopulationDataYear.objects.filter(
             state_code=state_code, district_code=district_code, subdistrict_code=subdistrict_code
@@ -41,6 +41,9 @@ def project_population_arithmetic(state_code, district_code, subdistrict_code, r
     print(f"Aritmetic ka village_2011_population = {village_2011_population}")
 
     if projection_method == "arithmetic-increase":
+        if "arithmetic-increase" not in result:
+            result['arithmetic-increase'] = {}
+
         d_mean = sum(d_values) / len(d_values)
         annual_growth_rate = math.floor(d_mean / 10)
         res = {}
@@ -66,7 +69,7 @@ def project_population_arithmetic(state_code, district_code, subdistrict_code, r
 
                 one_year["Growth Percent"] = round(growth_percent, 2)
 
-                res[key] = one_year
+                result['arithmetic-increase'][key] = one_year
                 
         elif target_year_range:
             start, end = int(target_year_range['start']), int(target_year_range['end'])
@@ -76,9 +79,8 @@ def project_population_arithmetic(state_code, district_code, subdistrict_code, r
                 for year in range(start, end + 1):
                     population_of_target_year_range = village_population + ((annual_growth_rate * (year - base_year)) * growth_factor)
                     year_wise_population[year] = int(population_of_target_year_range)
-                res[village_code] = year_wise_population
+                result['arithmetic-increase'][village_code] = year_wise_population
                 
-        result['arithmetic-increase'] = res
         
 def project_population_geometric(state_code, district_code, subdistrict_code, result, village_2011_population, base_year, projection_method, target_year, target_year_range):
     population_1951_to_2011 = []
@@ -133,6 +135,9 @@ def project_population_geometric(state_code, district_code, subdistrict_code, re
 
     # Rest of your code remains the same
     res = {}
+
+    if "geometric-increase" not in result:
+            result['geometric-increase'] = {}
     if target_year:
         # For a single target year
         target_year = int(target_year)
@@ -156,7 +161,7 @@ def project_population_geometric(state_code, district_code, subdistrict_code, re
             one_year["Growth Percent"] = round(growth_percent, 2)
             
 
-            res[key] = one_year    
+            result['geometric-increase'][key] = one_year    
 
     elif target_year_range:
         # For a range of target years
@@ -170,9 +175,7 @@ def project_population_geometric(state_code, district_code, subdistrict_code, re
                 n = (x-base_year)/10
                 population_of_target_year_range = value * (math.pow((1 + (annual_growth_rate/100)), n))
                 year_wise_population[x] = int(population_of_target_year_range)
-            res[key] = year_wise_population
-
-    result['geometric-increase'] = res
+            result['geometric-increase'][key] = year_wise_population
 
 def project_population_logistic(state_code, district_code, subdistrict_code, result, village_2011_population, base_year, projection_method, target_year, target_year_range):
     population_1951_to_2011 = []
@@ -224,7 +227,8 @@ def project_population_logistic(state_code, district_code, subdistrict_code, res
     annual_growth_rate = math.exp(r_mean) - 1
 
     print(f"Annual growth rate: {annual_growth_rate}")
-
+    if "logistic-growth" not in result:
+            result['logistic-growth'] = {}
     res = {}
     if target_year:
         target_year = int(target_year)
@@ -285,12 +289,12 @@ def project_population_logistic(state_code, district_code, subdistrict_code, res
 
                 one_year["Growth Percent"] = round(growth_percent, 2) if growth_percent>0 else 0
 
-                res[key] = one_year
+                result['logistic-growth'][key] = one_year
                 
             except Exception as e:
                 print(f"Error processing village {key}: {str(e)}")
                 one_year = {2011: value, target_year: 0}
-                res[key] = one_year
+                result['logistic-growth'][key] = one_year
 
 
 
@@ -348,15 +352,13 @@ def project_population_logistic(state_code, district_code, subdistrict_code, res
                             except (OverflowError, ValueError):
                                 year_wise_population[x] = 0
                             
-                res[key] = year_wise_population
+                result['logistic-growth'][key] = year_wise_population
                 
             except (ValueError, ZeroDivisionError):
                 year_wise_population = {2011: value}
                 for x in range(start, end + 1):
                     year_wise_population[x] = 0
-                res[key] = year_wise_population
-
-    result['logistic-growth'] = res
+                result['logistic-growth'][key] = year_wise_population
 
 def project_population_incremental(state_code, district_code, subdistrict_code, result, village_2011_population, base_year, projection_method, target_year, target_year_range):
     population_1951_to_2011 = []
@@ -397,6 +399,8 @@ def project_population_incremental(state_code, district_code, subdistrict_code, 
     m_mean = (m1+m2+m3+m4+m5) / 5
 
     res = {}
+    if "incremental-growth" not in result:
+            result['incremental-growth'] = {}
     if target_year:
         # For a single target year
         target_year = int(target_year)
@@ -422,7 +426,7 @@ def project_population_incremental(state_code, district_code, subdistrict_code, 
 
             one_year["Growth Percent"] = round(growth_percent, 2)
 
-            res[key] = one_year
+            result['incremental-growth'][key] = one_year
 
     elif target_year_range:
         # For a range of target years
@@ -437,9 +441,9 @@ def project_population_incremental(state_code, district_code, subdistrict_code, 
                 k = value / p7
                 population_of_target_year_range = value + k*n*d_mean + ((n*(n+1))*m_mean / 2)*k
                 year_wise_population[x] = int(population_of_target_year_range)
-            res[key] = year_wise_population  # Assign year-wise populations to the village
+            result['incremental-growth'][key] = year_wise_population  # Assign year-wise populations to the village
 
-    result['incremental-growth'] = res
+    
 
 def project_population_exponential(state_code, district_code, subdistrict_code, result, village_2011_population, base_year, projection_method, target_year, target_year_range):
     population_1951_to_2011 = []
@@ -497,6 +501,8 @@ def project_population_exponential(state_code, district_code, subdistrict_code, 
     print(f"growth_rate_of_expo {growth_rate}")
 
     res = {}
+    if "exponential-growth" not in result:
+            result['exponential-growth'] = {}
     if target_year:
         # For a single target year
         target_year = int(target_year)
@@ -520,7 +526,7 @@ def project_population_exponential(state_code, district_code, subdistrict_code, 
 
             one_year["Growth Percent"] = round(growth_percent, 2)
 
-            res[key] = one_year    
+            result['exponential-growth'][key] = one_year    
 
     elif target_year_range:
         # For a range of target years
@@ -534,10 +540,8 @@ def project_population_exponential(state_code, district_code, subdistrict_code, 
                 t = x - base_year
                 population_of_target_year_range = value * math.exp(growth_rate*t)
                 year_wise_population[x] = int(population_of_target_year_range)
-            res[key] = year_wise_population  # Assign year-wise populations to the village
+            result['exponential-growth'][key] = year_wise_population  # Assign year-wise populations to the village
     
-    
-    result['exponential-growth'] = res
                 
 def project_population_demographic(state_code, district_code, subdistrict_code, result, village_2011_population, base_year, target_year, target_year_range, annual_birth_rate, annual_death_rate,annual_emigration_rate,annual_immigration_rate):
  
@@ -654,20 +658,49 @@ def get_villages(request, state_code, district_code, subdistrict_code):
             district_code=district_code,
             village_code__gt=0  # Only get actual villages, exclude 'All' entries
         )
+
+        # Get population data for each subdistrict (where village_code = 0)
+        subdistricts = PopulationData.objects.filter(
+            state_code=state_code,
+            district_code=district_code,
+            subdistrict_code__gt=0,
+            village_code=0
+        ).values('subdistrict_code', 'population_2011','region_name')
+
+        # Convert subdistrict data to a dictionary for easy lookup
+        subdistrict_population_map = {sd['subdistrict_code']: sd['population_2011'] for sd in subdistricts}
+
         # Add a single 'All' entry at the district level
         all_entry = {
+            "subdistrict_code": 0,
             "village_code": 0,
             "region_name": " All ",
             "population_2011": None
         }
+
+        # Construct the village list with subdistrict populations included
         village_list = [all_entry] + [
             {
+                "subdistrict_code": loc.subdistrict_code,
                 "village_code": loc.village_code,
                 "region_name": loc.region_name,
                 "population_2011": loc.population_2011
             }
             for loc in locations
         ]
+
+        # Add subdistrict-level population entries
+        for subdistrict in subdistricts:
+            print(subdistrict)
+            village_list.append({
+                "subdistrict_code": subdistrict["subdistrict_code"],
+                "village_code": 0,  # Represents the total population for the subdistrict
+                "region_name": f"Subdistrict {subdistrict['region_name']}",
+                "population_2011": subdistrict["population_2011"]
+            })
+
+        # Sort so that "All" is at the top, followed by subdistrict totals, then villages
+        village_list.sort(key=lambda x: (x["subdistrict_code"] == 0, x["village_code"] == 0, x["region_name"]))
     else:
         # For specific subdistrict, get villages as before
         print(f"I am coming in 2nd")
@@ -678,16 +711,18 @@ def get_villages(request, state_code, district_code, subdistrict_code):
         )
         village_list = [
             {
+                "subdistrict_code":loc.subdistrict_code,
                 "village_code": loc.village_code,
                 "region_name": " All " if loc.village_code == 0 else loc.region_name,
                 "population_2011": loc.population_2011
-            }
+            }   
             for loc in locations
         ]
         # Sort so that " All " appears at the top
         village_list.sort(key=lambda x: (x["region_name"] != " All ", x["region_name"], x["village_code"]))
 
     return JsonResponse(village_list, safe=False)
+
 
 
 
@@ -809,8 +844,435 @@ def calculate_projection(request):
             print(f"target_year = {target_year}")
             print(f"target_year_range = {target_year_range}")
 
+
+            
+
             base_year  =int(base_year)
         
+           # Handle edge case: When only a single district is selected with no subdistricts
+            if int(subdistrict_code) == 0 and isinstance(villages, list) and len(villages) == 1 and villages[0].split('-')[-1] == "0":
+                print("I am single (Only district selected with one village)")
+
+                population_1951_to_2011_district = []
+                if state_code and district_code and subdistrict_code:
+                    query = PopulationDataYear.objects.filter(
+                                            state_code=state_code, district_code=district_code, subdistrict_code=subdistrict_code
+                                        )       
+                data = query.values(
+                            'population_1951', 'population_1961', 'population_1971', 'population_1981',
+                            'population_1991', 'population_2001', 'population_2011'
+                        )
+                
+                if data.exists():
+                        record = data[0]
+                        population_1951_to_2011_district = [record.get(f'population_{year}', None) for year in [1951, 1961, 1971, 1981, 1991, 2001, 2011]]
+                else:
+                    print("No data found for the given state, district, and subdistrict codes.")
+                    return
+                
+                print(f"population_1951_to_2011_district {population_1951_to_2011_district}")
+
+                if len(population_1951_to_2011_district) < 7:
+                    print("Insufficient data for population projection.")
+                    return
+                
+                # Extract populations from different years
+                p1, p2, p3, p4, p5, p6, p7 = population_1951_to_2011_district
+                d_values = [p2 - p1, p3 - p2, p4 - p3, p5 - p4, p6 - p5, p7 - p6]
+                village_2011_population={}
+                village_2011_population[0] = p7
+                result={}
+                if projection_method == "arithmetic-increase":
+                    d_mean = sum(d_values) / len(d_values)
+                    annual_growth_rate = math.floor(d_mean / 10)
+                    res = {}
+                    base_year = int(base_year)
+                    
+                    if target_year:
+                        target_year = int(target_year)
+                        for key, value in village_2011_population.items():
+                            one_year = {2011: value}
+                            growth_factor = value / p7
+                            population_of_target_year = value+ ((annual_growth_rate * (target_year - base_year)) * growth_factor)
+
+                            one_year[target_year] = int(population_of_target_year)
+
+                            growth_percent = 0
+                            try:
+                                if value != '' and population_of_target_year != '':
+                                    value_int = int(value)
+                                    target_year_int = int(population_of_target_year)
+                                    growth_percent = ((target_year_int - value_int) / value_int) * 100
+                            except (ValueError, TypeError, ZeroDivisionError):
+                                growth_percent = 0  # If conversion fails or division by zero occurs, set to 0
+
+                            one_year["Growth Percent"] = round(growth_percent, 2)
+
+                            res[key] = one_year
+                            
+                    elif target_year_range:
+                        start, end = int(target_year_range['start']), int(target_year_range['end'])
+                        for village_code, village_population in village_2011_population.items():
+                            year_wise_population = {2011: village_population}
+                            growth_factor = village_population / p7
+                            for year in range(start, end + 1):
+                                population_of_target_year_range = village_population + ((annual_growth_rate * (year - base_year)) * growth_factor)
+                                year_wise_population[year] = int(population_of_target_year_range)
+                            res[village_code] = year_wise_population
+                            
+                    result['arithmetic-increase'] = res
+
+                elif projection_method == "geometric-increase":
+                     # Calculate decadal population differences
+                    d1,d2,d3,d4,d5,d6 = [p2 - p1, p3 - p2, p4 - p3, p5 - p4, p6 - p5, p7 - p6]
+                    g1 = (d1 * 100) / p1 if p1 != 0 else 0
+                    g2 = (d2 * 100) / p2 if p2 != 0 else 0
+                    g3 = (d3 * 100) / p3 if p3 != 0 else 0
+                    g4 = (d4 * 100) / p4 if p4 != 0 else 0
+                    g5 = (d5 * 100) / p5 if p5 != 0 else 0
+                    g6 = (d6 * 100) / p6 if p6 != 0 else 0
+
+                     # For the annual growth rate, we need to handle negative or zero values
+                    growth_values = [g1, g2, g3, g4, g5, g6]
+                    valid_growth_values = [g for g in growth_values if g > 0]
+
+                    if valid_growth_values:
+                        # Calculate geometric mean only for positive values
+                        product = 1
+                        for g in valid_growth_values:
+                            product *= g
+                        annual_growth_rate = math.pow(product, 1/len(valid_growth_values))
+                    else:
+                        # Handle the case where no valid growth rates exist
+                        annual_growth_rate = 0
+
+                    # Rest of your code remains the same
+                    res = {}
+                    if target_year:
+                        # For a single target year
+                        target_year = int(target_year)
+                        n = (target_year-base_year)/10
+                        for key, value in village_2011_population.items():
+                            one_year = {}
+                            one_year[2011] = value
+                            population_of_target_year = value * (math.pow((1 + (annual_growth_rate/100)), n))
+                            one_year[target_year] = int(population_of_target_year)
+                            
+                            growth_percent = 0
+
+                            try:
+                                if value != '' and population_of_target_year != '':
+                                    value_int = int(value)
+                                    target_year_int = int(population_of_target_year)
+                                    growth_percent = ((target_year_int - value_int) / value_int) * 100
+                            except (ValueError, TypeError, ZeroDivisionError):
+                                growth_percent = 0  # If conversion fails or division by zero occurs, set to 0
+
+                            one_year["Growth Percent"] = round(growth_percent, 2)
+                            
+
+                            res[key] = one_year
+                    elif target_year_range:
+                        # For a range of target years
+                        start = int(target_year_range['start'])
+                        end = int(target_year_range['end'])
+
+                        for key, value in village_2011_population.items():
+                            year_wise_population = {}
+                            year_wise_population[2011] = value
+                            for x in range(start, end + 1):
+                                n = (x-base_year)/10
+                                population_of_target_year_range = value * (math.pow((1 + (annual_growth_rate/100)), n))
+                                year_wise_population[x] = int(population_of_target_year_range)
+                            res[key] = year_wise_population
+
+                    result['geometric-increase'] = res        
+
+                elif projection_method == "logistic-growth":
+                    # Calculate decadal population differences
+                    d1,d2,d3,d4,d5,d6 = [p2 - p1, p3 - p2, p4 - p3, p5 - p4, p6 - p5, p7 - p6]
+                    
+                    g1 = (d1) / p1 if p1 != 0 else 0
+                    g2 = (d2) / p2 if p2 != 0 else 0
+                    g3 = (d3) / p3 if p3 != 0 else 0
+                    g4 = (d4) / p4 if p4 != 0 else 0
+                    g5 = (d5) / p5 if p5 != 0 else 0
+                    g6 = (d6) / p6 if p6 != 0 else 0
+
+                    print(f"Growth rates: g1={g1}, g2={g2}, g3={g3}, g4={g4}, g5={g5}, g6={g6}")
+                    r1 = math.log(1+g1)
+                    r2 = math.log(1+g2)
+                    r3 = math.log(1+g3)
+                    r4 = math.log(1+g4)
+                    r5 = math.log(1+g5)
+                    r6 = math.log(1+g6)
+                    
+                    r_mean = (r1 + r2 + r3 + r4 + r5 + r6) / 6
+                    print(f"Mean growth rate: {r_mean}")
+                    
+                    annual_growth_rate = math.exp(r_mean) - 1
+
+                    print(f"Annual growth rate: {annual_growth_rate}")
+                    res = {}
+                    if target_year:
+                        target_year = int(target_year)
+                        t = target_year - 1991
+                        for key, value in village_2011_population.items():
+                            try:
+                                print(f"\nProcessing village {key} with 2011 population {value}")
+                                if value == 0:
+                                    continue
+                                    
+                                p_2 = float(value)  # village_2011 population
+                                p_0 = p_2 * ((1 - (annual_growth_rate/100))**2)  # 1991
+                                p_1 = p_2 * (1 - (annual_growth_rate/100))  # 2001
+                                p_1 = round(p_1, 2) 
+                                p_0 = round(p_0, 2)
+                                
+                                print(f"p_0={p_0}, p_1={p_1}, p_2={p_2}")
+                                
+                                if abs(p_0 * p_2 - p_1**2) < 1e-10:  # Check for near-zero
+                                    ps = 0
+                                else:
+                                    ps = (2 * p_0 * p_1 * p_2 - p_1**2 * (p_0 + p_2)) / (p_0 * p_2 - p_1**2)
+                                print(f"ps={ps}")
+                                
+                                # Extra safety checks
+                                if p_1 <= 0 or p_0 <= 0 or ps <= p_0 or ps <= p_1:
+                                    print(f"Invalid values detected for logarithm calculation")
+                                    population_of_target_year = 0
+                                else:
+                                    log_denominator = (p_0 / p_1) * ((ps - p_1) / (ps - p_0))
+                                    print(f"log_denominator={log_denominator}")
+                                    
+                                    if log_denominator <= 0:
+                                        print(f"Negative log_denominator")
+                                        population_of_target_year = 0
+                                    else:
+                                        n = (2.3/10) * math.log10(log_denominator)  # Using log10 directly
+                                        m = (ps - p_0) / p_0
+                                        print(f"n={n}, m={m}")
+                                        
+                                        denominator = 1 + m * math.exp(n*t)
+                                        population_of_target_year = ps / denominator if denominator != 0 else 0
+                                        print(f"denominator={denominator}, population={population_of_target_year}")
+                                
+                                one_year = {
+                                    2011: value,
+                                    target_year: int(population_of_target_year)
+                                }
+
+                                growth_percent = 0
+                                try:
+                                    if value != '' and population_of_target_year != '':
+                                        value_int = int(value)
+                                        target_year_int = int(population_of_target_year)
+                                        growth_percent = ((target_year_int - value_int) / value_int) * 100
+                                except (ValueError, TypeError, ZeroDivisionError):
+                                    growth_percent = 0  # If conversion fails or division by zero occurs, set to 0
+
+                                one_year["Growth Percent"] = round(growth_percent, 2) if growth_percent>0 else 0
+
+                                res[key] = one_year
+                                
+                            except Exception as e:
+                                print(f"Error processing village {key}: {str(e)}")
+                                one_year = {2011: value, target_year: 0}
+                                res[key] = one_year
+
+                    elif target_year_range:
+                        start = int(target_year_range['start'])
+                        end = int(target_year_range['end'])
+
+                        for key, value in village_2011_population.items():
+                            if value == 0:
+                                continue
+                                
+                            try:
+                                p_2 = float(value)  # village_2011 population
+                                p_0 = p_2 * ((1 - (annual_growth_rate/100))**2)  # 1991
+                                p_1 = p_2 * (1 - (annual_growth_rate/100))  # 2001
+                                p_1 = round(p_1, 2) 
+                                p_0 = round(p_0, 2)
+                                
+                                print(f"p_0={p_0}, p_1={p_1}, p_2={p_2}")
+                                
+                                if abs(p_0 * p_2 - p_1**2) < 1e-10:  # Check for near-zero
+                                    ps = 0
+                                else:
+                                    ps = (2 * p_0 * p_1 * p_2 - p_1**2 * (p_0 + p_2)) / (p_0 * p_2 - p_1**2)
+                                print(f"ps={ps}")
+                                
+                                # Check for invalid conditions early
+                                if (p_1 == 0 or ps == p_0 or p_0 <= 0 or p_1 <= 0 or ps <= 0):
+                                    year_wise_population = {2011: value}
+                                    for x in range(start, end + 1):
+                                        year_wise_population[x] = 0
+                                else:
+                                    # Calculate log_denominator safely
+                                    log_term = (p_0 / p_1) * ((ps - p_1) / (ps - p_0))
+                                    if log_term <= 0:
+                                        year_wise_population = {2011: value}
+                                        for x in range(start, end + 1):
+                                            year_wise_population[x] = 0
+                                    else:
+                                        n = (2.3/10) * math.log(log_term, 10)
+                                        m = (ps - p_0) / p_0 if p_0 != 0 else 0
+                                        
+                                        year_wise_population = {2011: value}
+                                        for x in range(start, end + 1):
+                                            try:
+                                                t = x - 1991
+                                                exp_term = math.exp(n*t)
+                                                # Check for overflow in exp calculation
+                                                if exp_term == float('inf'):
+                                                    population = 0
+                                                else:
+                                                    denominator = 1 + m * exp_term
+                                                    population = ps / denominator if denominator != 0 else 0
+                                                year_wise_population[x] = int(population)
+                                            except (OverflowError, ValueError):
+                                                year_wise_population[x] = 0
+                                            
+                                res[key] = year_wise_population
+                                
+                            except (ValueError, ZeroDivisionError):
+                                year_wise_population = {2011: value}
+                                for x in range(start, end + 1):
+                                    year_wise_population[x] = 0
+                                res[key] = year_wise_population
+
+                    result['logistic-growth'] = res
+
+                elif projection_method == "incremental-growth":
+                     # Calculate decadal population differences
+                    d1,d2,d3,d4,d5,d6 = [p2 - p1, p3 - p2, p4 - p3, p5 - p4, p6 - p5, p7 - p6]
+                   
+                    d_mean = (d1+d2+d3+d4+d5+d6) / 6
+
+                    m1 = d2 - d1
+                    m2 = d3 - d2
+                    m3 = d4 - d3
+                    m4 = d5 - d4
+                    m5 = d6 - d5 
+                    m_mean = (m1+m2+m3+m4+m5) / 5
+
+                    res = {}
+                    if target_year:
+                        # For a single target year
+                        target_year = int(target_year)
+                        n = (target_year - base_year) / 10
+                        for key, value in village_2011_population.items():
+                            k = value / p7
+                            one_year = {}
+                            one_year[2011] = value #populating 2011 population of village to result dict
+                            
+                            # print(f"n={n}, d_mean = {d_mean}, pop_2011_vill {value}, m_mean {m_mean}, pop_2011_subdis {p7}")
+                            population_of_target_year = value + k*n*d_mean + ((n*(n+1))*m_mean / 2)*k
+                            one_year[target_year] = int(population_of_target_year)
+
+                            growth_percent = 0
+
+                            try:
+                                if value != '' and population_of_target_year != '':
+                                    value_int = int(value)
+                                    target_year_int = int(population_of_target_year)
+                                    growth_percent = ((target_year_int - value_int) / value_int) * 100
+                            except (ValueError, TypeError, ZeroDivisionError):
+                                growth_percent = 0  # If conversion fails or division by zero occurs, set to 0
+
+                            one_year["Growth Percent"] = round(growth_percent, 2)
+
+                            res[key] = one_year
+                    elif target_year_range:
+                        # For a range of target years
+                        start = int(target_year_range['start'])
+                        end = int(target_year_range['end'])
+                        
+                        for key, value in village_2011_population.items():
+                            year_wise_population = {}  # To store population for each year in the range
+                            year_wise_population[2011] = value #populating 2011 population of village to result dict
+                            for x in range(start, end + 1):
+                                n = (x - base_year) / 10
+                                k = value / p7
+                                population_of_target_year_range = value + k*n*d_mean + ((n*(n+1))*m_mean / 2)*k
+                                year_wise_population[x] = int(population_of_target_year_range)
+                            res[key] = year_wise_population  # Assign year-wise populations to the village
+
+                    result['incremental-growth'] = res         
+                elif projection_method == "exponential-growth":
+                    x1 =  1951-base_year
+                    x2 =   1961-base_year
+                    x3 =  1971-base_year
+                    x4 =  1981-base_year
+                    x5 = 1991-base_year
+                    x6 = 2001-base_year
+                    x7 = 2011-base_year
+
+                    y1 = math.log(p1,10)
+                    y2 = math.log(p2, 10)
+                    y3 = math.log(p3,10)
+                    y4 = math.log(p4, 10)
+                    y5 = math.log(p5,10)
+                    y6 = math.log(p6,10)
+                    y7 = math.log(p7,10)
+
+                    x_i_sum = x1+x2+x3+x4+x5+x6+x7
+                    y_i_sum = y1+y2+y3+y4+y5+y6+y7
+                    x_i_square_sum = x1**2 + x2**2 + x3**2 + x4**2 + x5**2 + x6**2 + x7**2
+                    x_y_prod_sum = x1*y1 + x2*y2 + x3*y3 + x4*y4 + x5*y5 + x6*y6 + x7*y7
+                    x_sum_prod_y_sum = x_i_sum * y_i_sum
+
+                    n = 7
+
+                    growth_rate = ((n*x_y_prod_sum) - x_sum_prod_y_sum) / (n*x_i_square_sum - (x_i_sum**2)) # r
+                    print(f"growth_rate_of_expo {growth_rate}")
+
+                    res = {}
+                    if target_year:
+                        # For a single target year
+                        target_year = int(target_year)
+                        t = target_year - base_year
+                        for key, value in village_2011_population.items():
+                            one_year = {}
+                            one_year[2011] = value  #populating 2011 population of village to result dict
+                            
+                            population_of_target_year =  value * math.exp(growth_rate*t)
+                            one_year[target_year] = int(population_of_target_year)
+
+                            growth_percent = 0
+
+                            try:
+                                if value != '' and population_of_target_year != '':
+                                    value_int = int(value)
+                                    target_year_int = int(population_of_target_year)
+                                    growth_percent = ((target_year_int - value_int) / value_int) * 100
+                            except (ValueError, TypeError, ZeroDivisionError):
+                                growth_percent = 0  # If conversion fails or division by zero occurs, set to 0
+
+                            one_year["Growth Percent"] = round(growth_percent, 2)
+
+                            res[key] = one_year
+                    elif target_year_range:
+                        # For a range of target years
+                        start = int(target_year_range['start'])
+                        end = int(target_year_range['end'])
+
+                        for key, value in village_2011_population.items():
+                            year_wise_population = {}  # To store population for each year in the range
+                            year_wise_population[2011] = value  #populating 2011 population of village to result dict
+                            for x in range(start, end + 1):
+                                t = x - base_year
+                                population_of_target_year_range = value * math.exp(growth_rate*t)
+                                year_wise_population[x] = int(population_of_target_year_range)
+                            res[key] = year_wise_population  # Assign year-wise populations to the village
+                    
+                    
+                    result['exponential-growth'] = res        
+
+
+
+                return JsonResponse({'success': True, 'result': result})
 
             village_2011_population = {}
             village_subdistrict_mapping = {}
@@ -909,4 +1371,5 @@ def calculate_projection(request):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
 
