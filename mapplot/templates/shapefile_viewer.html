@@ -145,26 +145,27 @@
             <i class="fas fa-palette"></i> Style Options
           </div>
 
-          <div class="style-control-row">
-            <label for="lineColor" class="form-label">Line Color:</label>
-            <input
-              type="color"
-              id="lineColor"
-              class="color-input"
-              value="#000000"
-            />
+          <div class="style-controls-container" style="display: flex; align-items: center; gap: 20px;">
+            <div class="style-control-item" style="display: flex; align-items: center;">
+              <label for="lineColor" class="form-label" style="margin-right: 8px;">Line Color:</label>
+              <input
+                type="color"
+                id="lineColor"
+                class="color-input"
+                value="#000000"
+              />
+            </div>
+            
+            <div class="style-control-item" style="display: flex; align-items: center;">
+              <label for="fillColor" class="form-label" style="margin-right: 8px;">Fill Color:</label>
+              <input
+                type="color"
+                id="fillColor"
+                class="color-input"
+                value="#78b4db"
+              />
+            </div>
           </div>
-
-          <div class="style-control-row">
-            <label for="fillColor" class="form-label">Fill Color:</label>
-            <input
-              type="color"
-              id="fillColor"
-              class="color-input"
-              value="#78b4db"
-            />
-          </div>
-
           <div class="style-control-row">
             <label for="opacity" class="form-label"
               >Opacity: <span id="opacityValue">0.8</span></label
@@ -1837,6 +1838,8 @@
     );
   }
 
+
+  
   // Function to add labels to features
   function addLabels() {
     if (!currentLayer || labelLayer) return;
@@ -2278,7 +2281,7 @@
       pdf.text(`Subcategory: ${subcategory}`, margin.left + 60, textYPos);
       pdf.text(`Generated: ${timestamp}`, margin.left + 130, textYPos);
       pdf.text(
-        `Source: India GIS Vector Data Viewer`,
+        `Source:IIT BHU DSS `,
         margin.left + 220,
         textYPos
       );
@@ -2316,7 +2319,7 @@
 
       // Left side - vertical text with better alignment
       pdf.saveGraphicsState();
-      pdf.text(label, x - 7, yPos, {
+      pdf.text(label, x - 2, yPos+5, {
         align: "center",
         angle: 90,
       });
@@ -2324,7 +2327,7 @@
 
       // Right side - vertical text with better alignment
       pdf.saveGraphicsState();
-      pdf.text(label, x + width + 7, yPos, {
+      pdf.text(label, x + width + 17, yPos+5, {
         align: "center",
         angle: 90,
       });
