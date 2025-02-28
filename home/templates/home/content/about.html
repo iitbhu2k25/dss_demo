@@ -55,15 +55,26 @@
         font-family: 'Merriweather', serif;
         font-size: 2.2em;
         margin-top: 2em;
-        margin-bottom: 1.2em;
+        margin-bottom: 0.5em;
         text-align: left;
         color: #1e3c72;
         border-bottom: 3px solid rgba(255, 255, 255, 0.4);
         padding-bottom: 0.5em;
+        text-decoration: none;
+    }
+    .Heading-text{
+        text-decoration: underline;
+    }
+    .about-h2::after{
+        content: ":";
+        margin-left: 0.3em;
+        font-size: 1em;
+        color: #1e3c72;
     }
 
     .about-p {
         font-size: 1.2em;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
         line-height: 1.8;
         margin: 0 0 2em 0;
         color: #1e3c72;
@@ -85,15 +96,17 @@
 
     .about-objectives ul,
     .about-applications ul {
-        list-style-type: none;
+        list-style-type: disc;
         padding: 0;
-        margin: 0;
+        margin-top: 0.5em;
+        margin-bottom: 0;
     }
 
     .about-objectives li,
     .about-applications li {
-        margin-bottom: 1.5em;
+        margin-bottom: 1em;
         font-size: 1.1em;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
         color: #1e3c72;
         padding-left: 1.5em;
         position: relative;
@@ -125,6 +138,36 @@
         padding: 0 1em;
     }
 
+    /* Button styles */
+    .documents-button {
+        display: block;
+        width: 200px;
+        margin: 0 auto 20px;
+        padding: 12px 20px;
+        background-color: #1e3c72;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1.1em;
+        font-weight: 600;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        text-decoration: none;
+    }
+
+    .documents-button:hover {
+        background-color: #2a4d8a;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .documents-button:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -134,6 +177,14 @@
         animation: fadeIn 0.5s ease-out forwards;
         opacity: 0;
     }
+.about-section:nth-child(3) {
+    margin-bottom: 0.5em;
+}
+
+.about-section:nth-child(4) {
+    margin-top: 0.5em; 
+}
+
 
     .about-section:nth-child(1) { animation-delay: 0.1s; }
     .about-section:nth-child(2) { animation-delay: 0.2s; }
@@ -172,11 +223,20 @@
             padding: 1.5em;
             margin: 2em 0;
         }
+        
+        .documents-button {
+            width: 180px;
+            font-size: 1em;
+            padding: 10px 16px;
+        }
     }
 </style>
 
 <div class="about-container">
     <div class="about-content-wrapper">
+        <!-- Documents Button -->
+        <a href="/confident" class="documents-button">Documents</a>
+        
         <!-- Main Title Section -->
         <section class="about-section">
             <h1 class="about-h1">Decision Support System for Water Governance</h1>
@@ -187,15 +247,19 @@
 
         <!-- Introduction Section -->
         <section class="about-section">
-            <h2 class="about-h2">Introduction: Water Governance Challenges</h2>
+            <h2 class="about-h2">  
+                <span class="Heading-text">Introduction: Water Governance Challenges</span>
+            </h2>
             <p class="about-p">
-                Water governance is a complex, multi-dimensional challenge exacerbated by climate change, urban expansion, and socio-economic dynamics. The aim of this DSS is to provide holistic solutions to water management by combining hydrological, socio-economic, and ecological factors through an integrated modeling framework.
+                &nbsp; &nbsp; &nbsp; &nbsp;Water governance is a complex, multi-dimensional challenge exacerbated by climate change, urban expansion, and socio-economic dynamics. The aim of this DSS is to provide holistic solutions to water management by combining hydrological, socio-economic, and ecological factors through an integrated modeling framework.
             </p>
         </section>
 
         <!-- Objectives Section -->
         <section class="about-section">
-            <h2 class="about-h2">Project Objectives</h2>
+            <h2 class="about-h2">
+                <span class="Heading-text">Project Objectives</span>
+            </h2>
             <div class="about-objectives">
                 <ul>
                     <li>Development of a Data Management Framework to handle large-scale, multi-source water data.</li>
@@ -207,7 +271,9 @@
 
         <!-- Applications Section -->
         <section class="about-section">
-            <h2 class="about-h2">Potential Applications of the DSS</h2>
+            <h2 class="about-h2">
+                <span class="Heading-text">Potential Applications of the DSS</span>
+            </h2>
             <div class="about-applications">
                 <ul id="applications-list">
                     <!-- List items will be populated by JavaScript -->
@@ -217,25 +283,31 @@
 
         <!-- Collaborations Section -->
         <section class="about-section">
-            <h2 class="about-h2">Key Collaborations and Supporting Missions</h2>
+            <h2 class="about-h2">
+                <span class="Heading-text">Key Collaborations and Supporting Missions</span>
+            </h2>
             <p class="about-p">
-                This DSS will work in alignment with national water projects like the <strong class="about-strong">Jal Jeevan Mission</strong>, <strong class="about-strong">Atal Bhujal Yojana</strong>, <strong class="about-strong">National Hydrological Project</strong>, and <strong class="about-strong">National Groundwater Management Improvement Program-2</strong>, to name a few. By integrating these missions' goals into our system, we aim to enhance India's water resource management capabilities.
+                &nbsp; &nbsp; &nbsp; &nbsp; This DSS will work in alignment with national water projects like the <strong class="about-strong">Jal Jeevan Mission</strong>, <strong class="about-strong">Atal Bhujal Yojana</strong>, <strong class="about-strong">National Hydrological Project</strong>, and <strong class="about-strong">National Groundwater Management Improvement Program-2</strong>, to name a few. By integrating these missions' goals into our system, we aim to enhance India's water resource management capabilities.
             </p>
         </section>
 
         <!-- Technology Section -->
         <section class="about-section">
-            <h2 class="about-h2">Technological Framework</h2>
+            <h2 class="about-h2">
+                <span class="Heading-text">Technological Framework</span>
+            </h2>
             <p class="about-p">
-                The DSS will utilize advanced data from sources such as the Central Water Commission (CWC), India Meteorological Department (IMD), and satellite imagery from NASA's MODIS and Sentinel satellites. By combining these data sources and applying system thinking methodologies, the DSS will facilitate informed, effective decision-making at multiple levels of water governance.
+                &nbsp;The DSS will utilize advanced data from sources such as the Central Water Commission (CWC), India Meteorological Department (IMD), and satellite imagery from NASA's MODIS and Sentinel satellites. By combining these data sources and applying system thinking methodologies, the DSS will facilitate informed, effective decision-making at multiple levels of water governance.
             </p>
         </section>
 
         <!-- Conclusion Section -->
         <section class="about-section">
-            <h2 class="about-h2">Conclusion</h2>
+            <h2 class="about-h2">
+                <span class="Heading-text">Conclusion</span>
+            </h2>
             <p class="about-p">
-                This DSS will serve as a critical tool for water resource management, supporting policymakers, stakeholders, and local authorities in managing water systems sustainably and effectively, contributing to the long-term achievement of the SDGs.
+                &nbsp;This DSS will serve as a critical tool for water resource management, supporting policymakers, stakeholders, and local authorities in managing water systems sustainably and effectively, contributing to the long-term achievement of the SDGs.
             </p>
         </section>
     </div>
