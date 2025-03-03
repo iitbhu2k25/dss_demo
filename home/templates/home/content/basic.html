@@ -2,122 +2,190 @@
 {% load static %}
 
 {% block content %}
-  <style>
-        /* Main container styles */
-        .varuna-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: #333;
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 0;
+        background: lightblue;
+        background-size: cover;
+        color: #fff;
+        text-align: center;
+    }
+
+
+    .overlay {
+        background: rgba(0, 0, 0, 0.6); 
+        padding: 50px 20px;
+    }
+
+    .title {
+        font-size: 2.5rem; 
+font-weight: bold;
+color: #45aef5;
+text-align: center;
+margin-top: -20px;
+    }
+
+    .subtitle {
+        
+        font-size: 1.3rem;  
+font-weight: 400;
+margin-bottom: 10px;
+color: #f2f6f8;
+text-align: center;  
+display: block;
+}
+.subtitle-container {
+width: 100%;  
+}
+    .section {
+        max-width: 900px;
+        margin: 40px auto;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .section:hover {
+        transform: scale(1.02);
+    }
+
+    .section h2 {
+        color: #84ccfb;
+        font-size: 2rem;
+        margin-bottom: 15px;
+    }
+
+    .section p {
+        font-size: 1.2rem;
+        line-height: 1.8;
+        color: #f1f1f1;
+        text-align: justify;
+    }
+
+
+    .footer {
+        margin-top: 50px;
+        font-size: 1rem;
+        color: #cceeff;
+    }
+
+
+    @media screen and (max-width: 768px) {
+        .title {
+            font-size: 2.2rem;
         }
-
-        /* Header styles */
-        .varuna-title {
-            color: #2c5282;
-            font-size: 2.5rem;
-            text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 3px solid #4299e1;
+        .subtitle {
+            font-size: 1.4rem;
         }
-
-        .varuna-heading {
-            color: #2b6cb0;
-            font-size: 2rem;
-            margin-top: 2.5rem;
-            margin-bottom: 1.5rem;
-            padding-left: 1rem;
-            border-left: 4px solid #4299e1;
+        .section {
+            width: 90%;
         }
-
-        .varuna-subheading {
-            color: #3182ce;
-            font-size: 1.5rem;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Paragraph styles */
-        .varuna-text {
-            margin-bottom: 1.5rem;
-            text-align: justify;
-            padding: 0 1rem;
-        }
-
-        /* Strong text emphasis */
-        .varuna-strong {
-            color: #2c5282;
-            font-weight: 600;
-        }
-
-        /* Content section spacing */
-        .varuna-content > * + * {
-            margin-top: 1rem;
-        }
-
-        /* Responsive design */
-        @media screen and (max-width: 768px) {
-            .varuna-content {
-                padding: 1rem;
-            }
-
-            .varuna-title {
-                font-size: 2rem;
-            }
-
-            .varuna-heading {
-                font-size: 1.75rem;
-            }
-
-            .varuna-subheading {
-                font-size: 1.25rem;
-            }
-
-            .varuna-text {
-                padding: 0 0.5rem;
-            }
-        }
-
-        /* Print styles */
-        @media print {
-            .varuna-content {
-                max-width: 100%;
-                padding: 0;
-            }
-
-            .varuna-title, .varuna-heading, .varuna-subheading {
-                page-break-after: avoid;
-            }
-
-            .varuna-text {
-                page-break-inside: avoid;
-            }
-        }
-
-        /* Hover effects */
-        .varuna-heading:hover, .varuna-subheading:hover {
-            transform: translateX(5px);
-            transition: transform 0.3s ease;
-        }
-    </style>
+    }
+</style>
 </head>
 <body>
-  <h1 class="varuna-title">Varuna River & SLCR</h1>
-  <div class="varuna-content">
-    <p class="varuna-text"><strong class="varuna-strong">Varuna River and SLCR (Sustainable Land and Water Resource Conservation)</strong> are critical for water management and conservation in regions dependent on river systems. The Varuna River faces challenges related to water quality, availability, and seasonal flow, which require coordinated management interventions.</p>
 
-    <h2 class="varuna-heading">Major Submodules and Outcomes</h2>
-    <h3 class="varuna-subheading">River Rejuvenation</h3>
-    <p class="varuna-text">Efforts to rejuvenate the Varuna River include monitoring and managing water quality, improving water availability, and restoring the river’s natural flow regime to ensure its sustainability for future generations.</p>
+    <div class="overlay">
+        <h1 class="title">BASIC MODULES</h1>
+        <div class="subtitle-container">    
+        <h2 class="subtitle">Basic Modules include efficient sewage load estimation and prediction. Efficient sewage
+            load estimation and prediction is essential for accurate wastewater quantification,
+            infrastructure planning, and sustainable environmental management. This module
+            integrates population forecasting, water demand estimation, sewage load assessment,
+            and STP site suitability analysis to ensure efficient wastewater treatment, optimized
+            resource allocation, and long-term urban sustainability.</p>
+</div>
+     
+        <div class="section">
+            <h2>Population Prediction</h2>
+            <p>Accurate forecasting is essential for predicting future sewage generation. Multiple analytical approaches are used:</p>
+            <ul>
+           <li> <p><strong>Time Series-Based Analysis:</strong> Uses historical demographic data to project population trends at district and sub-district levels and allows analysis at different levels (district, sub-district, ward, village).</p></li>
+            <li><p><strong>Machine Learning-Based Methods:</strong> Employs artificial neural networks (ANNs) for predictive modeling with a 70:30 training-to-testing data split.</p></li>
+           <li> <p><strong>Cohort Component Method:</strong> Estimates future population using fertility, mortality, migration rates and provides gender-segregated projections for improved planning.</p></li>
+           <li><p><strong>Logistic & Exponential Growth Models:</strong> Simulates both constrained and unrestricted population growth scenarios and essential for long-term urban sewage management planning.</p></li>
+        </ul>
+        </div>
 
-    <h3 class="varuna-subheading">SLCR Strategies</h3>
-    <p class="varuna-text">Sustainable Land and Water Resource Conservation (SLCR) strategies focus on preventing land degradation, managing water efficiently, and ensuring that local communities engage in water resource management.</p>
+        <div class="section">
+            <h2>Water Demand Estimation & Prediction</h2>
+            <p>Sewage generation is directly linked to water consumption. This module estimates
+                current and future water demand across different sectors, ensuring a reliable basis for
+                wastewater calculations.</p>
+            <ul>
+            <li><p><strong>Domestic Demand:</strong> Calculated using CPHEEO guidelines (135 LPCD for <1M population, 150 LPCD
+                for >1M) and provides automated estimates based on region-specific population data.</p></li>
+            <li><p><strong>Institutional Demand:</strong> Computes water requirements for hospitals, hotels, hostels, industries,
+                schools, and public facilities and uses sector-specific multipliers (e.g., 450 LPCD for hospitals, 135 LPCD for
+                hostels).</p></li>
+            <li><p><strong>Fire Fighting Demand:</strong> Estimates emergency water requirements based on regional population growth
+                rates and supports reservoir allocation and contingency planning.</p></li>
+            <li><p><strong>Floating Population Water Demand:</strong> Adjusts estimates based on bathing facilities (45 LPCD with, 25 LPCD without) and incorporates real-time crowd data for festival/event planning.</p></li>    
+            <li><p><strong>Total Water Demand:</strong> Aggregates all sector-based demands to determine gross regional water
+                requirements and enables real-time tracking for municipal planning and infrastructure upgrades.</p></li>
+        </ul>
+        </div>
 
-    <h2 class="varuna-heading">Applications and Outputs</h2>
-    <p class="varuna-text">Outputs include reports on river health, rejuvenation strategies, water quality improvement plans, and SLCR implementation documents, as well as data-driven decision tools for better management.</p>
-  </div>
+ 
+        <div class="section">
+            <h2>Sewage Load Estimation</h2>
+            <p>The Sewage Load Estimation module provides an integrated framework to predict
+                wastewater generation based on water supply, sector-based consumption, and
+                infiltration factors.</p>
+            <ul>  
+
+         <li><p><strong>Sector-Based Estimation Method:</strong> Estimates sewage load from domestic, institutional, industrial, and public
+                water use and accounts for floating population and fire-fighting requirements.</p></li>    
+            <li><p><strong>Water Supply-Based Method:</strong> Computes sewage load as 80% of water consumption (per CPHEEO
+                standards) and adjusts for stormwater infiltration in combined sewer networks.</p></li>
+        <li><p><strong>Real-Time Wastewater Monitoring:</strong> Uses sensor-based tracking for improved STP operations (Sewage Treatment
+                Plants) and enables predictive maintenance and operational efficiency improvements.</p></li>
+        </ul>
+            </div>
+
+        <div class="section">
+            <h2>STP Site Priority & Suitability</h2>
+            <p>Optimal sewage treatment plant (STP) site selection ensures efficient wastewater
+                management while minimizing environmental and social impacts. This module
+                prioritizes sites based on multi-criteria decision analysis (MCDA).</p>
+            <ul>   
+            <li><p><strong>STP Site Prioritization:</strong> Uses Analytic Hierarchy Process (AHP) and TOPSIS to rank potential STP
+                locations and factors in sewage gap, rainfall, temperature, tourist population, and water
+                quality index.</p></li>
+            <li><p><strong>STP Site Suitability Analysis:</strong> Evaluates lithology, geomorphology, soil type, elevation, land use (LULC), and
+                population density, avoids conflict zones like ASI heritage sites, defense areas, flood zones, and
+                seismic zones as well as utilizes GIS-based spatial analysis for precision mapping.</p></li>
+            <li><p><strong>Advanced Suitability Models:</strong> Integrates AHP, Fuzzy-AHP, DEMATLE-ANP, and Grey Relational Analysis (GRA)
+                for optimized decision-making and supports adaptive site planning based on hydrological and demographic
+                shifts.</p></li>
+            </ul>    
+        </div>
+
+   
+        <div class="section">
+            <h2>Why This Matters?</h2>
+            <ul>
+            <li><p>Enhances wastewater infrastructure planning with data-driven forecasting.</p></li>
+            <li><p>Reduces water pollution risks through optimized STP site selection.</p></li>
+            <li><p>Improves public health & sanitation with accurate sewage load assessments.</p></li>
+            <li><p>Supports sustainable urban development by integrating machine learning,
+                GIS, and predictive analytics.</p></li>
+            <li><p>Optimizes wastewater treatment efficiency, reducing operational costs and
+                environmental impact.</p></li>   
+            </ul>    
+            <p>With real-time monitoring, advanced forecasting models, and GIS-based planning,
+                this module ensures sustainable, resilient, and future-ready wastewater
+                management solutions. </p>     
+        </div>
+        <div class="footer">
+            <p>© 2025 Varuna River Conservation Initiative | Designed for Sustainability</p>
+        </div>
+    </div>
+
 </body>
 {% include 'footer.html' %}
 {% endblock content %}

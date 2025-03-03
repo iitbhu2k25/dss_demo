@@ -145,62 +145,30 @@
             <i class="fas fa-palette"></i> Style Options
           </div>
 
-          <div class="style-controls-container" style="display: flex; align-items: center; gap: 20px;">
-            <div class="style-control-item" style="display: flex; align-items: center;">
-              <label for="lineColor" class="form-label" style="margin-right: 8px;">Line Color:</label>
-              <input
-                type="color"
-                id="lineColor"
-                class="color-input"
-                value="#000000"
-              />
+          <div class="style-controls-container" style="display: flex; align-items: center; gap: 20px">
+            <div class="style-control-item" style="display: flex; align-items: center">
+              <label for="lineColor" class="form-label" style="margin-right: 8px">Line Color:</label>
+              <input type="color" id="lineColor" class="color-input" value="#000000" />
             </div>
-            
-            <div class="style-control-item" style="display: flex; align-items: center;">
-              <label for="fillColor" class="form-label" style="margin-right: 8px;">Fill Color:</label>
-              <input
-                type="color"
-                id="fillColor"
-                class="color-input"
-                value="#78b4db"
-              />
+
+            <div class="style-control-item" style="display: flex; align-items: center">
+              <label for="fillColor" class="form-label" style="margin-right: 8px">Fill Color:</label>
+              <input type="color" id="fillColor" class="color-input" value="#78b4db" />
             </div>
           </div>
           <div class="style-control-row">
-            <label for="opacity" class="form-label"
-              >Opacity: <span id="opacityValue">0.8</span></label
-            >
-            <input
-              type="range"
-              id="opacity"
-              class="style-range"
-              min="0.1"
-              max="1"
-              step="0.1"
-              value="0.8"
-            />
+            <label for="opacity" class="form-label">Opacity: <span id="opacityValue">0.8</span></label>
+            <input type="range" id="opacity" class="style-range" min="0.1" max="1" step="0.1" value="0.8" />
           </div>
 
           <div class="style-control-row">
-            <label for="weight" class="form-label"
-              >Line Weight: <span id="weightValue">2</span></label
-            >
-            <input
-              type="range"
-              id="weight"
-              class="style-range"
-              min="1"
-              max="10"
-              step="1"
-              value="2"
-            />
+            <label for="weight" class="form-label">Line Weight: <span id="weightValue">2</span></label>
+            <input type="range" id="weight" class="style-range" min="1" max="10" step="1" value="2" />
           </div>
 
           <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" id="toggleLabels" />
-            <label class="form-check-label" for="toggleLabels"
-              >Show Labels</label
-            >
+            <label class="form-check-label" for="toggleLabels">Show Labels</label>
           </div>
         </div>
 
@@ -210,39 +178,18 @@
           </div>
 
           <div class="form-check form-switch mb-2">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="grid-toggle"
-              checked
-            />
-            <label class="form-check-label" for="grid-toggle"
-              >Coordinate Grid</label
-            >
+            <input class="form-check-input" type="checkbox" id="grid-toggle" checked />
+            <label class="form-check-label" for="grid-toggle">Coordinate Grid</label>
           </div>
 
           <div class="form-check form-switch mb-2">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="info-toggle"
-              checked
-            />
-            <label class="form-check-label" for="info-toggle"
-              >Show Info Panel</label
-            >
+            <input class="form-check-input" type="checkbox" id="info-toggle" checked />
+            <label class="form-check-label" for="info-toggle">Show Info Panel</label>
           </div>
 
           <div class="form-check form-switch">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="compass-toggle"
-              checked
-            />
-            <label class="form-check-label" for="compass-toggle"
-              >Show Compass</label
-            >
+            <input class="form-check-input" type="checkbox" id="compass-toggle" checked />
+            <label class="form-check-label" for="compass-toggle">Show Compass</label>
           </div>
         </div>
 
@@ -254,27 +201,40 @@
           <div class="export-container">
             <div class="form-group mb-2">
               <label for="mapTitle" class="form-label">Map Title:</label>
-              <input
-                type="text"
-                id="mapTitle"
-                class="custom-dropdown"
-                placeholder="Enter title..."
-              />
+              <input type="text" id="mapTitle" class="custom-dropdown" placeholder="Enter title..." />
             </div>
 
             <div class="form-group mb-3">
-              <label for="exportFormat" class="form-label"
-                >Export Format:</label
-              >
+              <label for="exportFormat" class="form-label">Export Format:</label>
               <select id="exportFormat" class="custom-dropdown">
-                <option value="pdf">PDF</option>
-                <option value="svg">SVG</option>
-                <option value="jpg">JPG</option>
-                <option value="png">PNG</option>
-                <option value="tif">TIFF</option>
+                <option value="pdf">.pdf</option>
+                <option value="svg">svg</option>
+                <option value="jpg">.jpeg</option>
+                <option value="tif">.tif</option>
               </select>
             </div>
-
+            <div class="form-group">
+              <label for="exportDPI">Export Quality (DPI):</label>
+              <select id="exportDPI" class="form-control">
+                <option value="1">Low (72 DPI)</option>
+                <option value="2" selected>Medium (150 DPI)</option>
+                <option value="3">High (300 DPI)</option>
+                <option value="4">Ultra High (600 DPI)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="exportLayout">Paper Layout:</label>
+              <select id="exportLayout" class="form-control">
+                <option value="a4-landscape" selected>A4 Landscape</option>
+                <option value="a4-portrait">A4 Portrait</option>
+                <option value="a3-landscape">A3 Landscape</option>
+                <option value="a3-portrait">A3 Portrait</option>
+                <option value="letter-landscape">Letter Landscape</option>
+                <option value="letter-portrait">Letter Portrait</option>
+                <option value="legal-landscape">Legal Landscape</option>
+                <option value="legal-portrait">Legal Portrait</option>
+              </select>
+            </div>
             <button id="exportMap" class="btn-success">
               <i class="fas fa-download"></i> Export Map
             </button>
@@ -331,18 +291,10 @@
             <button class="map-control-btn" id="home-btn" title="Default View">
               <i class="fas fa-home"></i>
             </button>
-            <button
-              class="map-control-btn pulse-btn"
-              id="locate-btn"
-              title="My Location"
-            >
+            <button class="map-control-btn pulse-btn" id="locate-btn" title="My Location">
               <i class="fas fa-location-arrow"></i>
             </button>
-            <button
-              class="map-control-btn"
-              id="fullscreen-btn"
-              title="Fullscreen"
-            >
+            <button class="map-control-btn" id="fullscreen-btn" title="Fullscreen">
               <i class="fas fa-expand"></i>
             </button>
           </div>
@@ -388,22 +340,10 @@
   </div>
 </div>
 {% endblock %} {% block extra_css %}
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css"
-/>
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-/>
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
-/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
 
 <style>
   @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
@@ -444,11 +384,9 @@
   }
 
   header {
-    background: linear-gradient(
-      135deg,
-      var(--secondary-color),
-      var(--primary-color)
-    );
+    background: linear-gradient(135deg,
+        var(--secondary-color),
+        var(--primary-color));
     color: white;
     padding: 0.75rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
@@ -586,11 +524,9 @@
 
   .feature-info-header {
     padding: 15px;
-    background: linear-gradient(
-      135deg,
-      var(--secondary-color),
-      var(--primary-color)
-    );
+    background: linear-gradient(135deg,
+        var(--secondary-color),
+        var(--primary-color));
     color: white;
     display: flex;
     justify-content: space-between;
@@ -1114,35 +1050,34 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: conic-gradient(
-      from 0deg,
-      transparent 0deg,
-      transparent 29deg,
-      rgba(52, 152, 219, 0.15) 30deg,
-      rgba(52, 152, 219, 0.15) 59deg,
-      transparent 60deg,
-      transparent 89deg,
-      rgba(52, 152, 219, 0.15) 90deg,
-      rgba(52, 152, 219, 0.15) 119deg,
-      transparent 120deg,
-      transparent 149deg,
-      rgba(52, 152, 219, 0.15) 150deg,
-      rgba(52, 152, 219, 0.15) 179deg,
-      transparent 180deg,
-      transparent 209deg,
-      rgba(52, 152, 219, 0.15) 210deg,
-      rgba(52, 152, 219, 0.15) 239deg,
-      transparent 240deg,
-      transparent 269deg,
-      rgba(52, 152, 219, 0.15) 270deg,
-      rgba(52, 152, 219, 0.15) 299deg,
-      transparent 300deg,
-      transparent 329deg,
-      rgba(52, 152, 219, 0.15) 330deg,
-      rgba(52, 152, 219, 0.15) 359deg
-    );
+    background: conic-gradient(from 0deg,
+        transparent 0deg,
+        transparent 29deg,
+        rgba(52, 152, 219, 0.15) 30deg,
+        rgba(52, 152, 219, 0.15) 59deg,
+        transparent 60deg,
+        transparent 89deg,
+        rgba(52, 152, 219, 0.15) 90deg,
+        rgba(52, 152, 219, 0.15) 119deg,
+        transparent 120deg,
+        transparent 149deg,
+        rgba(52, 152, 219, 0.15) 150deg,
+        rgba(52, 152, 219, 0.15) 179deg,
+        transparent 180deg,
+        transparent 209deg,
+        rgba(52, 152, 219, 0.15) 210deg,
+        rgba(52, 152, 219, 0.15) 239deg,
+        transparent 240deg,
+        transparent 269deg,
+        rgba(52, 152, 219, 0.15) 270deg,
+        rgba(52, 152, 219, 0.15) 299deg,
+        transparent 300deg,
+        transparent 329deg,
+        rgba(52, 152, 219, 0.15) 330deg,
+        rgba(52, 152, 219, 0.15) 359deg);
     opacity: 0.8;
   }
+
   /* Modern Compass Styles End */
 
   .map-controls {
@@ -1321,10 +1256,12 @@
       transform: scale(1);
       opacity: 0.5;
     }
+
     50% {
       transform: scale(1.2);
       opacity: 0;
     }
+
     100% {
       transform: scale(1);
       opacity: 0;
@@ -1335,9 +1272,11 @@
     0% {
       opacity: 0.7;
     }
+
     50% {
       opacity: 1;
     }
+
     100% {
       opacity: 0.7;
     }
@@ -1348,6 +1287,7 @@
       opacity: 0;
       transform: translate(-50%, -60%);
     }
+
     to {
       opacity: 1;
       transform: translate(-50%, -50%);
@@ -1359,6 +1299,7 @@
       opacity: 0;
       transform: scale(0.8) rotate(-20deg);
     }
+
     to {
       opacity: 1;
       transform: scale(1) rotate(0);
@@ -1488,6 +1429,7 @@
     }
   }
 </style>
+
 {% endblock %} {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
@@ -1496,7 +1438,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-  // Global variables
+  
   // Global variables
   let map;
   let currentLayer = null;
@@ -1838,8 +1780,6 @@
     );
   }
 
-
-  
   // Function to add labels to features
   function addLabels() {
     if (!currentLayer || labelLayer) return;
@@ -2090,9 +2030,8 @@
       subcategorySelect.innerHTML =
         '<option value="" disabled selected>Select Subcategory</option>';
       subcategories[category].forEach((sub) => {
-        subcategorySelect.innerHTML += `<option value="${sub}">${
-          sub.charAt(0).toUpperCase() + sub.slice(1)
-        }</option>`;
+        subcategorySelect.innerHTML += `<option value="${sub}">${sub.charAt(0).toUpperCase() + sub.slice(1)
+          }</option>`;
       });
       subcategorySelect.disabled = false;
     } else {
@@ -2102,8 +2041,6 @@
       loadButton.disabled = true;
     }
   }
-
-  // Load shapefile data
 
   // Load shapefile data
   async function loadShapefile() {
@@ -2208,94 +2145,221 @@
         ? "N"
         : "S"
       : dms.direction >= 0
-      ? "E"
-      : "W";
+        ? "E"
+        : "W";
     return `${dms.degrees}°${dms.minutes}'${dms.seconds}"${direction}`;
   }
 
-  // Export map as PDF
-  function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp) {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({
-      orientation: "landscape",
-      unit: "mm",
-      format: "a4",
-    });
+  // Function to add coordinates to the canvas for image exports
+  // Function to add coordinates to the canvas for image exports with DPI scaling
+  function addCoordinatesToCanvas(canvas, bounds, scaleFactor = 1) {
+    const ctx = canvas.getContext("2d");
+    const width = canvas.width;
+    const height = canvas.height;
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+    // Extract bounds
+    const west = parseFloat(bounds.getWest());
+    const east = parseFloat(bounds.getEast());
+    const south = parseFloat(bounds.getSouth());
+    const north = parseFloat(bounds.getNorth());
 
-    // Margins for coordinate labels
+    // Set styles for coordinate labels - adjust for DPI
+    ctx.font = `${12 * scaleFactor}px Helvetica`;
+    ctx.fillStyle = "#000000";
+    ctx.textAlign = "center";
+
+    // Margins for coordinate labels - increased to prevent overlap and scaled for DPI
     const margin = {
-      top: 25,
-      bottom: 25,
-      left: 25,
-      right: 25,
+      top: 60 * scaleFactor,
+      bottom: 60 * scaleFactor,
+      left: 60 * scaleFactor,
+      right: 60 * scaleFactor,
     };
 
     // Calculate available space for map
-    const contentWidth = pageWidth - (margin.left + margin.right);
-    const contentHeight = pageHeight - (margin.top + margin.bottom);
+    const contentWidth = width - (margin.left + margin.right);
+    const contentHeight = height - (margin.top + margin.bottom);
 
-    // Add title with adjusted position
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(24);
-    pdf.text(mapTitle, pageWidth / 2, 15, { align: "center" });
+    // Draw coordinate scales
+    const numDivisions = 5;
 
-    const img = new Image();
-    img.src = mapImage;
-    img.onload = function () {
-      const imgWidth = img.width;
-      const imgHeight = img.height;
+    // Draw white background for coordinates
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.fillRect(0, 0, width, margin.top);
+    ctx.fillRect(0, height - margin.bottom, width, margin.bottom);
+    ctx.fillRect(0, 0, margin.left, height);
+    ctx.fillRect(width - margin.right, 0, margin.right, height);
 
-      // Calculate dimensions to fit while maintaining aspect ratio
-      let newWidth = contentWidth - 20; // Additional 20mm padding
-      let newHeight = (imgHeight * newWidth) / imgWidth;
+    ctx.fillStyle = "#000000";
 
-      // Check if height exceeds available space
-      if (newHeight > contentHeight - 20) {
-        newHeight = contentHeight - 20;
-        newWidth = (imgWidth * newHeight) / imgHeight;
-      }
+    // Draw border around map area first (so coordinates can overlay if needed)
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2 * scaleFactor;
+    ctx.strokeRect(margin.left, margin.top, contentWidth, contentHeight);
 
-      // Center the map in the available space
-      const xPos = margin.left + (contentWidth - newWidth) / 2;
-      const yPos = margin.top + (contentHeight - newHeight) / 2;
+    // Latitude scales (left and right)
+    for (let i = 0; i <= numDivisions; i++) {
+      const lat = south + ((north - south) * i) / numDivisions;
+      const yPos =
+        margin.top + (contentHeight * (numDivisions - i)) / numDivisions;
+      const dms = decimalToDMS(lat);
+      const label = formatDMS(dms, true);
 
-      // Draw border around map area
-      pdf.setDrawColor(0);
-      pdf.setLineWidth(0.5);
-      pdf.rect(xPos - 5, yPos - 5, newWidth + 10, newHeight + 10);
+      // Left side
+      ctx.save();
+      ctx.translate(margin.left - (18 * scaleFactor), yPos);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
 
-      // Add map image
-      pdf.addImage(mapImage, "PNG", xPos, yPos, newWidth, newHeight);
+      // Right side
+      ctx.save();
+      ctx.translate(width - margin.right + (18 * scaleFactor), yPos);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
 
-      // Add coordinate scales on all four sides
-      addCoordinateScales(pdf, xPos, yPos, newWidth, newHeight);
+      // Draw tick marks
+      ctx.beginPath();
+      ctx.moveTo(margin.left - (5 * scaleFactor), yPos);
+      ctx.lineTo(margin.left, yPos);
+      ctx.stroke();
 
-      // Add metadata to bottom with proper spacing
-      const textYPos = pageHeight - 15;
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(10);
-      pdf.text(`Category: ${category}`, margin.left, textYPos);
-      pdf.text(`Subcategory: ${subcategory}`, margin.left + 60, textYPos);
-      pdf.text(`Generated: ${timestamp}`, margin.left + 130, textYPos);
-      pdf.text(
-        `Source:IIT BHU DSS `,
-        margin.left + 220,
-        textYPos
-      );
+      ctx.beginPath();
+      ctx.moveTo(width - margin.right, yPos);
+      ctx.lineTo(width - margin.right + (5 * scaleFactor), yPos);
+      ctx.stroke();
+    }
 
-      pdf.save(`${mapTitle.replace(/\s+/g, "_")}.pdf`);
+    // Longitude scales (top and bottom)
+    for (let i = 0; i <= numDivisions; i++) {
+      const lon = west + ((east - west) * i) / numDivisions;
+      const xPos = margin.left + (contentWidth * i) / numDivisions;
+      const dms = decimalToDMS(lon);
+      const label = formatDMS(dms, false);
 
-      showNotification(
-        "Export Complete",
-        "Map exported as PDF successfully",
-        "success"
-      );
-    };
+      // Top side
+      ctx.fillText(label, xPos, margin.top - (18 * scaleFactor));
+
+      // Bottom side
+      ctx.fillText(label, xPos, height - margin.bottom + (25 * scaleFactor));
+
+      // Draw tick marks
+      ctx.beginPath();
+      ctx.moveTo(xPos, margin.top - (5 * scaleFactor));
+      ctx.lineTo(xPos, margin.top);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(xPos, height - margin.bottom);
+      ctx.lineTo(xPos, height - margin.bottom + (5 * scaleFactor));
+      ctx.stroke();
+    }
+
+    // Add compass directions
+    ctx.font = `bold ${14 * scaleFactor}px Helvetica`;
+    ctx.fillText("N", width / 2, margin.top - (35 * scaleFactor));
+    ctx.fillText("S", width / 2, height - margin.bottom + (40 * scaleFactor));
+    ctx.fillText("W", margin.left - (35 * scaleFactor), height / 2);
+    ctx.fillText("E", width - margin.right + (35 * scaleFactor), height / 2);
+
+    return canvas;
   }
+  // Export map as PDF
+  // Export map as PDF with DPI setting
+// Export map as PDF with DPI setting and layout options
+function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp, dpi = 150) {
+  // Get the selected layout
+  const layoutOption = document.getElementById("exportLayout").value;
+  
+  // Split the layout option into format and orientation
+  const [format, orientation] = layoutOption.split('-');
+  
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({
+    orientation: orientation, // Use the selected orientation
+    unit: "mm",
+    format: format, // Use the selected format
+  });
 
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+
+  // Margins for coordinate labels
+  const margin = {
+    top: 25,
+    bottom: 25,
+    left: 25,
+    right: 25,
+  };
+
+  // Calculate available space for map
+  const contentWidth = pageWidth - (margin.left + margin.right);
+  const contentHeight = pageHeight - (margin.top + margin.bottom);
+
+  // Add title with adjusted position
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(24);
+  pdf.text(mapTitle, pageWidth / 2, 15, { align: "center" });
+
+  const img = new Image();
+  img.src = mapImage;
+  img.onload = function () {
+    const imgWidth = img.width;
+    const imgHeight = img.height;
+
+    // Calculate dimensions to fit while maintaining aspect ratio
+    let newWidth = contentWidth - 20; // Additional 20mm padding
+    let newHeight = (imgHeight * newWidth) / imgWidth;
+
+    // Check if height exceeds available space
+    if (newHeight > contentHeight - 20) {
+      newHeight = contentHeight - 20;
+      newWidth = (imgWidth * newHeight) / imgHeight;
+    }
+
+    // Center the map in the available space
+    const xPos = margin.left + (contentWidth - newWidth) / 2;
+    const yPos = margin.top + (contentHeight - newHeight) / 2;
+
+    // Draw border around map area
+    pdf.setDrawColor(0);
+    pdf.setLineWidth(0.5);
+    pdf.rect(xPos - 5, yPos - 5, newWidth + 10, newHeight + 10);
+
+    // Add map image
+    pdf.addImage(mapImage, "PNG", xPos, yPos, newWidth, newHeight);
+
+    // Add coordinate scales on all four sides
+    addCoordinateScales(pdf, xPos, yPos, newWidth, newHeight);
+
+    // Add metadata to bottom with proper spacing
+    const textYPos = pageHeight - 15;
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(10);
+    
+    // Adjust metadata position based on page size
+    const metadataSpacing = pageWidth < 210 ? 40 : 60; // Use smaller spacing for smaller page sizes
+    
+    pdf.text(`Category: ${category}`, margin.left, textYPos);
+    pdf.text(`Subcategory: ${subcategory}`, margin.left + metadataSpacing, textYPos);
+    pdf.text(`Generated: ${timestamp}`, margin.left + (metadataSpacing * 2), textYPos);
+    
+    // For smaller page formats, we might need to adjust or omit some metadata
+    if (pageWidth >= 210) { // Only include source info if we have enough space
+      pdf.text(`Source: IIT BHU DSS (${dpi} DPI)`, margin.left + (metadataSpacing * 3), textYPos);
+    }
+
+    // Save PDF with format in filename
+    pdf.save(`${mapTitle.replace(/\s+/g, "_")}_${format}_${orientation}.pdf`);
+
+    showNotification(
+      "Export Complete",
+      `Map exported as PDF successfully (${format.toUpperCase()} ${orientation}, ${dpi} DPI)`,
+      "success"
+    );
+  };
+}
   // Add coordinate scales to PDF
   function addCoordinateScales(pdf, x, y, width, height) {
     const bounds = map.getBounds();
@@ -2319,7 +2383,7 @@
 
       // Left side - vertical text with better alignment
       pdf.saveGraphicsState();
-      pdf.text(label, x - 2, yPos+5, {
+      pdf.text(label, x - 2, yPos + 5, {
         align: "center",
         angle: 90,
       });
@@ -2327,7 +2391,7 @@
 
       // Right side - vertical text with better alignment
       pdf.saveGraphicsState();
-      pdf.text(label, x + width + 17, yPos+5, {
+      pdf.text(label, x + width + 17, yPos + 5, {
         align: "center",
         angle: 90,
       });
@@ -2369,10 +2433,13 @@
     pdf.text("E", x + width + 15, y + height / 2, { align: "center" });
   }
 
-  // Handle map export
+  // Handle map export with coordinates for all formats
+  // Handle map export with coordinates and DPI selection
   function handleMapExport() {
+    
     const mapElement = document.getElementById("map");
     const exportFormat = document.getElementById("exportFormat").value;
+    const exportDPI = parseInt(document.getElementById("exportDPI").value);
     const mapTitle =
       document.getElementById("mapTitle").value || "India GIS Vector Map";
 
@@ -2391,58 +2458,189 @@
     // Ensure map is properly sized
     map.invalidateSize();
 
+    // Get map dimensions
+    const mapWidth = mapElement.clientWidth;
+    const mapHeight = mapElement.clientHeight;
+
+    // Calculate base size (uncompressed) at 72 DPI
+    // Each pixel takes 4 bytes (RGBA) in memory before compression
+    const basePixelCount = mapWidth * mapHeight;
+    const baseImageSize = basePixelCount * 4; // Size in bytes at 72 DPI
+
+    // Estimate target DPI based on selected quality level
+    // Target sizes in bytes (500KB to 10MB)
+    const MIN_TARGET_SIZE = 500 * 1024;
+    const MAX_TARGET_SIZE = 10 * 1024 * 1024;
+
+    // Calculate compression ratio (PNG typically compresses well, around 0.25 for maps)
+    const estimatedCompressionRatio = 0.25;
+
+    // Calculate DPI values that would yield our min/max file sizes
+    // This is an estimation since actual compression depends on image content
+    const maxDPI = Math.sqrt(MAX_TARGET_SIZE / (baseImageSize * estimatedCompressionRatio)) * 72;
+    const minDPI = Math.sqrt(MIN_TARGET_SIZE / (baseImageSize * estimatedCompressionRatio)) * 72;
+
+    // Convert exportDPI value to actual DPI
+    // Assign DPI based on selected quality level
+    let dpi;
+    switch (exportDPI) {
+      case 1: // Low
+        dpi = Math.max(72, Math.min(minDPI, 100)); // At least 72, cap at 100
+        break;
+      case 2: // Medium
+        dpi = Math.min(Math.max(minDPI, 150), Math.min(300, maxDPI));
+        break;
+      case 3: // High
+        dpi = Math.min(Math.max(200, minDPI), Math.min(400, maxDPI));
+        break;
+      case 4: // Ultra High
+        dpi = Math.min(Math.max(300, minDPI), maxDPI);
+        break;
+      default:
+        dpi = 150; // Medium as default
+    }
+
+    // Cap the DPI to reasonable values
+    dpi = Math.max(72, Math.min(dpi, 600));
+
+    console.log(`Map dimensions: ${mapWidth}x${mapHeight}, Calculated DPI: ${dpi.toFixed(0)}`);
+
+    // Set scale factor based on DPI (96 is standard screen DPI)
+    const scaleFactor = dpi / 96;
+
     // Wait for map to stabilize
     setTimeout(async () => {
       try {
+        // Get the bounds before html2canvas to use for coordinates
+        const bounds = map.getBounds();
+
+        // Set scale factor based on DPI (96 is standard screen DPI)
+        const scaleFactor = dpi / 96;
+
+        // Capture the map with appropriate scale factor
         const mapCanvas = await html2canvas(mapElement, {
           useCORS: true,
           allowTaint: true,
-          scale: 2,
+          scale: scaleFactor, // Use DPI-based scale factor
           backgroundColor: "#ffffff",
           logging: false,
           removeContainer: false,
         });
 
-        const mapImage = mapCanvas.toDataURL("image/png", 1.0);
+        // Create a larger canvas to accommodate coordinates
+        const finalCanvas = document.createElement('canvas');
+        const padding = 120 * scaleFactor; // Scale padding based on DPI
+        finalCanvas.width = mapCanvas.width + padding * 2;
+        finalCanvas.height = mapCanvas.height + padding * 2;
 
-        switch (exportFormat) {
-          case "pdf":
-            exportAsPDF(
-              mapImage,
-              mapTitle,
-              selectedCategory,
-              selectedSubcategory,
-              timestamp
-            );
-            break;
-          case "svg":
-            // TODO: Implement SVG export if needed
-            showNotification(
-              "Notice",
-              "SVG export will be implemented in a future update",
-              "info"
-            );
-            break;
-          case "jpg":
-          case "png":
-            // Direct download as image
-            const link = document.createElement("a");
-            link.download = `${mapTitle.replace(/\s+/g, "_")}.${exportFormat}`;
-            link.href = mapImage.replace("image/png", `image/${exportFormat}`);
-            link.click();
-            showNotification(
-              "Export Complete",
-              `Map exported as ${exportFormat.toUpperCase()} successfully`,
-              "success"
-            );
-            break;
-          case "tif":
-            showNotification(
-              "Notice",
-              "TIFF export will be implemented in a future update",
-              "info"
-            );
-            break;
+        // Draw original map in the center of the new canvas
+        const ctx = finalCanvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+        ctx.drawImage(mapCanvas, padding, padding);
+
+        // For image formats, add coordinates directly to the canvas
+        if (exportFormat === 'png' || exportFormat === 'jpg') {
+          // Add title to the canvas - scale font size based on DPI
+          ctx.font = `bold ${24 * scaleFactor}px Helvetica`;
+          ctx.fillStyle = '#000000';
+          ctx.textAlign = 'center';
+          ctx.fillText(mapTitle, finalCanvas.width / 2, padding / 2);
+
+          // Add metadata to the canvas - scale font size based on DPI
+          ctx.font = `${12 * scaleFactor}px Helvetica`;
+          ctx.textAlign = 'left';
+          ctx.fillText(`Category: ${selectedCategory}`, padding, finalCanvas.height - padding / 2 + (5 * scaleFactor));
+          ctx.fillText(`Subcategory: ${selectedSubcategory}`, padding + (180 * scaleFactor), finalCanvas.height - padding / 2 + (5 * scaleFactor));
+          ctx.fillText(`Generated: ${timestamp}`, padding + (360 * scaleFactor), finalCanvas.height - padding / 2 + (5 * scaleFactor));
+          ctx.textAlign = 'right';
+          ctx.fillText(`Source: IIT BHU DSS`, finalCanvas.width - padding, finalCanvas.height - padding / 2 + (5 * scaleFactor));
+
+          // Add the coordinates to the canvas
+          addCoordinatesToCanvas(finalCanvas, bounds, scaleFactor);
+
+          // Get the final image with coordinates
+          const finalImage = finalCanvas.toDataURL(`image/${exportFormat === 'jpg' ? 'jpeg' : 'png'}`, 1.0);
+
+          // Direct download as image
+          const link = document.createElement("a");
+          link.download = `${mapTitle.replace(/\s+/g, "_")}.${exportFormat}`;
+          link.href = finalImage;
+          link.click();
+
+          showNotification(
+            "Export Complete",
+            `Map exported as ${exportFormat.toUpperCase()} successfully at ${dpi} DPI`,
+            "success"
+          );
+        }
+        // For PDF, use the specialized PDF export function
+        else if (exportFormat === 'pdf') {
+          // Get map image without coordinates (they'll be added in PDF context)
+          const mapImage = mapCanvas.toDataURL("image/png", 1.0);
+
+          exportAsPDF(
+            mapImage,
+            mapTitle,
+            selectedCategory,
+            selectedSubcategory,
+            timestamp,
+            dpi
+          );
+        }
+        
+        // For SVG format
+        else if (exportFormat === 'svg') {
+          // Add title to the canvas first
+          ctx.font = `bold ${24 * scaleFactor}px Helvetica`;
+          ctx.fillStyle = '#000000';
+          ctx.textAlign = 'center';
+          ctx.fillText(mapTitle, finalCanvas.width / 2, padding / 2);
+
+          // Add metadata to the canvas
+          ctx.font = `${12 * scaleFactor}px Helvetica`;
+          ctx.textAlign = 'left';
+          ctx.fillText(`Category: ${selectedCategory}`, padding, finalCanvas.height - padding / 2 + (5 * scaleFactor));
+          ctx.fillText(`Subcategory: ${selectedSubcategory}`, padding + (180 * scaleFactor), finalCanvas.height - padding / 2 + (5 * scaleFactor));
+          ctx.fillText(`Generated: ${timestamp}`, padding + (360 * scaleFactor), finalCanvas.height - padding / 2 + (5 * scaleFactor));
+          ctx.textAlign = 'right';
+          ctx.fillText(`Source: IIT BHU DSS`, finalCanvas.width - padding, finalCanvas.height - padding / 2 + (5 * scaleFactor));
+
+          // Add coordinates
+          addCoordinatesToCanvas(finalCanvas, bounds, scaleFactor);
+
+          // Convert canvas to SVG
+          const svgSerializer = new XMLSerializer();
+          const svgData = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="${finalCanvas.width}" height="${finalCanvas.height}">
+            <image href="${finalCanvas.toDataURL('image/png')}" width="${finalCanvas.width}" height="${finalCanvas.height}" />
+          </svg>
+        `;
+
+          // Create SVG Blob and download
+          const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+          const svgUrl = URL.createObjectURL(svgBlob);
+
+          const link = document.createElement("a");
+          link.download = `${mapTitle.replace(/\s+/g, "_")}.svg`;
+          link.href = svgUrl;
+          link.click();
+
+          // Clean up
+          URL.revokeObjectURL(svgUrl);
+
+          showNotification(
+            "Export Complete",
+            `Map exported as SVG successfully at ${dpi} DPI`,
+            "success"
+          );
+        }
+        else if (exportFormat === 'tif') {
+          showNotification(
+            "Notice",
+            "TIFF export will be implemented in a future update",
+            "info"
+          );
         }
       } catch (error) {
         console.error("Error exporting map:", error);
@@ -2454,7 +2652,6 @@
       }
     }, 1000);
   }
-
   // Document ready function
   document.addEventListener("DOMContentLoaded", function () {
     // Initialize map
@@ -2811,8 +3008,7 @@
           // Show notification for demo
           showNotification(
             "Analysis Tool",
-            `${
-              analysisType.charAt(0).toUpperCase() + analysisType.slice(1)
+            `${analysisType.charAt(0).toUpperCase() + analysisType.slice(1)
             } analysis tool selected`,
             "info"
           );
