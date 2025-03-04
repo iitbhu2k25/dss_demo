@@ -52,7 +52,7 @@ def get_locations(request):
             locations = PopulationData.objects.filter(**filters).exclude(village_code=0)
             if locations.exists():
                 location_list = [{"code": "0", "name": " ALL"}] + [
-                    {"code": loc.village_code, "name": f"{loc.region_name} ({loc.population_2011})"} for loc in locations
+                    {"code": loc.village_code, "name": f"{loc.region_name}"} for loc in locations
                 ]
             else:
                 location_list = [{"code": "", "name": "No villages found"}]
@@ -211,3 +211,20 @@ def get_combined_population(request):
         return JsonResponse({"error": str(e)}, status=500)
     
     return JsonResponse({"error": "Invalid parameters or calculation failed."}, status=400)
+
+
+def get_village_population(request):
+    village_codes = request.GET.get('village_codes').split(',')
+    population_data = []
+
+    for code in village_codes:
+        try:
+            village = PopulationData.objects.get(village_code=code)
+            population_data.append({
+                'name': village.region_name,
+                'population_2011': village.population_2011
+            })
+        except PopulationData.DoesNotExist:
+            pass
+
+    return JsonResponse({'population_data': population_data})

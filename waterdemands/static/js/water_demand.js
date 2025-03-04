@@ -167,10 +167,17 @@ document.addEventListener('DOMContentLoaded', () => {
             code: checkbox.value,        // for sending to the backend
             name: checkbox.dataset.name    // for display purposes
         }));
-
-        selectedContainer.innerHTML = selectedVillages.length
-            ? selectedVillages.map(village => `<span class="badge bg-primary me-1">${village.name}</span>`).join('')
-            : '<p class="text-muted">No villages selected.</p>';                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+    
+        const villageCodes = selectedVillages.map(village => village.code);
+        const url = `waterdemand/get_village_population/?village_codes=${villageCodes.join(',')}`;
+    
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const populationData = data.population_data;
+                selectedContainer.innerHTML = populationData.map(village => `<span class="badge bg-primary me-1">${village.name} (${village.population_2011})</span>`).join('');
+            })
+            .catch(error => console.error('Error fetching population data:', error));
     };
     
     
