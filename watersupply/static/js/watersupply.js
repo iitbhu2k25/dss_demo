@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultContainer = document.getElementById('result_container');
     const villageContainer = document.getElementById('village-container');
     const selectedVillagesContainer = document.getElementById('selected-villages');
+    const totalPopulationContainer = document.getElementById('total-population');
 
     // Groundwater supply input elements
     const directGroundwaterInput = document.getElementById("direct_groundwater");
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const aquiferRechargeInput = document.getElementById("aquifer_recharge");
     const surfaceRunoffInput = document.getElementById("surface_runoff");
     const reuseWaterInput = document.getElementById("reuse_water");
+    
 
 
 
@@ -168,15 +170,55 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Selected Villages
-    const updateSelectedVillages = (selectedContainer) => {
+    const updateSelectedVillages = (selectedContainer, totalPopulationContainer) => {
         const selectedCheckboxes = document.querySelectorAll('#village-container input[type="checkbox"]:checked');
         const selectedVillages = Array.from(selectedCheckboxes).map(checkbox => ({
             code: checkbox.value,
             name: checkbox.dataset.name
         }));
-        selectedContainer.innerHTML = selectedVillages.length
-            ? selectedVillages.map(village => `<span class="badge bg-primary me-1">${village.name}</span>`).join('')
-            : '<p class="text-muted">No villages selected.</p>';
+    
+        let url = '';
+        let populationLevel = '';
+    
+        // If any village checkboxes are selected, fetch village-level population
+        if (selectedVillages.length > 0) {
+            const villageCodes = selectedVillages.map(v => v.code);
+            url = `waterdemand/get_village_population/?state_code=${stateDropdown.value}&district_code=${districtDropdown.value}&subdistrict_code=${subdistrictDropdown.value}&village_codes=${villageCodes.join(',')}`;
+            populationLevel = 'village';
+        } else {
+            // If no village is selected, default to district (or state) level as appropriate
+            if (districtDropdown.value === "0") {
+                url = `waterdemand/get_village_population/?state_code=${stateDropdown.value}&district_code=${districtDropdown.value}&subdistrict_code=0&village_codes=0`;
+                populationLevel = 'state';
+            } else {
+                url = `waterdemand/get_village_population/?state_code=${stateDropdown.value}&district_code=${districtDropdown.value}&subdistrict_code=${subdistrictDropdown.value}&village_codes=0`;
+                populationLevel = 'district';
+            }
+        }
+    
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const populationData = data.population_data;
+                if (populationLevel === 'village') {
+                    selectedContainer.innerHTML = populationData.map(village => 
+                        `<span class="badge bg-primary me-1">${village.name} (Population in 2011: ${village.population_2011})</span>`
+                    ).join('');
+                    const totalPopulation = populationData.reduce((acc, village) => acc + village.population_2011, 0);
+                    totalPopulationContainer.innerHTML = `Total population: ${totalPopulation}`;
+                } else {
+                    // For district or state, assume one record is returned
+                    if (populationData.length > 0) {
+                        const p = populationData[0];
+                        selectedContainer.innerHTML = `<span class="badge bg-primary me-1">${p.name} (${p.population_2011})</span>`;
+                        totalPopulationContainer.innerHTML = `Total population: ${p.population_2011}`;
+                    } else {
+                        selectedContainer.innerHTML = '';
+                        totalPopulationContainer.innerHTML = 'Total population: 0';
+                    }
+                }
+            })
+            .catch(error => console.error('Error fetching population data:', error));
     };
 
     // Populate dropdowns on load and on change events
@@ -204,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const url = `waterdemand/get_locations/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}`;
             fetchVillages(url, villageContainer, selectedVillagesContainer);
         }
+        updateSelectedVillages(selectedContainer, totalPopulationContainer);
     });
 
     // ======================================

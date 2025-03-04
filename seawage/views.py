@@ -44,7 +44,7 @@ def get_locations(request):
             locations = PopulationData.objects.filter(**filters).exclude(village_code=0)
             if locations.exists():
                 location_list = [{"code": "0", "name": " ALL"}] + [
-                    {"code": loc.village_code, "name": f"{loc.region_name} ({loc.population_2011})"} for loc in locations
+                    {"code": loc.village_code, "name": f"{loc.region_name}"} for loc in locations
                 ]
             else:
                 location_list = [{"code": "", "name": "No villages found"}]
@@ -203,3 +203,46 @@ def get_combined_population(request):
         return JsonResponse({"error": str(e)}, status=500)
     
     return JsonResponse({"error": "Invalid parameters or calculation failed."}, status=400)
+
+def get_village_population(request):
+    state_code = request.GET.get('state_code')
+    district_code = request.GET.get('district_code')
+    subdistrict_code = request.GET.get('subdistrict_code')
+    village_codes_param = request.GET.get('village_codes', '')
+
+    # Ensure required parameters are provided
+    if not (state_code and district_code):
+        return JsonResponse({"error": "Missing required state or district parameter."}, status=400)
+
+    # Split village_codes and filter out any empty strings
+    village_codes = [code.strip() for code in village_codes_param.split(',') if code.strip() != '']
+    population_data = []
+
+    # Build filters. Normally we filter by subdistrict_code,
+    # but if subdistrict_code is "0" (meaning "ALL") and the user has selected specific village codes (not "0"),
+    # then remove the subdistrict filter so that each village is looked up by its actual subdistrict.
+    filters = {
+        "state_code": state_code,
+        "district_code": district_code,
+    }
+    if subdistrict_code != "0":
+        filters["subdistrict_code"] = subdistrict_code
+    else:
+        # if village_codes does not include "0" (which indicates the "ALL" option)
+        if village_codes and "0" not in village_codes:
+            # Do not add a subdistrict filter so that the lookup will use each village's actual subdistrict.
+            pass
+        else:
+            filters["subdistrict_code"] = subdistrict_code
+
+    for code in village_codes:
+        village = PopulationData.objects.filter(**filters, village_code=code).first()
+        if village:
+            population_data.append({
+                'name': village.region_name,
+                'population_2011': village.population_2011
+            })
+
+    return JsonResponse({'population_data': population_data})
+
+
