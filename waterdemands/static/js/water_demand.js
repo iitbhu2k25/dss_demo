@@ -42,11 +42,23 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const totalDemandFields = {
-        domestic: [document.getElementById('year_container'), document.getElementById('population_container')],
-        floating: [document.getElementById('floating_container'), document.getElementById('enu_container'), document.getElementById('facility_container')],
-        institutional: [document.getElementById('institutional_container')],
-        firefighting: [document.getElementById('firefighting_container')],
+        domestic: [
+            document.getElementById('year_container'),
+            document.getElementById('population_container')
+        ],
+        floating: [
+            document.getElementById('floating_container'),
+            document.getElementById('enu_container'),
+            document.getElementById('facility_container')
+        ],
+        institutional: [
+            document.getElementById('institutional_container')
+        ],
+        firefighting: [
+            document.getElementById('firefighting_container')
+        ],
     };
+    
     
     
 
@@ -57,18 +69,21 @@ document.addEventListener('DOMContentLoaded', () => {
         fields.forEach(field => {
             if (field) {
                 if (isChecked) {
-                    console.log(`Showing field: ${field.id}`);
+                    // Show the field and add the border class
                     field.classList.remove('hidden');
+                    field.classList.add('bordered-container');
                 } else {
-                    console.log(`Hiding field: ${field.id}`);
+                    // Hide the field and remove the border class
                     field.classList.add('hidden');
+                    field.classList.remove('bordered-container');
                 }
             } else {
                 console.error(`Field for ${key} is undefined.`);
             }
         });
-        
     };
+    
+    
 
     // Add event listeners to the checkboxes
     Object.entries(totalDemandCheckboxes).forEach(([key, checkbox]) => {
@@ -76,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleFields(key, checkbox.checked);
         });
     });
+    
 
     const fetchLocations = (url, dropdown, placeholder) => {
         fetch(url)
@@ -200,14 +216,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     totalPopulationContainer.innerHTML = `Total population: ${totalPopulation}`;
                 } else {
                     // For district or state, assume one record is returned
-                    if (populationData.length > 0) {
-                        const p = populationData[0];
-                        selectedContainer.innerHTML = `<span class="badge bg-primary me-1">${p.name} (${p.population_2011})</span>`;
-                        totalPopulationContainer.innerHTML = `Total population: ${p.population_2011}`;
-                    } else {
-                        selectedContainer.innerHTML = '';
-                        totalPopulationContainer.innerHTML = 'Total population: 0';
-                    }
+                    selectedContainer.innerHTML = '';
+                    totalPopulationContainer.innerHTML = 'Total population: 0';
                 }
             })
             .catch(error => console.error('Error fetching population data:', error));

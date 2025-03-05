@@ -189,14 +189,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     totalPopulationContainer.innerHTML = `Total population: ${totalPopulation}`;
                 } else {
                     // For district or state, assume one record is returned
-                    if (populationData.length > 0) {
-                        const p = populationData[0];
-                        selectedContainer.innerHTML = `<span class="badge bg-primary me-1">${p.name} (${p.population_2011})</span>`;
-                        totalPopulationContainer.innerHTML = `Total population: ${p.population_2011}`;
-                    } else {
-                        selectedContainer.innerHTML = '';
-                        totalPopulationContainer.innerHTML = 'Total population: 0';
-                    }
+                    selectedContainer.innerHTML = '';
+                    totalPopulationContainer.innerHTML = 'Total population: 0';
                 }
             })
             .catch(error => console.error('Error fetching population data:', error));

@@ -187,13 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
             populationLevel = 'village';
         } else {
             // If no village is selected, default to district (or state) level as appropriate
-            if (districtDropdown.value === "0") {
-                url = `waterdemand/get_village_population/?state_code=${stateDropdown.value}&district_code=${districtDropdown.value}&subdistrict_code=0&village_codes=0`;
-                populationLevel = 'state';
-            } else {
-                url = `waterdemand/get_village_population/?state_code=${stateDropdown.value}&district_code=${districtDropdown.value}&subdistrict_code=${subdistrictDropdown.value}&village_codes=0`;
-                populationLevel = 'district';
-            }
+            selectedContainer.innerHTML = '';
+            totalPopulationContainer.innerHTML = 'Total population: 0';
         }
     
         fetch(url)
