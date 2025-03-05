@@ -121,7 +121,7 @@
               <div class="dropdown-item" data-analysis="buffer">
                 <i class="fas fa-expand-alt"></i> Buffer Zone
               </div>
-              
+
               <div class="dropdown-item" data-analysis="intersect">
                 <i class="fas fa-object-group"></i> Intersection
               </div>
@@ -253,7 +253,7 @@
           <div id="map"></div>
 
 
-          
+
 
           <!-- Compass -->
           <div class="compass-container" id="compass">
@@ -360,7 +360,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-  
+
   // Global variables
   let map;
   let currentLayer = null;
@@ -1072,7 +1072,86 @@
     return `${dms.degrees}°${dms.minutes}'${dms.seconds}"${direction}`;
   }
 
-  // Function to add coordinates to the canvas for image exports
+  // Function to manually draw GeoJSON features onto the canvas
+  function drawFeaturesOnCanvas(ctx, bounds, canvas, features, scaleFactor) {
+    if (!features || !features.length) return;
+
+    // Calculate the pixel coordinates from geographic coordinates
+    function latLngToPixel(lat, lng) {
+      const west = bounds.getWest();
+      const east = bounds.getEast();
+      const south = bounds.getSouth();
+      const north = bounds.getNorth();
+
+      // Calculate margins (same as in addCoordinatesToCanvas)
+      const margin = {
+        top: 60 * scaleFactor,
+        bottom: 60 * scaleFactor,
+        left: 60 * scaleFactor,
+        right: 60 * scaleFactor,
+      };
+
+      // Available space for map
+      const contentWidth = canvas.width - (margin.left + margin.right);
+      const contentHeight = canvas.height - (margin.top + margin.bottom);
+
+      // Convert lat/lng to x/y
+      const x = margin.left + ((lng - west) / (east - west)) * contentWidth;
+      const y = margin.top + ((north - lat) / (north - south)) * contentHeight;
+
+      return { x, y };
+    }
+
+    // Set style for GeoJSON features
+    ctx.lineWidth = 2 * scaleFactor;
+    ctx.strokeStyle = "#000000";
+    ctx.fillStyle = "rgba(53, 128, 255, 0.3)";
+
+    // Loop through all features and draw them
+    features.forEach(feature => {
+      if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
+        const coordinates = feature.geometry.type === "Polygon" ?
+          [feature.geometry.coordinates] : feature.geometry.coordinates;
+
+        coordinates.forEach(polygon => {
+          polygon.forEach(ring => {
+            ctx.beginPath();
+
+            ring.forEach((coord, i) => {
+              const pixel = latLngToPixel(coord[1], coord[0]);
+              if (i === 0) {
+                ctx.moveTo(pixel.x, pixel.y);
+              } else {
+                ctx.lineTo(pixel.x, pixel.y);
+              }
+            });
+
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+          });
+        });
+      } else if (feature.geometry.type === "LineString") {
+        ctx.beginPath();
+        feature.geometry.coordinates.forEach((coord, i) => {
+          const pixel = latLngToPixel(coord[1], coord[0]);
+          if (i === 0) {
+            ctx.moveTo(pixel.x, pixel.y);
+          } else {
+            ctx.lineTo(pixel.x, pixel.y);
+          }
+        });
+        ctx.stroke();
+      } else if (feature.geometry.type === "Point") {
+        const pixel = latLngToPixel(feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
+        ctx.beginPath();
+        ctx.arc(pixel.x, pixel.y, 5 * scaleFactor, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+      }
+    });
+  }
+
   // Function to add coordinates to the canvas for image exports with DPI scaling
   function addCoordinatesToCanvas(canvas, bounds, scaleFactor = 1) {
     const ctx = canvas.getContext("2d");
@@ -1187,10 +1266,148 @@
 
     return canvas;
   }
-  // Export map as PDF
-  // Export map as PDF with DPI setting
-// Export map as PDF with DPI setting and layout options
-function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp, dpi = 150) {
+
+  // Function to draw GeoJSON features with their original styles - improved for clarity and positioning
+  function drawFeaturesWithStyles(ctx, bounds, canvas, featuresWithStyles, scaleFactor) {
+    if (!featuresWithStyles || !featuresWithStyles.length) return;
+
+    // Calculate the pixel coordinates from geographic coordinates with high precision
+    function latLngToPixel(lat, lng) {
+      const west = bounds.getWest();
+      const east = bounds.getEast();
+      const south = bounds.getSouth();
+      const north = bounds.getNorth();
+
+      // Calculate margins (same as in addCoordinatesToCanvas)
+      const margin = {
+        top: 60 * scaleFactor,
+        bottom: 60 * scaleFactor,
+        left: 60 * scaleFactor,
+        right: 60 * scaleFactor,
+      };
+
+      // Available space for map
+      const contentWidth = canvas.width - (margin.left + margin.right);
+      const contentHeight = canvas.height - (margin.top + margin.bottom);
+
+      // We need to compensate for the different vertical scaling between Leaflet and our canvas
+      // This dynamically calculates an adjustment based on the map's actual dimensions
+      const aspectRatio = (north - south) / (east - west);
+      const canvasAspectRatio = contentHeight / contentWidth;
+
+      // Dynamically calculate adjustment instead of using a fixed factor
+      const adjustmentFactor = Math.max(0, (aspectRatio / canvasAspectRatio - 1) * 0.05);
+
+      // Precise conversion from lat/lng to x/y with a better adjustment
+      const x = margin.left + ((lng - west) / (east - west)) * contentWidth;
+      const y = margin.top + ((north - lat) / (north - south)) * contentHeight * (1 - adjustmentFactor);
+
+      return { x: Math.round(x), y: Math.round(y) };
+    }
+    // Enable crisp edges for lines
+    ctx.imageSmoothingEnabled = false;
+
+    // Loop through all features and draw them with their original styles
+    featuresWithStyles.forEach(item => {
+      const feature = item.feature;
+      const style = item.style;
+
+      // Set style based on the original layer style
+      ctx.lineWidth = Math.max(1, Math.round(style.weight * scaleFactor)); // Ensure minimum line width of 1px
+      ctx.strokeStyle = style.color;
+      ctx.fillStyle = style.fillColor;
+
+      if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
+        const coordinates = feature.geometry.type === "Polygon" ?
+          [feature.geometry.coordinates] : feature.geometry.coordinates;
+
+        coordinates.forEach(polygon => {
+          polygon.forEach(ring => {
+            ctx.beginPath();
+
+            ring.forEach((coord, i) => {
+              const pixel = latLngToPixel(coord[1], coord[0]);
+              if (i === 0) {
+                ctx.moveTo(pixel.x, pixel.y);
+              } else {
+                ctx.lineTo(pixel.x, pixel.y);
+              }
+            });
+
+            ctx.closePath();
+
+            // Set fill with proper opacity
+            ctx.globalAlpha = style.fillOpacity;
+            ctx.fill();
+
+            // Set stroke with proper opacity
+            ctx.globalAlpha = style.opacity;
+            ctx.stroke();
+
+            // Reset alpha
+            ctx.globalAlpha = 1.0;
+          });
+        });
+      } else if (feature.geometry.type === "LineString" || feature.geometry.type === "MultiLineString") {
+        ctx.globalAlpha = style.opacity;
+
+        if (feature.geometry.type === "LineString") {
+          ctx.beginPath();
+          feature.geometry.coordinates.forEach((coord, i) => {
+            const pixel = latLngToPixel(coord[1], coord[0]);
+            if (i === 0) {
+              ctx.moveTo(pixel.x, pixel.y);
+            } else {
+              ctx.lineTo(pixel.x, pixel.y);
+            }
+          });
+          ctx.stroke();
+        } else {
+          // Handle MultiLineString
+          feature.geometry.coordinates.forEach(line => {
+            ctx.beginPath();
+            line.forEach((coord, i) => {
+              const pixel = latLngToPixel(coord[1], coord[0]);
+              if (i === 0) {
+                ctx.moveTo(pixel.x, pixel.y);
+              } else {
+                ctx.lineTo(pixel.x, pixel.y);
+              }
+            });
+            ctx.stroke();
+          });
+        }
+
+        // Reset alpha
+        ctx.globalAlpha = 1.0;
+      } else if (feature.geometry.type === "Point" || feature.geometry.type === "MultiPoint") {
+        const coordinates = feature.geometry.type === "Point" ?
+          [feature.geometry.coordinates] : feature.geometry.coordinates;
+
+        coordinates.forEach(coord => {
+          const pixel = latLngToPixel(coord[1], coord[0]);
+
+          // Fill
+          ctx.globalAlpha = style.fillOpacity;
+          ctx.beginPath();
+          ctx.arc(pixel.x, pixel.y, Math.max(3, style.weight * scaleFactor), 0, 2 * Math.PI);
+          ctx.fill();
+
+          // Stroke
+          ctx.globalAlpha = style.opacity;
+          ctx.stroke();
+
+          // Reset alpha
+          ctx.globalAlpha = 1.0;
+        });
+      }
+    });
+
+    // Reset image smoothing
+    ctx.imageSmoothingEnabled = true;
+  }
+
+  function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp, dpi, featuresWithStyles = [], bounds) {
   // Get the selected layout
   const layoutOption = document.getElementById("exportLayout").value;
   
@@ -1199,9 +1416,10 @@ function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp, dpi =
   
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({
-    orientation: orientation, // Use the selected orientation
+    orientation: orientation,
     unit: "mm",
-    format: format, // Use the selected format
+    format: format,
+    compress: false // Disable compression for better quality
   });
 
   const pageWidth = pdf.internal.pageSize.getWidth();
@@ -1230,8 +1448,8 @@ function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp, dpi =
     const imgWidth = img.width;
     const imgHeight = img.height;
 
-    // Calculate dimensions to fit while maintaining aspect ratio
-    let newWidth = contentWidth - 20; // Additional 20mm padding
+    // Calculate dimensions to fit
+    let newWidth = contentWidth - 20;
     let newHeight = (imgHeight * newWidth) / imgWidth;
 
     // Check if height exceeds available space
@@ -1244,13 +1462,49 @@ function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp, dpi =
     const xPos = margin.left + (contentWidth - newWidth) / 2;
     const yPos = margin.top + (contentHeight - newHeight) / 2;
 
+    // For sharper rendering in PDF: 
+    // Use a single high-resolution canvas for all drawing
+    const pdfCanvas = document.createElement('canvas');
+    
+    // Create a canvas with higher resolution for sharper output
+    // Scale based on the user-selected DPI, with a minimum multiplier of 3
+    const canvasScale = Math.max(3, dpi / 96);
+    pdfCanvas.width = imgWidth * canvasScale;
+    pdfCanvas.height = imgHeight * canvasScale;
+    
+    const pdfCtx = pdfCanvas.getContext('2d');
+    
+    // Apply sharp rendering settings
+    pdfCtx.imageSmoothingEnabled = false;
+    
+    // First draw the base map (scaled up for quality)
+    pdfCtx.drawImage(img, 0, 0, pdfCanvas.width, pdfCanvas.height);
+    
+    // Draw features with proper geo-positioning and original styles
+    if (featuresWithStyles && featuresWithStyles.length > 0) {
+      // Calculate the proper scale factor based on user DPI
+      const pdfScaleFactor = canvasScale;
+      
+      // Draw directly onto the high-resolution PDF canvas
+      drawFeaturesWithStyles(
+        pdfCtx, 
+        bounds, 
+        pdfCanvas, 
+        featuresWithStyles, 
+        pdfScaleFactor
+      );
+    }
+    
+    // Get the high-quality image
+    const pdfMapImage = pdfCanvas.toDataURL('image/png', 1.0);
+    
     // Draw border around map area
     pdf.setDrawColor(0);
     pdf.setLineWidth(0.5);
     pdf.rect(xPos - 5, yPos - 5, newWidth + 10, newHeight + 10);
-
-    // Add map image
-    pdf.addImage(mapImage, "PNG", xPos, yPos, newWidth, newHeight);
+    
+    // Add the map image with features using the FAST alias for better quality
+    pdf.addImage(pdfMapImage, "PNG", xPos, yPos, newWidth, newHeight, undefined, 'FAST');
 
     // Add coordinate scales on all four sides
     addCoordinateScales(pdf, xPos, yPos, newWidth, newHeight);
@@ -1261,14 +1515,14 @@ function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp, dpi =
     pdf.setFontSize(10);
     
     // Adjust metadata position based on page size
-    const metadataSpacing = pageWidth < 210 ? 40 : 60; // Use smaller spacing for smaller page sizes
+    const metadataSpacing = pageWidth < 210 ? 40 : 60;
     
     pdf.text(`Category: ${category}`, margin.left, textYPos);
     pdf.text(`Subcategory: ${subcategory}`, margin.left + metadataSpacing, textYPos);
     pdf.text(`Generated: ${timestamp}`, margin.left + (metadataSpacing * 2), textYPos);
     
     // For smaller page formats, we might need to adjust or omit some metadata
-    if (pageWidth >= 210) { // Only include source info if we have enough space
+    if (pageWidth >= 210) {
       pdf.text(`Source: IIT BHU DSS (${dpi} DPI)`, margin.left + (metadataSpacing * 3), textYPos);
     }
 
@@ -1282,6 +1536,293 @@ function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp, dpi =
     );
   };
 }
+  function handleMapExport() {
+    const mapElement = document.getElementById("map");
+    const exportFormat = document.getElementById("exportFormat").value;
+    const exportDPI = parseInt(document.getElementById("exportDPI").value);
+    const mapTitle =
+      document.getElementById("mapTitle").value || "India GIS Vector Map";
+
+    const categorySelect = document.getElementById("categorySelect");
+    const subcategorySelect = document.getElementById("subcategorySelect");
+    const selectedCategory =
+      categorySelect.options[categorySelect.selectedIndex]?.text ||
+      "No Category Selected";
+    const selectedSubcategory =
+      subcategorySelect.options[subcategorySelect.selectedIndex]?.text ||
+      "No Subcategory Selected";
+    const timestamp = new Date().toLocaleString();
+
+    showNotification("Exporting", "Preparing map export...", "info");
+
+    // Ensure map is properly sized and fully rendered
+    map.invalidateSize(true);
+
+    // Get map dimensions
+    const mapWidth = mapElement.clientWidth;
+    const mapHeight = mapElement.clientHeight;
+
+    // Calculate base size (uncompressed) at 72 DPI
+    const basePixelCount = mapWidth * mapHeight;
+    const baseImageSize = basePixelCount * 4; // Size in bytes at 72 DPI (RGBA)
+
+    // Estimate target DPI based on selected quality level
+    const MIN_TARGET_SIZE = 500 * 1024;
+    const MAX_TARGET_SIZE = 10 * 1024 * 1024;
+    const estimatedCompressionRatio = 0.25;
+
+    // Calculate DPI values for min/max file sizes
+    const maxDPI = Math.sqrt(MAX_TARGET_SIZE / (baseImageSize * estimatedCompressionRatio)) * 72;
+    const minDPI = Math.sqrt(MIN_TARGET_SIZE / (baseImageSize * estimatedCompressionRatio)) * 72;
+
+    // Convert exportDPI value to actual DPI
+    let dpi;
+    switch (exportDPI) {
+      case 1: // Low
+        dpi = Math.max(72, Math.min(minDPI, 100));
+        break;
+      case 2: // Medium
+        dpi = Math.min(Math.max(minDPI, 150), Math.min(300, maxDPI));
+        break;
+      case 3: // High
+        dpi = Math.min(Math.max(200, minDPI), Math.min(400, maxDPI));
+        break;
+      case 4: // Ultra High
+        dpi = Math.min(Math.max(300, minDPI), maxDPI);
+        break;
+      default:
+        dpi = 150; // Medium as default
+    }
+
+    // Cap the DPI to reasonable values
+    dpi = Math.max(72, Math.min(dpi, 600));
+
+    console.log(`Map dimensions: ${mapWidth}x${mapHeight}, Calculated DPI: ${dpi.toFixed(0)}`);
+
+    // Set scale factor based on DPI
+    const scaleFactor = dpi / 96;
+
+    // Wait for map to stabilize - longer delay to ensure complete rendering
+    setTimeout(async () => {
+      try {
+        // Get the bounds before html2canvas
+        const bounds = map.getBounds();
+
+        // Log the bounds for debugging - this helps identify positioning issues
+        console.log("Export using bounds:",
+          `North: ${bounds.getNorth().toFixed(6)}`,
+          `South: ${bounds.getSouth().toFixed(6)}`,
+          `East: ${bounds.getEast().toFixed(6)}`,
+          `West: ${bounds.getWest().toFixed(6)}`
+        );
+
+        // Create a fixed bounds object to ensure consistency across all functions
+        // Create a more complete bounds object
+        const exportBounds = {
+          getNorth: () => bounds.getNorth(),
+          getSouth: () => bounds.getSouth(),
+          getEast: () => bounds.getEast(),
+          getWest: () => bounds.getWest(),
+          getNorthWest: () => L.latLng(bounds.getNorth(), bounds.getWest()),
+          getNorthEast: () => L.latLng(bounds.getNorth(), bounds.getEast()),
+          getSouthWest: () => L.latLng(bounds.getSouth(), bounds.getWest()),
+          getSouthEast: () => L.latLng(bounds.getSouth(), bounds.getEast())
+        };
+
+        // Collect all GeoJSON features with their styles
+        let featuresWithStyles = [];
+
+        // Store visibility state of layers
+        let layerVisibility = {};
+
+        if (currentLayer) {
+          currentLayer.eachLayer(layer => {
+            if (layer.feature) {
+              // Store layer visibility
+              layerVisibility[layer._leaflet_id] = map.hasLayer(layer);
+
+              // Store feature with its style
+              const style = layer.options || {};
+              featuresWithStyles.push({
+                feature: layer.feature,
+                style: {
+                  fillColor: style.fillColor || "#3388ff",
+                  color: style.color || "#3388ff",
+                  weight: style.weight || 3,
+                  opacity: style.opacity || 1.0,
+                  fillOpacity: style.fillOpacity || 0.2
+                }
+              });
+
+              // Hide the layer temporarily to avoid duplication
+              if (map.hasLayer(layer)) {
+                map.removeLayer(layer);
+              }
+            }
+          });
+        }
+
+        // Capture the map base without GeoJSON layers
+        const mapCanvas = await html2canvas(mapElement, {
+          useCORS: true,
+          allowTaint: true,
+          scale: scaleFactor * 1.5, // Higher scale factor for better quality
+          backgroundColor: "#ffffff",
+          logging: false,
+          removeContainer: false,
+          imageTimeout: 0, // No timeout for images
+          onclone: function (clonedDoc) {
+            // Use this to ensure the cloned document has fully-loaded tiles
+            const mapPane = clonedDoc.querySelector('.leaflet-map-pane');
+            if (mapPane) {
+              mapPane.style.willChange = 'transform'; // Better rendering
+            }
+          }
+        });
+
+        // Restore layer visibility
+        if (currentLayer) {
+          currentLayer.eachLayer(layer => {
+            if (layer.feature && layerVisibility[layer._leaflet_id]) {
+              map.addLayer(layer);
+            }
+          });
+        }
+
+        // Create a larger canvas for final output
+        const finalCanvas = document.createElement('canvas');
+        const padding = 120 * scaleFactor;
+        finalCanvas.width = mapCanvas.width + padding * 2;
+        finalCanvas.height = mapCanvas.height + padding * 2;
+
+        // Apply CSS for better rendering quality
+        finalCanvas.style.imageRendering = '-webkit-optimize-contrast';
+        finalCanvas.style.imageRendering = 'crisp-edges';
+
+        // Draw white background and base map
+        const ctx = finalCanvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+        ctx.drawImage(mapCanvas, padding, padding);
+
+        // Draw the features with proper geographic positioning and original styles
+        drawFeaturesWithStyles(ctx, exportBounds, finalCanvas, featuresWithStyles, scaleFactor);
+
+        // For image formats (PNG/JPG)
+        if (exportFormat === 'png' || exportFormat === 'jpg') {
+          // Add title to the canvas
+          ctx.font = `bold ${24 * scaleFactor}px Helvetica`;
+          ctx.fillStyle = '#000000';
+          ctx.textAlign = 'center';
+          ctx.fillText(mapTitle, finalCanvas.width / 2, padding / 2);
+
+          // Add metadata to the canvas
+          ctx.font = `${12 * scaleFactor}px Helvetica`;
+          ctx.textAlign = 'left';
+          ctx.fillText(`Category: ${selectedCategory}`, padding, finalCanvas.height - padding / 2 + (5 * scaleFactor));
+          ctx.fillText(`Subcategory: ${selectedSubcategory}`, padding + (180 * scaleFactor), finalCanvas.height - padding / 2 + (5 * scaleFactor));
+          ctx.fillText(`Generated: ${timestamp}`, padding + (360 * scaleFactor), finalCanvas.height - padding / 2 + (5 * scaleFactor));
+          ctx.textAlign = 'right';
+          ctx.fillText(`Source: IIT BHU DSS`, finalCanvas.width - padding, finalCanvas.height - padding / 2 + (5 * scaleFactor));
+
+          // Add the coordinates to the canvas
+          addCoordinatesToCanvas(finalCanvas, exportBounds, scaleFactor);
+
+          // Get the final image
+          const finalImage = finalCanvas.toDataURL(`image/${exportFormat === 'jpg' ? 'jpeg' : 'png'}`, 1.0);
+
+          // Download the image
+          const link = document.createElement("a");
+          link.download = `${mapTitle.replace(/\s+/g, "_")}.${exportFormat}`;
+          link.href = finalImage;
+          link.click();
+
+          showNotification(
+            "Export Complete",
+            `Map exported as ${exportFormat.toUpperCase()} successfully at ${dpi} DPI`,
+            "success"
+          );
+        }
+        // For PDF export
+        else if (exportFormat === 'pdf') {
+          // Get map image for PDF
+          const mapImage = mapCanvas.toDataURL("image/png", 1.0);
+
+          // Use the improved exportAsPDF function with featuresWithStyles
+          exportAsPDF(
+            mapImage,
+            mapTitle,
+            selectedCategory,
+            selectedSubcategory,
+            timestamp,
+            dpi,
+            featuresWithStyles,
+            exportBounds
+          );
+        }
+        // For SVG format
+        else if (exportFormat === 'svg') {
+          // Add title to the canvas
+          ctx.font = `bold ${24 * scaleFactor}px Helvetica`;
+          ctx.fillStyle = '#000000';
+          ctx.textAlign = 'center';
+          ctx.fillText(mapTitle, finalCanvas.width / 2, padding / 2);
+
+          // Add metadata to the canvas
+          ctx.font = `${12 * scaleFactor}px Helvetica`;
+          ctx.textAlign = 'left';
+          ctx.fillText(`Category: ${selectedCategory}`, padding, finalCanvas.height - padding / 2 + (5 * scaleFactor));
+          ctx.fillText(`Subcategory: ${selectedSubcategory}`, padding + (180 * scaleFactor), finalCanvas.height - padding / 2 + (5 * scaleFactor));
+          ctx.fillText(`Generated: ${timestamp}`, padding + (360 * scaleFactor), finalCanvas.height - padding / 2 + (5 * scaleFactor));
+          ctx.textAlign = 'right';
+          ctx.fillText(`Source: IIT BHU DSS`, finalCanvas.width - padding, finalCanvas.height - padding / 2 + (5 * scaleFactor));
+
+          // Add coordinates
+          addCoordinatesToCanvas(finalCanvas, exportBounds, scaleFactor);
+
+          // Convert to SVG
+          const svgData = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${finalCanvas.width}" height="${finalCanvas.height}">
+          <image href="${finalCanvas.toDataURL('image/png')}" width="${finalCanvas.width}" height="${finalCanvas.height}" />
+        </svg>
+        `;
+
+          // Create SVG Blob and download
+          const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+          const svgUrl = URL.createObjectURL(svgBlob);
+
+          const link = document.createElement("a");
+          link.download = `${mapTitle.replace(/\s+/g, "_")}.svg`;
+          link.href = svgUrl;
+          link.click();
+
+          // Clean up
+          URL.revokeObjectURL(svgUrl);
+
+          showNotification(
+            "Export Complete",
+            `Map exported as SVG successfully at ${dpi} DPI`,
+            "success"
+          );
+        }
+        else if (exportFormat === 'tif') {
+          showNotification(
+            "Notice",
+            "TIFF export will be implemented in a future update",
+            "info"
+          );
+        }
+      } catch (error) {
+        console.error("Error exporting map:", error);
+        showNotification(
+          "Error",
+          "Failed to export map: " + error.message,
+          "error"
+        );
+      }
+    }, 1500); // Longer timeout for more reliable capture
+  }
+
   // Add coordinate scales to PDF
   function addCoordinateScales(pdf, x, y, width, height) {
     const bounds = map.getBounds();
@@ -1355,225 +1896,7 @@ function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp, dpi =
     pdf.text("E", x + width + 15, y + height / 2, { align: "center" });
   }
 
-  // Handle map export with coordinates for all formats
-  // Handle map export with coordinates and DPI selection
-  function handleMapExport() {
-    
-    const mapElement = document.getElementById("map");
-    const exportFormat = document.getElementById("exportFormat").value;
-    const exportDPI = parseInt(document.getElementById("exportDPI").value);
-    const mapTitle =
-      document.getElementById("mapTitle").value || "India GIS Vector Map";
 
-    const categorySelect = document.getElementById("categorySelect");
-    const subcategorySelect = document.getElementById("subcategorySelect");
-    const selectedCategory =
-      categorySelect.options[categorySelect.selectedIndex]?.text ||
-      "No Category Selected";
-    const selectedSubcategory =
-      subcategorySelect.options[subcategorySelect.selectedIndex]?.text ||
-      "No Subcategory Selected";
-    const timestamp = new Date().toLocaleString();
-
-    showNotification("Exporting", "Preparing map export...", "info");
-
-    // Ensure map is properly sized
-    map.invalidateSize();
-
-    // Get map dimensions
-    const mapWidth = mapElement.clientWidth;
-    const mapHeight = mapElement.clientHeight;
-
-    // Calculate base size (uncompressed) at 72 DPI
-    // Each pixel takes 4 bytes (RGBA) in memory before compression
-    const basePixelCount = mapWidth * mapHeight;
-    const baseImageSize = basePixelCount * 4; // Size in bytes at 72 DPI
-
-    // Estimate target DPI based on selected quality level
-    // Target sizes in bytes (500KB to 10MB)
-    const MIN_TARGET_SIZE = 500 * 1024;
-    const MAX_TARGET_SIZE = 10 * 1024 * 1024;
-
-    // Calculate compression ratio (PNG typically compresses well, around 0.25 for maps)
-    const estimatedCompressionRatio = 0.25;
-
-    // Calculate DPI values that would yield our min/max file sizes
-    // This is an estimation since actual compression depends on image content
-    const maxDPI = Math.sqrt(MAX_TARGET_SIZE / (baseImageSize * estimatedCompressionRatio)) * 72;
-    const minDPI = Math.sqrt(MIN_TARGET_SIZE / (baseImageSize * estimatedCompressionRatio)) * 72;
-
-    // Convert exportDPI value to actual DPI
-    // Assign DPI based on selected quality level
-    let dpi;
-    switch (exportDPI) {
-      case 1: // Low
-        dpi = Math.max(72, Math.min(minDPI, 100)); // At least 72, cap at 100
-        break;
-      case 2: // Medium
-        dpi = Math.min(Math.max(minDPI, 150), Math.min(300, maxDPI));
-        break;
-      case 3: // High
-        dpi = Math.min(Math.max(200, minDPI), Math.min(400, maxDPI));
-        break;
-      case 4: // Ultra High
-        dpi = Math.min(Math.max(300, minDPI), maxDPI);
-        break;
-      default:
-        dpi = 150; // Medium as default
-    }
-
-    // Cap the DPI to reasonable values
-    dpi = Math.max(72, Math.min(dpi, 600));
-
-    console.log(`Map dimensions: ${mapWidth}x${mapHeight}, Calculated DPI: ${dpi.toFixed(0)}`);
-
-    // Set scale factor based on DPI (96 is standard screen DPI)
-    const scaleFactor = dpi / 96;
-
-    // Wait for map to stabilize
-    setTimeout(async () => {
-      try {
-        // Get the bounds before html2canvas to use for coordinates
-        const bounds = map.getBounds();
-
-        // Set scale factor based on DPI (96 is standard screen DPI)
-        const scaleFactor = dpi / 96;
-
-        // Capture the map with appropriate scale factor
-        const mapCanvas = await html2canvas(mapElement, {
-          useCORS: true,
-          allowTaint: true,
-          scale: scaleFactor, // Use DPI-based scale factor
-          backgroundColor: "#ffffff",
-          logging: false,
-          removeContainer: false,
-        });
-
-        // Create a larger canvas to accommodate coordinates
-        const finalCanvas = document.createElement('canvas');
-        const padding = 120 * scaleFactor; // Scale padding based on DPI
-        finalCanvas.width = mapCanvas.width + padding * 2;
-        finalCanvas.height = mapCanvas.height + padding * 2;
-
-        // Draw original map in the center of the new canvas
-        const ctx = finalCanvas.getContext('2d');
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-        ctx.drawImage(mapCanvas, padding, padding);
-
-        // For image formats, add coordinates directly to the canvas
-        if (exportFormat === 'png' || exportFormat === 'jpg') {
-          // Add title to the canvas - scale font size based on DPI
-          ctx.font = `bold ${24 * scaleFactor}px Helvetica`;
-          ctx.fillStyle = '#000000';
-          ctx.textAlign = 'center';
-          ctx.fillText(mapTitle, finalCanvas.width / 2, padding / 2);
-
-          // Add metadata to the canvas - scale font size based on DPI
-          ctx.font = `${12 * scaleFactor}px Helvetica`;
-          ctx.textAlign = 'left';
-          ctx.fillText(`Category: ${selectedCategory}`, padding, finalCanvas.height - padding / 2 + (5 * scaleFactor));
-          ctx.fillText(`Subcategory: ${selectedSubcategory}`, padding + (180 * scaleFactor), finalCanvas.height - padding / 2 + (5 * scaleFactor));
-          ctx.fillText(`Generated: ${timestamp}`, padding + (360 * scaleFactor), finalCanvas.height - padding / 2 + (5 * scaleFactor));
-          ctx.textAlign = 'right';
-          ctx.fillText(`Source: IIT BHU DSS`, finalCanvas.width - padding, finalCanvas.height - padding / 2 + (5 * scaleFactor));
-
-          // Add the coordinates to the canvas
-          addCoordinatesToCanvas(finalCanvas, bounds, scaleFactor);
-
-          // Get the final image with coordinates
-          const finalImage = finalCanvas.toDataURL(`image/${exportFormat === 'jpg' ? 'jpeg' : 'png'}`, 1.0);
-
-          // Direct download as image
-          const link = document.createElement("a");
-          link.download = `${mapTitle.replace(/\s+/g, "_")}.${exportFormat}`;
-          link.href = finalImage;
-          link.click();
-
-          showNotification(
-            "Export Complete",
-            `Map exported as ${exportFormat.toUpperCase()} successfully at ${dpi} DPI`,
-            "success"
-          );
-        }
-        // For PDF, use the specialized PDF export function
-        else if (exportFormat === 'pdf') {
-          // Get map image without coordinates (they'll be added in PDF context)
-          const mapImage = mapCanvas.toDataURL("image/png", 1.0);
-
-          exportAsPDF(
-            mapImage,
-            mapTitle,
-            selectedCategory,
-            selectedSubcategory,
-            timestamp,
-            dpi
-          );
-        }
-        
-        // For SVG format
-        else if (exportFormat === 'svg') {
-          // Add title to the canvas first
-          ctx.font = `bold ${24 * scaleFactor}px Helvetica`;
-          ctx.fillStyle = '#000000';
-          ctx.textAlign = 'center';
-          ctx.fillText(mapTitle, finalCanvas.width / 2, padding / 2);
-
-          // Add metadata to the canvas
-          ctx.font = `${12 * scaleFactor}px Helvetica`;
-          ctx.textAlign = 'left';
-          ctx.fillText(`Category: ${selectedCategory}`, padding, finalCanvas.height - padding / 2 + (5 * scaleFactor));
-          ctx.fillText(`Subcategory: ${selectedSubcategory}`, padding + (180 * scaleFactor), finalCanvas.height - padding / 2 + (5 * scaleFactor));
-          ctx.fillText(`Generated: ${timestamp}`, padding + (360 * scaleFactor), finalCanvas.height - padding / 2 + (5 * scaleFactor));
-          ctx.textAlign = 'right';
-          ctx.fillText(`Source: IIT BHU DSS`, finalCanvas.width - padding, finalCanvas.height - padding / 2 + (5 * scaleFactor));
-
-          // Add coordinates
-          addCoordinatesToCanvas(finalCanvas, bounds, scaleFactor);
-
-          // Convert canvas to SVG
-          const svgSerializer = new XMLSerializer();
-          const svgData = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="${finalCanvas.width}" height="${finalCanvas.height}">
-            <image href="${finalCanvas.toDataURL('image/png')}" width="${finalCanvas.width}" height="${finalCanvas.height}" />
-          </svg>
-        `;
-
-          // Create SVG Blob and download
-          const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-          const svgUrl = URL.createObjectURL(svgBlob);
-
-          const link = document.createElement("a");
-          link.download = `${mapTitle.replace(/\s+/g, "_")}.svg`;
-          link.href = svgUrl;
-          link.click();
-
-          // Clean up
-          URL.revokeObjectURL(svgUrl);
-
-          showNotification(
-            "Export Complete",
-            `Map exported as SVG successfully at ${dpi} DPI`,
-            "success"
-          );
-        }
-        else if (exportFormat === 'tif') {
-          showNotification(
-            "Notice",
-            "TIFF export will be implemented in a future update",
-            "info"
-          );
-        }
-      } catch (error) {
-        console.error("Error exporting map:", error);
-        showNotification(
-          "Error",
-          "Failed to export map: " + error.message,
-          "error"
-        );
-      }
-    }, 1000);
-  }
   // Document ready function
   document.addEventListener("DOMContentLoaded", function () {
     // Initialize map
@@ -1944,29 +2267,29 @@ function exportAsPDF(mapImage, mapTitle, category, subcategory, timestamp, dpi =
             .classList.remove("active");
         });
       });
-  //////////////////////////////////////////////////////////////////////////////////
-// Buffer Tool Fix - Implementation to ensure toolbar appears
+    //////////////////////////////////////////////////////////////////////////////////
+    // Buffer Tool Fix - Implementation to ensure toolbar appears
 
-// Enhanced Buffer Tools Implementation
-document.addEventListener('DOMContentLoaded', function() {
-  // Create style for buffer toolbar
-  addBufferToolbarStyles();
-  
-  // Create and add the buffer toolbar to the DOM
-  createAndAddBufferToolbar();
-  
-  // Modify analysis dropdown handler
-  modifyAnalysisDropdownHandler();
-  
-  // Load Turf.js for buffer operations
-  ensureTurfJsLoaded();
-});
+    // Enhanced Buffer Tools Implementation
+    document.addEventListener('DOMContentLoaded', function () {
+      // Create style for buffer toolbar
+      addBufferToolbarStyles();
 
-// Function to add required styles
-function addBufferToolbarStyles() {
-  const styleElement = document.createElement('style');
-  styleElement.id = 'buffer-tool-styles';
-  styleElement.textContent = `
+      // Create and add the buffer toolbar to the DOM
+      createAndAddBufferToolbar();
+
+      // Modify analysis dropdown handler
+      modifyAnalysisDropdownHandler();
+
+      // Load Turf.js for buffer operations
+      ensureTurfJsLoaded();
+    });
+
+    // Function to add required styles
+    function addBufferToolbarStyles() {
+      const styleElement = document.createElement('style');
+      styleElement.id = 'buffer-tool-styles';
+      styleElement.textContent = `
     .thin-strip-toolbar {
       display: none; /* Initially hidden */
       background-color: #f5f5f5;
@@ -2036,256 +2359,256 @@ function addBufferToolbarStyles() {
       padding: 5px;
     }
   `;
-  
-  document.head.appendChild(styleElement);
-}
 
-// Create and add buffer toolbar to DOM
-function createAndAddBufferToolbar() {
-  // Create toolbar container
-  const bufferToolbar = document.createElement('div');
-  bufferToolbar.id = 'buffer-toolbar';
-  bufferToolbar.className = 'thin-strip-toolbar';
-  
-  // Create toolbar title
-  const toolbarTitle = document.createElement('div');
-  toolbarTitle.className = 'toolbar-title';
-  toolbarTitle.style.marginRight = '10px';
-  toolbarTitle.style.fontWeight = 'bold';
-  toolbarTitle.textContent = 'Buffer:';
-  bufferToolbar.appendChild(toolbarTitle);
-  
-  // Add buffer drawing tools
-  const tools = [
-    { id: 'buffer-point', icon: 'fas fa-map-marker-alt', tooltip: 'Place Point' },
-    { id: 'buffer-line', icon: 'fas fa-slash', tooltip: 'Draw Line' },
-    { id: 'buffer-polygon', icon: 'fas fa-draw-polygon', tooltip: 'Draw Polygon' }
-  ];
-  
-  tools.forEach(tool => {
-    const toolButton = document.createElement('button');
-    toolButton.id = tool.id;
-    toolButton.className = 'buffer-tool-btn';
-    toolButton.setAttribute('data-tooltip', tool.tooltip);
-    
-    // Add icon
-    const icon = document.createElement('i');
-    icon.className = tool.icon;
-    toolButton.appendChild(icon);
-    
-    // Add click event listener
-    toolButton.addEventListener('click', function() {
-      activateBufferTool(tool.id);
-    });
-    
-    bufferToolbar.appendChild(toolButton);
-  });
-  
-  // Add close button
-  const closeButton = document.createElement('button');
-  closeButton.className = 'buffer-tool-btn';
-  closeButton.setAttribute('data-tooltip', 'Close Buffer Tool');
-  closeButton.style.marginLeft = '10px';
-  
-  const closeIcon = document.createElement('i');
-  closeIcon.className = 'fas fa-times';
-  closeButton.appendChild(closeIcon);
-  
-  closeButton.addEventListener('click', function() {
-    bufferToolbar.style.display = 'none';
-  });
-  
-  bufferToolbar.appendChild(closeButton);
-  
-  // Add the toolbar to the map container
-  document.addEventListener('DOMContentLoaded', function() {
-    const mapContainer = document.querySelector('.map-container');
-    if (mapContainer) {
-      mapContainer.appendChild(bufferToolbar);
-    } else {
-      document.body.appendChild(bufferToolbar);
+      document.head.appendChild(styleElement);
     }
-  });
-}
 
-// Modify analysis dropdown handler
-function modifyAnalysisDropdownHandler() {
-  document.addEventListener('DOMContentLoaded', function() {
-    // Wait for the page to fully load
-    setTimeout(() => {
-      // Find all analysis dropdown items
-      document.querySelectorAll("#analysis-dropdown .dropdown-item").forEach((item) => {
-        // Remove any existing click listeners (to avoid duplicates)
-        const oldItem = item.cloneNode(true);
-        item.parentNode.replaceChild(oldItem, item);
-        
-        // Add our new click listener
-        oldItem.addEventListener("click", function() {
-          const analysisType = this.getAttribute("data-analysis");
-          
-          // Special handling for buffer tool
-          if (analysisType === 'buffer') {
-            // Show buffer toolbar
-            const bufferToolbar = document.getElementById('buffer-toolbar');
-            if (bufferToolbar) {
-              bufferToolbar.style.display = 'flex';
-              
-              showNotification(
-                "Buffer Tool",
-                "Buffer tool selected. Choose a drawing method.",
-                "info"
-              );
-            } else {
-              showNotification(
-                "Error",
-                "Buffer toolbar not found. Please refresh the page.",
-                "error"
-              );
-            }
-          } else {
-            // Hide buffer toolbar for other tools
-            const bufferToolbar = document.getElementById('buffer-toolbar');
-            if (bufferToolbar) {
-              bufferToolbar.style.display = 'none';
-            }
-            
-            showNotification(
-              "Analysis Tool",
-              `${analysisType.charAt(0).toUpperCase() + analysisType.slice(1)} analysis tool selected`,
-              "info"
-            );
-          }
-          
-          // Close dropdown
-          document
-            .querySelector("#analysis-dropdown .dropdown-content")
-            .classList.remove("show");
-          document
-            .querySelector("#analysis-dropdown .dropdown-header")
-            .classList.remove("active");
+    // Create and add buffer toolbar to DOM
+    function createAndAddBufferToolbar() {
+      // Create toolbar container
+      const bufferToolbar = document.createElement('div');
+      bufferToolbar.id = 'buffer-toolbar';
+      bufferToolbar.className = 'thin-strip-toolbar';
+
+      // Create toolbar title
+      const toolbarTitle = document.createElement('div');
+      toolbarTitle.className = 'toolbar-title';
+      toolbarTitle.style.marginRight = '10px';
+      toolbarTitle.style.fontWeight = 'bold';
+      toolbarTitle.textContent = 'Buffer:';
+      bufferToolbar.appendChild(toolbarTitle);
+
+      // Add buffer drawing tools
+      const tools = [
+        { id: 'buffer-point', icon: 'fas fa-map-marker-alt', tooltip: 'Place Point' },
+        { id: 'buffer-line', icon: 'fas fa-slash', tooltip: 'Draw Line' },
+        { id: 'buffer-polygon', icon: 'fas fa-draw-polygon', tooltip: 'Draw Polygon' }
+      ];
+
+      tools.forEach(tool => {
+        const toolButton = document.createElement('button');
+        toolButton.id = tool.id;
+        toolButton.className = 'buffer-tool-btn';
+        toolButton.setAttribute('data-tooltip', tool.tooltip);
+
+        // Add icon
+        const icon = document.createElement('i');
+        icon.className = tool.icon;
+        toolButton.appendChild(icon);
+
+        // Add click event listener
+        toolButton.addEventListener('click', function () {
+          activateBufferTool(tool.id);
         });
+
+        bufferToolbar.appendChild(toolButton);
       });
-    }, 500); // Short delay to ensure elements are fully loaded
-  });
-}
 
-// Function to handle buffer tool activation
-function activateBufferTool(toolId) {
-  // Deactivate all tools first
-  document.querySelectorAll('.buffer-tool-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  
-  // Activate the selected tool
-  document.getElementById(toolId).classList.add('active');
-  
-  // Set the current active tool and apply appropriate action
-  const toolType = toolId.split('-')[1]; // Extract 'polygon', 'point', or 'line'
-  
-  showNotification(
-    "Buffer Tool",
-    `${toolType.charAt(0).toUpperCase() + toolType.slice(1)} tool activated`,
-    "info"
-  );
-  
-  // Setup appropriate drawing method based on the selected tool
-  switch (toolType) {
-    case 'point':
-      setupBufferPointTool();
-      break;
-    case 'line':
-      setupBufferLineTool();
-      break;
-    case 'polygon':
-      setupBufferPolygonTool();
-      break;
-  }
-}
+      // Add close button
+      const closeButton = document.createElement('button');
+      closeButton.className = 'buffer-tool-btn';
+      closeButton.setAttribute('data-tooltip', 'Close Buffer Tool');
+      closeButton.style.marginLeft = '10px';
 
-// Setup buffer point drawing tool
-function setupBufferPointTool() {
-  // Use Leaflet.draw for point placement
-  new L.Draw.Marker(map, {
-    icon: new L.Icon({
-      iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-      shadowSize: [41, 41]
-    })
-  }).enable();
-  
-  // If we don't already have a created event handler for buffer features
-  if (!map._hasBufferCreateHandler) {
-    map._hasBufferCreateHandler = true;
-    
-    // Store the original handler if it exists
-    const originalCreatedHandler = map._events['draw:created'] ? [...map._events['draw:created']] : [];
-    
-    // Add our custom handler for buffer features
-    map.on('draw:created', function(e) {
-      const type = e.layerType;
-      const layer = e.layer;
-      
-      // Add the layer to the map
-      layer.addTo(map);
-      
-      // Special handling for buffer features
-      if (document.getElementById('buffer-toolbar').style.display === 'flex') {
-        // It's a buffer feature - add special popup
-        if (type === 'marker') {
-          // Point buffer
-          layer.bindPopup(createBufferControlsPopup('Point')).openPopup();
-        } else if (type === 'polyline') {
-          // Line buffer
-          layer.bindPopup(createBufferControlsPopup('Line')).openPopup();
-        } else if (type === 'polygon') {
-          // Polygon buffer
-          layer.bindPopup(createBufferControlsPopup('Polygon')).openPopup();
+      const closeIcon = document.createElement('i');
+      closeIcon.className = 'fas fa-times';
+      closeButton.appendChild(closeIcon);
+
+      closeButton.addEventListener('click', function () {
+        bufferToolbar.style.display = 'none';
+      });
+
+      bufferToolbar.appendChild(closeButton);
+
+      // Add the toolbar to the map container
+      document.addEventListener('DOMContentLoaded', function () {
+        const mapContainer = document.querySelector('.map-container');
+        if (mapContainer) {
+          mapContainer.appendChild(bufferToolbar);
+        } else {
+          document.body.appendChild(bufferToolbar);
         }
-        
-        // Setup buffer controls event handlers
-        layer.on('popupopen', setupBufferControlsHandlers);
-      } else {
-        // It's a regular feature - call original handlers
-        if (originalCreatedHandler.length > 0) {
-          originalCreatedHandler.forEach(handler => {
-            handler.fn.call(handler.ctx, e);
+      });
+    }
+
+    // Modify analysis dropdown handler
+    function modifyAnalysisDropdownHandler() {
+      document.addEventListener('DOMContentLoaded', function () {
+        // Wait for the page to fully load
+        setTimeout(() => {
+          // Find all analysis dropdown items
+          document.querySelectorAll("#analysis-dropdown .dropdown-item").forEach((item) => {
+            // Remove any existing click listeners (to avoid duplicates)
+            const oldItem = item.cloneNode(true);
+            item.parentNode.replaceChild(oldItem, item);
+
+            // Add our new click listener
+            oldItem.addEventListener("click", function () {
+              const analysisType = this.getAttribute("data-analysis");
+
+              // Special handling for buffer tool
+              if (analysisType === 'buffer') {
+                // Show buffer toolbar
+                const bufferToolbar = document.getElementById('buffer-toolbar');
+                if (bufferToolbar) {
+                  bufferToolbar.style.display = 'flex';
+
+                  showNotification(
+                    "Buffer Tool",
+                    "Buffer tool selected. Choose a drawing method.",
+                    "info"
+                  );
+                } else {
+                  showNotification(
+                    "Error",
+                    "Buffer toolbar not found. Please refresh the page.",
+                    "error"
+                  );
+                }
+              } else {
+                // Hide buffer toolbar for other tools
+                const bufferToolbar = document.getElementById('buffer-toolbar');
+                if (bufferToolbar) {
+                  bufferToolbar.style.display = 'none';
+                }
+
+                showNotification(
+                  "Analysis Tool",
+                  `${analysisType.charAt(0).toUpperCase() + analysisType.slice(1)} analysis tool selected`,
+                  "info"
+                );
+              }
+
+              // Close dropdown
+              document
+                .querySelector("#analysis-dropdown .dropdown-content")
+                .classList.remove("show");
+              document
+                .querySelector("#analysis-dropdown .dropdown-header")
+                .classList.remove("active");
+            });
           });
-        }
+        }, 500); // Short delay to ensure elements are fully loaded
+      });
+    }
+
+    // Function to handle buffer tool activation
+    function activateBufferTool(toolId) {
+      // Deactivate all tools first
+      document.querySelectorAll('.buffer-tool-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      // Activate the selected tool
+      document.getElementById(toolId).classList.add('active');
+
+      // Set the current active tool and apply appropriate action
+      const toolType = toolId.split('-')[1]; // Extract 'polygon', 'point', or 'line'
+
+      showNotification(
+        "Buffer Tool",
+        `${toolType.charAt(0).toUpperCase() + toolType.slice(1)} tool activated`,
+        "info"
+      );
+
+      // Setup appropriate drawing method based on the selected tool
+      switch (toolType) {
+        case 'point':
+          setupBufferPointTool();
+          break;
+        case 'line':
+          setupBufferLineTool();
+          break;
+        case 'polygon':
+          setupBufferPolygonTool();
+          break;
       }
-    });
-  }
-}
-
-// Setup buffer line drawing tool
-function setupBufferLineTool() {
-  // Use Leaflet.draw for line drawing
-  new L.Draw.Polyline(map, {
-    shapeOptions: {
-      color: document.getElementById('lineColor')?.value || '#3498db',
-      weight: parseInt(document.getElementById('weight')?.value || 3)
     }
-  }).enable();
-}
 
-// Setup buffer polygon drawing tool
-function setupBufferPolygonTool() {
-  // Use Leaflet.draw for polygon drawing
-  new L.Draw.Polygon(map, {
-    shapeOptions: {
-      color: document.getElementById('lineColor')?.value || '#3498db',
-      fillColor: document.getElementById('fillColor')?.value || '#3498db',
-      fillOpacity: parseFloat(document.getElementById('opacity')?.value || 0.5),
-      weight: parseInt(document.getElementById('weight')?.value || 3)
+    // Setup buffer point drawing tool
+    function setupBufferPointTool() {
+      // Use Leaflet.draw for point placement
+      new L.Draw.Marker(map, {
+        icon: new L.Icon({
+          iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+          shadowSize: [41, 41]
+        })
+      }).enable();
+
+      // If we don't already have a created event handler for buffer features
+      if (!map._hasBufferCreateHandler) {
+        map._hasBufferCreateHandler = true;
+
+        // Store the original handler if it exists
+        const originalCreatedHandler = map._events['draw:created'] ? [...map._events['draw:created']] : [];
+
+        // Add our custom handler for buffer features
+        map.on('draw:created', function (e) {
+          const type = e.layerType;
+          const layer = e.layer;
+
+          // Add the layer to the map
+          layer.addTo(map);
+
+          // Special handling for buffer features
+          if (document.getElementById('buffer-toolbar').style.display === 'flex') {
+            // It's a buffer feature - add special popup
+            if (type === 'marker') {
+              // Point buffer
+              layer.bindPopup(createBufferControlsPopup('Point')).openPopup();
+            } else if (type === 'polyline') {
+              // Line buffer
+              layer.bindPopup(createBufferControlsPopup('Line')).openPopup();
+            } else if (type === 'polygon') {
+              // Polygon buffer
+              layer.bindPopup(createBufferControlsPopup('Polygon')).openPopup();
+            }
+
+            // Setup buffer controls event handlers
+            layer.on('popupopen', setupBufferControlsHandlers);
+          } else {
+            // It's a regular feature - call original handlers
+            if (originalCreatedHandler.length > 0) {
+              originalCreatedHandler.forEach(handler => {
+                handler.fn.call(handler.ctx, e);
+              });
+            }
+          }
+        });
+      }
     }
-  }).enable();
-}
 
-// Create popup content with buffer controls
-function createBufferControlsPopup(featureType) {
-  return `
+    // Setup buffer line drawing tool
+    function setupBufferLineTool() {
+      // Use Leaflet.draw for line drawing
+      new L.Draw.Polyline(map, {
+        shapeOptions: {
+          color: document.getElementById('lineColor')?.value || 'red',
+          weight: parseInt(document.getElementById('weight')?.value || 3)
+        }
+      }).enable();
+    }
+
+    // Setup buffer polygon drawing tool
+    function setupBufferPolygonTool() {
+      // Use Leaflet.draw for polygon drawing
+      new L.Draw.Polygon(map, {
+        shapeOptions: {
+          color: document.getElementById('lineColor')?.value || '#3498db',
+          fillColor: document.getElementById('fillColor')?.value || '#3498db',
+          fillOpacity: parseFloat(document.getElementById('opacity')?.value || 0.5),
+          weight: parseInt(document.getElementById('weight')?.value || 3)
+        }
+      }).enable();
+    }
+
+    // Create popup content with buffer controls
+    function createBufferControlsPopup(featureType) {
+      return `
     <div class="buffer-info">
       <h4>Buffer ${featureType}</h4>
       <p>To create a buffer zone around this ${featureType.toLowerCase()}, adjust the distance:</p>
@@ -2296,120 +2619,120 @@ function createBufferControlsPopup(featureType) {
       </div>
     </div>
   `;
-}
+    }
 
-// Setup event handlers for buffer controls in popup
-function setupBufferControlsHandlers() {
-  const slider = document.getElementById('buffer-distance');
-  const valueDisplay = document.getElementById('buffer-distance-value');
-  const applyButton = document.getElementById('apply-buffer');
-  
-  if (slider && valueDisplay && applyButton) {
-    // Update display value when slider changes
-    slider.addEventListener('input', function() {
-      valueDisplay.textContent = this.value;
-    });
-    
-    // Apply buffer when button is clicked
-    applyButton.addEventListener('click', () => {
-      const layer = this._source || this; // Get the layer (this context may vary)
-      const distance = parseInt(slider.value);
-      
-      if (distance > 0) {
-        // Create the buffer
-        createBufferZone(layer, distance);
-        
-        // Close the popup
-        layer.closePopup();
-        
-        // Hide the buffer toolbar after operation is complete
-        const bufferToolbar = document.getElementById('buffer-toolbar');
-        if (bufferToolbar) {
-          bufferToolbar.style.display = 'none';
-        }
-      }
-    });
-  }
-}
+    // Setup event handlers for buffer controls in popup
+    function setupBufferControlsHandlers() {
+      const slider = document.getElementById('buffer-distance');
+      const valueDisplay = document.getElementById('buffer-distance-value');
+      const applyButton = document.getElementById('apply-buffer');
 
-// Apply buffer to a feature
-function createBufferZone(sourceFeature, distance) {
-  if (!map) {
-    console.error("Map not initialized");
-    return;
-  }
-  
-  if (typeof turf === 'undefined') {
-    showNotification(
-      "Error",
-      "Buffer functionality requires Turf.js library which is not loaded",
-      "error"
-    );
-    ensureTurfJsLoaded();
-    return;
-  }
-  
-  try {
-    // Convert Leaflet feature to GeoJSON
-    const featureGeoJSON = sourceFeature.toGeoJSON();
-    
-    // Use turf.js to create buffer
-    const buffered = turf.buffer(featureGeoJSON, distance / 1000, { units: 'kilometers' });
-    
-    // Add the buffer to the map
-    const bufferLayer = L.geoJSON(buffered, {
-      style: {
-        color: '#ff7800',
-        weight: 2,
-        opacity: 0.8,
-        fillColor: '#ff7800',
-        fillOpacity: 0.2
+      if (slider && valueDisplay && applyButton) {
+        // Update display value when slider changes
+        slider.addEventListener('input', function () {
+          valueDisplay.textContent = this.value;
+        });
+
+        // Apply buffer when button is clicked
+        applyButton.addEventListener('click', () => {
+          const layer = this._source || this; // Get the layer (this context may vary)
+          const distance = parseInt(slider.value);
+
+          if (distance > 0) {
+            // Create the buffer
+            createBufferZone(layer, distance);
+
+            // Close the popup
+            layer.closePopup();
+
+            // Hide the buffer toolbar after operation is complete
+            const bufferToolbar = document.getElementById('buffer-toolbar');
+            if (bufferToolbar) {
+              bufferToolbar.style.display = 'none';
+            }
+          }
+        });
       }
-    }).addTo(map);
-    
-    // Add popup with buffer info
-    bufferLayer.bindPopup(`
+    }
+
+    // Apply buffer to a feature
+    function createBufferZone(sourceFeature, distance) {
+      if (!map) {
+        console.error("Map not initialized");
+        return;
+      }
+
+      if (typeof turf === 'undefined') {
+        showNotification(
+          "Error",
+          "Buffer functionality requires Turf.js library which is not loaded",
+          "error"
+        );
+        ensureTurfJsLoaded();
+        return;
+      }
+
+      try {
+        // Convert Leaflet feature to GeoJSON
+        const featureGeoJSON = sourceFeature.toGeoJSON();
+
+        // Use turf.js to create buffer
+        const buffered = turf.buffer(featureGeoJSON, distance / 1000, { units: 'kilometers' });
+
+        // Add the buffer to the map
+        const bufferLayer = L.geoJSON(buffered, {
+          style: {
+            color: '#ff7800',
+            weight: 2,
+            opacity: 0.8,
+            fillColor: '#ff7800',
+            fillOpacity: 0.2
+          }
+        }).addTo(map);
+
+        // Add popup with buffer info
+        bufferLayer.bindPopup(`
       <div class="buffer-info">
         <h4>Buffer Zone</h4>
         <p>Distance: ${distance} meters</p>
-        <p>Source: ${sourceFeature instanceof L.Polygon ? 'Polygon' : 
-                     sourceFeature instanceof L.Marker ? 'Point' : 
-                     'Line'}</p>
+        <p>Source: ${sourceFeature instanceof L.Polygon ? 'Polygon' :
+            sourceFeature instanceof L.Marker ? 'Point' :
+              'Line'}</p>
       </div>
     `);
-    
-    showNotification(
-      "Buffer Created",
-      `${distance}m buffer zone has been applied`,
-      "success"
-    );
-    
-    return bufferLayer;
-  } catch (error) {
-    console.error("Error creating buffer:", error);
-    showNotification(
-      "Error",
-      "Failed to create buffer: " + error.message,
-      "error"
-    );
-  }
-}
 
-// Add Turf.js script if not already loaded
-function ensureTurfJsLoaded() {
-  if (typeof turf === 'undefined') {
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/@turf/turf@6/turf.min.js';
-    script.onload = function() {
-      console.log("Turf.js library loaded successfully");
-    };
-    script.onerror = function() {
-      console.error("Failed to load Turf.js library");
-    };
-    document.head.appendChild(script);
-  }
-}
-  /////////////////////////////////////////////////////////////////////////////////////
+        showNotification(
+          "Buffer Created",
+          `${distance}m buffer zone has been applied`,
+          "success"
+        );
+
+        return bufferLayer;
+      } catch (error) {
+        console.error("Error creating buffer:", error);
+        showNotification(
+          "Error",
+          "Failed to create buffer: " + error.message,
+          "error"
+        );
+      }
+    }
+
+    // Add Turf.js script if not already loaded
+    function ensureTurfJsLoaded() {
+      if (typeof turf === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/@turf/turf@6/turf.min.js';
+        script.onload = function () {
+          console.log("Turf.js library loaded successfully");
+        };
+        script.onerror = function () {
+          console.error("Failed to load Turf.js library");
+        };
+        document.head.appendChild(script);
+      }
+    }
+    /////////////////////////////////////////////////////////////////////////////////////
     // Toggle modern dropdowns
     document.querySelectorAll(".dropdown-header").forEach((header) => {
       header.addEventListener("click", function () {
@@ -2478,15 +2801,15 @@ function ensureTurfJsLoaded() {
   });
 
   //////////////////////////////
-// Add this code at the very end of your script tag, OUTSIDE your existing DOMContentLoaded handler
+  // Add this code at the very end of your script tag, OUTSIDE your existing DOMContentLoaded handler
 
-// Create the buffer toolbar and functionality after the page is fully loaded
-window.addEventListener('load', function() {
-  // Create buffer toolbar
-  const bufferToolbar = document.createElement('div');
-  bufferToolbar.id = 'buffer-toolbar';
-  bufferToolbar.className = 'thin-strip-toolbar';
-  bufferToolbar.style.cssText = `
+  // Create the buffer toolbar and functionality after the page is fully loaded
+  window.addEventListener('load', function () {
+    // Create buffer toolbar
+    const bufferToolbar = document.createElement('div');
+    bufferToolbar.id = 'buffer-toolbar';
+    bufferToolbar.className = 'thin-strip-toolbar';
+    bufferToolbar.style.cssText = `
     display: none;
     background-color: #f5f5f5;
     border: 1px solid #ddd;
@@ -2501,9 +2824,9 @@ window.addEventListener('load', function() {
     flex-direction: row;
     align-items: center;
   `;
-  
-  // Create the toolbar content with buffer distance slider
-  bufferToolbar.innerHTML = `
+
+    // Create the toolbar content with buffer distance slider
+    bufferToolbar.innerHTML = `
     <div style="font-weight:bold; margin-right:10px;">Buffer Tools:</div>
     
     <div style="display:flex; align-items:center; margin-right:15px;">
@@ -2522,368 +2845,368 @@ window.addEventListener('load', function() {
     <button id="buffer-clear" class="map-control-btn" title="Clear All Buffers"><i class="fas fa-trash-alt"></i></button>
     <button id="buffer-close" class="map-control-btn" title="Close"><i class="fas fa-times"></i></button>
   `;
-  
-  // Add to map container
-  document.querySelector('.map-container').appendChild(bufferToolbar);
-  
-  // Load Turf.js if needed
-  if (typeof turf === 'undefined') {
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/@turf/turf@6/turf.min.js';
-    document.head.appendChild(script);
-  }
-  
-  // Create a feature group to hold all buffer layers
-  const bufferLayers = new L.FeatureGroup().addTo(map);
-  
-  // Update buffer distance display when slider changes
-  document.getElementById('buffer-distance').addEventListener('input', function() {
-    document.getElementById('buffer-value').textContent = this.value;
-  });
-  
-  // Add event listeners to buffer tool buttons
-  document.getElementById('buffer-point').addEventListener('click', function() {
-    // For point (circle), we need to create a custom interaction
-    activatePointCircleTool();
-    showNotification("Buffer Tool", "Click on map to create a circle with specified radius", "info");
-  });
-  
-  document.getElementById('buffer-line').addEventListener('click', function() {
-    // For line with width, use the Draw.Polyline but modify it after creation
-    activateWidthLineTool();
-    showNotification("Buffer Tool", "Draw a line that will have specified width", "info");
-  });
-  
-  document.getElementById('buffer-polygon').addEventListener('click', function() {
-    // For polygon, use the Draw.Polygon but buffer it after creation
-    activateBufferedPolygonTool();
-    showNotification("Buffer Tool", "Draw a polygon that will be buffered outward", "info");
-  });
-  
-  // Clear all buffers
-  document.getElementById('buffer-clear').addEventListener('click', function() {
-    // Remove all layers from the feature group
-    bufferLayers.eachLayer(function(layer) {
-      bufferLayers.removeLayer(layer);
+
+    // Add to map container
+    document.querySelector('.map-container').appendChild(bufferToolbar);
+
+    // Load Turf.js if needed
+    if (typeof turf === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/@turf/turf@6/turf.min.js';
+      document.head.appendChild(script);
+    }
+
+    // Create a feature group to hold all buffer layers
+    const bufferLayers = new L.FeatureGroup().addTo(map);
+
+    // Update buffer distance display when slider changes
+    document.getElementById('buffer-distance').addEventListener('input', function () {
+      document.getElementById('buffer-value').textContent = this.value;
     });
-    
-    // Also ensure we remove any lingering buffer elements
-    map.eachLayer(function(layer) {
-      if (layer._bufferElement && layer !== bufferLayers) {
-        map.removeLayer(layer);
-      }
+
+    // Add event listeners to buffer tool buttons
+    document.getElementById('buffer-point').addEventListener('click', function () {
+      // For point (circle), we need to create a custom interaction
+      activatePointCircleTool();
+      showNotification("Buffer Tool", "Click on map to create a circle with specified radius", "info");
     });
-    
-    showNotification("Buffer Tool", "All buffer elements cleared", "info");
-  });
-  
-  // Close the buffer toolbar
-  document.getElementById('buffer-close').addEventListener('click', function() {
-    document.getElementById('buffer-toolbar').style.display = 'none';
-    deactivateAllTools();
-  });
-  
-  // Update analysis dropdown handler
-  document.querySelectorAll("#analysis-dropdown .dropdown-item").forEach(item => {
-    item.addEventListener('click', function(e) {
-      const analysisType = this.getAttribute("data-analysis");
-      if (analysisType === 'buffer') {
-        document.getElementById('buffer-toolbar').style.display = 'flex';
-        showNotification("Buffer Tool", "Set buffer distance and select a drawing tool", "info");
-      } else {
-        document.getElementById('buffer-toolbar').style.display = 'none';
-        deactivateAllTools();
-      }
+
+    document.getElementById('buffer-line').addEventListener('click', function () {
+      // For line with width, use the Draw.Polyline but modify it after creation
+      activateWidthLineTool();
+      showNotification("Buffer Tool", "Draw a line that will have specified width", "info");
     });
-  });
-  
-  // Point (Circle) Tool Activation
-  function activatePointCircleTool() {
-    deactivateAllTools();
-    
-    // Change cursor style
-    map._container.style.cursor = 'crosshair';
-    
-    // Store the buffer click handler on the map
-    map._bufferClickHandler = function(e) {
-      const radius = parseFloat(document.getElementById('buffer-distance').value) * 1000; // Convert km to meters
-      
-      // Create a circle at the clicked location
-      const circle = L.circle(e.latlng, {
-        radius: radius,
-        color: '#ff7800',
-        weight: 2,
-        opacity: 0.8,
-        fillColor: '#ff7800',
-        fillOpacity: 0.2
+
+    document.getElementById('buffer-polygon').addEventListener('click', function () {
+      // For polygon, use the Draw.Polygon but buffer it after creation
+      activateBufferedPolygonTool();
+      showNotification("Buffer Tool", "Draw a polygon that will be buffered outward", "info");
+    });
+
+    // Clear all buffers
+    document.getElementById('buffer-clear').addEventListener('click', function () {
+      // Remove all layers from the feature group
+      bufferLayers.eachLayer(function (layer) {
+        bufferLayers.removeLayer(layer);
       });
-      
-      // Mark as buffer element for easier cleanup
-      circle._bufferElement = true;
-      
-      // Add to buffer layers
-      bufferLayers.addLayer(circle);
-      
-      // Add popup with information
-      circle.bindPopup(`
-        <div style="padding:5px;">
-          <h4>Circle Buffer</h4>
-          <p>Center: ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}</p>
-          <p>Radius: ${(radius/1000).toFixed(1)} km</p>
-          <button class="buffer-delete-btn" style="background-color:#e74c3c; color:white; border:none; padding:3px 8px; border-radius:3px; cursor:pointer; margin-top:5px; width:100%;">Delete</button>
-        </div>
-      `);
-      
-      // Add delete event handler to the popup
-      circle.on('popupopen', function() {
-        const deleteBtn = document.querySelector('.buffer-delete-btn');
-        if (deleteBtn) {
-          deleteBtn.addEventListener('click', function() {
-            // Direct removal from map and buffer group
-            map.removeLayer(circle);
-            bufferLayers.removeLayer(circle);
-            map.closePopup();
-            showNotification("Buffer Deleted", "Circle buffer has been removed", "info");
-          });
+
+      // Also ensure we remove any lingering buffer elements
+      map.eachLayer(function (layer) {
+        if (layer._bufferElement && layer !== bufferLayers) {
+          map.removeLayer(layer);
         }
       });
-      
-      showNotification("Circle Created", `Circle with ${(radius/1000).toFixed(1)}km radius created`, "success");
-    };
-    
-    // Add the click handler
-    map.on('click', map._bufferClickHandler);
-  }
-  
-  // Line with Width Tool Activation
-  function activateWidthLineTool() {
-    deactivateAllTools();
-    
-    // Use the Leaflet.Draw line tool but modify our draw:created handler
-    map._bufferLineMode = true;
-    const drawLineControl = new L.Draw.Polyline(map);
-    drawLineControl.enable();
-    map.drawHandler = drawLineControl;
-  }
-  
-  // Buffered Polygon Tool Activation
-  function activateBufferedPolygonTool() {
-    deactivateAllTools();
-    
-    // Use the Leaflet.Draw polygon tool but modify our draw:created handler
-    map._bufferPolygonMode = true;
-    const drawPolygonControl = new L.Draw.Polygon(map);
-    drawPolygonControl.enable();
-    map.drawHandler = drawPolygonControl;
-  }
-  
-  // Deactivate all tools
-  function deactivateAllTools() {
-    // Reset cursor
-    map._container.style.cursor = '';
-    
-    // Remove point (circle) handler if active
-    if (map._bufferClickHandler) {
-      map.off('click', map._bufferClickHandler);
-      map._bufferClickHandler = null;
-    }
-    
-    // Reset line and polygon modes
-    map._bufferLineMode = false;
-    map._bufferPolygonMode = false;
-    
-    // Disable any active drawing
-    if (map.drawHandler && map.drawHandler.disable) {
-      map.drawHandler.disable();
-      map.drawHandler = null;
-    }
-    
-    // Try to cancel any active draw tools
-    if (typeof L.Draw !== 'undefined') {
-      try {
-        // Force disable all drawing handlers
-        Object.values(L.Draw.Event).forEach(eventName => {
-          if (typeof eventName === 'string' && eventName.includes('CANCEL')) {
-            map.fire(eventName);
-          }
-        });
-      } catch (e) {
-        console.log("Failed to cancel drawing:", e);
-      }
-    }
-  }
-  
-  // Override the draw created event to handle buffered features
-  map.on('draw:created', function(e) {
-    const layer = e.layer;
-    
-    // Only apply special handling if buffer toolbar is visible
-    if (document.getElementById('buffer-toolbar').style.display === 'flex') {
-      // Get buffer distance in kilometers
-      const distanceKm = parseFloat(document.getElementById('buffer-distance').value);
-      
-      if (map._bufferLineMode && e.layerType === 'polyline') {
-        // For line with width, create a buffered line and don't add the original
-        createBufferedLine(layer, distanceKm);
-      } 
-      else if (map._bufferPolygonMode && e.layerType === 'polygon') {
-        // For polygon, create a buffered polygon and don't add the original
-        createBufferedPolygon(layer, distanceKm);
-      }
-      else {
-        // In any other case, add to the buffer layers group for proper management
-        layer._bufferElement = true;
-        bufferLayers.addLayer(layer);
-      }
-      
-      // Reset buffer modes
-      map._bufferLineMode = false;
-      map._bufferPolygonMode = false;
-    } 
-    else {
-      // For normal drawing, add the layer to the map as usual
-      map.addLayer(layer);
-    }
-  });
-  
-  // Create buffered line (line with width)
-  function createBufferedLine(lineLayer, widthKm) {
-    try {
-      // Convert Leaflet line to GeoJSON
-      const lineGeoJSON = lineLayer.toGeoJSON();
-      
-      // Use turf.js to create buffer
-      const buffered = turf.buffer(lineGeoJSON, widthKm, { units: 'kilometers' });
-      
-      // Add the buffered line to the map
-      const bufferLayer = L.geoJSON(buffered, {
-        style: {
+
+      showNotification("Buffer Tool", "All buffer elements cleared", "info");
+    });
+
+    // Close the buffer toolbar
+    document.getElementById('buffer-close').addEventListener('click', function () {
+      document.getElementById('buffer-toolbar').style.display = 'none';
+      deactivateAllTools();
+    });
+
+    // Update analysis dropdown handler
+    document.querySelectorAll("#analysis-dropdown .dropdown-item").forEach(item => {
+      item.addEventListener('click', function (e) {
+        const analysisType = this.getAttribute("data-analysis");
+        if (analysisType === 'buffer') {
+          document.getElementById('buffer-toolbar').style.display = 'flex';
+          showNotification("Buffer Tool", "Set buffer distance and select a drawing tool", "info");
+        } else {
+          document.getElementById('buffer-toolbar').style.display = 'none';
+          deactivateAllTools();
+        }
+      });
+    });
+
+    // Point (Circle) Tool Activation
+    function activatePointCircleTool() {
+      deactivateAllTools();
+
+      // Change cursor style
+      map._container.style.cursor = 'crosshair';
+
+      // Store the buffer click handler on the map
+      map._bufferClickHandler = function (e) {
+        const radius = parseFloat(document.getElementById('buffer-distance').value) * 1000; // Convert km to meters
+
+        // Create a circle at the clicked location
+        const circle = L.circle(e.latlng, {
+          radius: radius,
           color: '#ff7800',
           weight: 2,
           opacity: 0.8,
           fillColor: '#ff7800',
           fillOpacity: 0.2
+        });
+
+        // Mark as buffer element for easier cleanup
+        circle._bufferElement = true;
+
+        // Add to buffer layers
+        bufferLayers.addLayer(circle);
+
+        // Add popup with information
+        circle.bindPopup(`
+        <div style="padding:5px;">
+          <h4>Circle Buffer</h4>
+          <p>Center: ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}</p>
+          <p>Radius: ${(radius / 1000).toFixed(1)} km</p>
+          <button class="buffer-delete-btn" style="background-color:#e74c3c; color:white; border:none; padding:3px 8px; border-radius:3px; cursor:pointer; margin-top:5px; width:100%;">Delete</button>
+        </div>
+      `);
+
+        // Add delete event handler to the popup
+        circle.on('popupopen', function () {
+          const deleteBtn = document.querySelector('.buffer-delete-btn');
+          if (deleteBtn) {
+            deleteBtn.addEventListener('click', function () {
+              // Direct removal from map and buffer group
+              map.removeLayer(circle);
+              bufferLayers.removeLayer(circle);
+              map.closePopup();
+              showNotification("Buffer Deleted", "Circle buffer has been removed", "info");
+            });
+          }
+        });
+
+        showNotification("Circle Created", `Circle with ${(radius / 1000).toFixed(1)}km radius created`, "success");
+      };
+
+      // Add the click handler
+      map.on('click', map._bufferClickHandler);
+    }
+
+    // Line with Width Tool Activation
+    function activateWidthLineTool() {
+      deactivateAllTools();
+
+      // Use the Leaflet.Draw line tool but modify our draw:created handler
+      map._bufferLineMode = true;
+      const drawLineControl = new L.Draw.Polyline(map);
+      drawLineControl.enable();
+      map.drawHandler = drawLineControl;
+    }
+
+    // Buffered Polygon Tool Activation
+    function activateBufferedPolygonTool() {
+      deactivateAllTools();
+
+      // Use the Leaflet.Draw polygon tool but modify our draw:created handler
+      map._bufferPolygonMode = true;
+      const drawPolygonControl = new L.Draw.Polygon(map);
+      drawPolygonControl.enable();
+      map.drawHandler = drawPolygonControl;
+    }
+
+    // Deactivate all tools
+    function deactivateAllTools() {
+      // Reset cursor
+      map._container.style.cursor = '';
+
+      // Remove point (circle) handler if active
+      if (map._bufferClickHandler) {
+        map.off('click', map._bufferClickHandler);
+        map._bufferClickHandler = null;
+      }
+
+      // Reset line and polygon modes
+      map._bufferLineMode = false;
+      map._bufferPolygonMode = false;
+
+      // Disable any active drawing
+      if (map.drawHandler && map.drawHandler.disable) {
+        map.drawHandler.disable();
+        map.drawHandler = null;
+      }
+
+      // Try to cancel any active draw tools
+      if (typeof L.Draw !== 'undefined') {
+        try {
+          // Force disable all drawing handlers
+          Object.values(L.Draw.Event).forEach(eventName => {
+            if (typeof eventName === 'string' && eventName.includes('CANCEL')) {
+              map.fire(eventName);
+            }
+          });
+        } catch (e) {
+          console.log("Failed to cancel drawing:", e);
         }
-      });
-      
-      // Mark as buffer element for easier cleanup
-      bufferLayer._bufferElement = true;
-      
-      // Add to the buffer layers group
-      bufferLayers.addLayer(bufferLayer);
-      
-      // Store reference to the original line for deletion
-      bufferLayer._originalLine = lineLayer;
-      
-      // Add a popup with information and delete button
-      bufferLayer.bindPopup(`
+      }
+    }
+
+    // Override the draw created event to handle buffered features
+    map.on('draw:created', function (e) {
+      const layer = e.layer;
+
+      // Only apply special handling if buffer toolbar is visible
+      if (document.getElementById('buffer-toolbar').style.display === 'flex') {
+        // Get buffer distance in kilometers
+        const distanceKm = parseFloat(document.getElementById('buffer-distance').value);
+
+        if (map._bufferLineMode && e.layerType === 'polyline') {
+          // For line with width, create a buffered line and don't add the original
+          createBufferedLine(layer, distanceKm);
+        }
+        else if (map._bufferPolygonMode && e.layerType === 'polygon') {
+          // For polygon, create a buffered polygon and don't add the original
+          createBufferedPolygon(layer, distanceKm);
+        }
+        else {
+          // In any other case, add to the buffer layers group for proper management
+          layer._bufferElement = true;
+          bufferLayers.addLayer(layer);
+        }
+
+        // Reset buffer modes
+        map._bufferLineMode = false;
+        map._bufferPolygonMode = false;
+      }
+      else {
+        // For normal drawing, add the layer to the map as usual
+        map.addLayer(layer);
+      }
+    });
+
+    // Create buffered line (line with width)
+    function createBufferedLine(lineLayer, widthKm) {
+      try {
+        // Convert Leaflet line to GeoJSON
+        const lineGeoJSON = lineLayer.toGeoJSON();
+
+        // Use turf.js to create buffer
+        const buffered = turf.buffer(lineGeoJSON, widthKm, { units: 'kilometers' });
+
+        // Add the buffered line to the map
+        const bufferLayer = L.geoJSON(buffered, {
+          style: {
+            color: '#ff7800',
+            weight: 2,
+            opacity: 0.8,
+            fillColor: '#ff7800',
+            fillOpacity: 0.2
+          }
+        });
+
+        // Mark as buffer element for easier cleanup
+        bufferLayer._bufferElement = true;
+
+        // Add to the buffer layers group
+        bufferLayers.addLayer(bufferLayer);
+
+        // Store reference to the original line for deletion
+        bufferLayer._originalLine = lineLayer;
+
+        // Add a popup with information and delete button
+        bufferLayer.bindPopup(`
         <div style="padding:5px;">
           <h4>Buffered Line</h4>
           <p>Width: ${widthKm} km</p>
           <button class="buffer-delete-btn" style="background-color:#e74c3c; color:white; border:none; padding:3px 8px; border-radius:3px; cursor:pointer; margin-top:5px; width:100%;">Delete</button>
         </div>
       `);
-      
-      // Add delete event handler to the popup
-      bufferLayer.on('popupopen', function() {
-        const deleteBtn = document.querySelector('.buffer-delete-btn');
-        if (deleteBtn) {
-          deleteBtn.addEventListener('click', function() {
-            // Direct removal from map and buffer group
-            map.removeLayer(bufferLayer);
-            bufferLayers.removeLayer(bufferLayer);
-            
-            // Make sure original line is also removed if it exists
-            if (bufferLayer._originalLine) {
-              if (map.hasLayer(bufferLayer._originalLine)) {
-                map.removeLayer(bufferLayer._originalLine);
+
+        // Add delete event handler to the popup
+        bufferLayer.on('popupopen', function () {
+          const deleteBtn = document.querySelector('.buffer-delete-btn');
+          if (deleteBtn) {
+            deleteBtn.addEventListener('click', function () {
+              // Direct removal from map and buffer group
+              map.removeLayer(bufferLayer);
+              bufferLayers.removeLayer(bufferLayer);
+
+              // Make sure original line is also removed if it exists
+              if (bufferLayer._originalLine) {
+                if (map.hasLayer(bufferLayer._originalLine)) {
+                  map.removeLayer(bufferLayer._originalLine);
+                }
               }
-            }
-            
-            map.closePopup();
-            showNotification("Buffer Deleted", "Line buffer has been removed", "info");
-          });
-        }
-      });
-      
-      showNotification("Buffered Line Created", `Line with ${widthKm}km width created`, "success");
-      
-      return bufferLayer;
-    } catch (error) {
-      console.error("Error creating buffered line:", error);
-      showNotification("Error", "Failed to create buffered line: " + error.message, "error");
+
+              map.closePopup();
+              showNotification("Buffer Deleted", "Line buffer has been removed", "info");
+            });
+          }
+        });
+
+        showNotification("Buffered Line Created", `Line with ${widthKm}km width created`, "success");
+
+        return bufferLayer;
+      } catch (error) {
+        console.error("Error creating buffered line:", error);
+        showNotification("Error", "Failed to create buffered line: " + error.message, "error");
+      }
     }
-  }
-  
-  // Create buffered polygon
-  function createBufferedPolygon(polygonLayer, bufferKm) {
-    try {
-      // Convert Leaflet polygon to GeoJSON
-      const polygonGeoJSON = polygonLayer.toGeoJSON();
-      
-      // Use turf.js to create buffer
-      const buffered = turf.buffer(polygonGeoJSON, bufferKm, { units: 'kilometers' });
-      
-      // Add the buffered polygon to the map
-      const bufferLayer = L.geoJSON(buffered, {
-        style: {
-          color: '#ff7800',
-          weight: 2,
-          opacity: 0.8,
-          fillColor: '#ff7800',
-          fillOpacity: 0.2
-        }
-      });
-      
-      // Mark as buffer element for easier cleanup
-      bufferLayer._bufferElement = true;
-      
-      // Add to the buffer layers group
-      bufferLayers.addLayer(bufferLayer);
-      
-      // Store reference to the original polygon for deletion
-      bufferLayer._originalPolygon = polygonLayer;
-      
-      // Add a popup with information and delete button
-      bufferLayer.bindPopup(`
+
+    // Create buffered polygon
+    function createBufferedPolygon(polygonLayer, bufferKm) {
+      try {
+        // Convert Leaflet polygon to GeoJSON
+        const polygonGeoJSON = polygonLayer.toGeoJSON();
+
+        // Use turf.js to create buffer
+        const buffered = turf.buffer(polygonGeoJSON, bufferKm, { units: 'kilometers' });
+
+        // Add the buffered polygon to the map
+        const bufferLayer = L.geoJSON(buffered, {
+          style: {
+            color: '#ff7800',
+            weight: 2,
+            opacity: 0.8,
+            fillColor: '#ff7800',
+            fillOpacity: 0.2
+          }
+        });
+
+        // Mark as buffer element for easier cleanup
+        bufferLayer._bufferElement = true;
+
+        // Add to the buffer layers group
+        bufferLayers.addLayer(bufferLayer);
+
+        // Store reference to the original polygon for deletion
+        bufferLayer._originalPolygon = polygonLayer;
+
+        // Add a popup with information and delete button
+        bufferLayer.bindPopup(`
         <div style="padding:5px;">
           <h4>Buffered Polygon</h4>
           <p>Buffer Distance: ${bufferKm} km</p>
           <button class="buffer-delete-btn" style="background-color:#e74c3c; color:white; border:none; padding:3px 8px; border-radius:3px; cursor:pointer; margin-top:5px; width:100%;">Delete</button>
         </div>
       `);
-      
-      // Add delete event handler to the popup
-      bufferLayer.on('popupopen', function() {
-        const deleteBtn = document.querySelector('.buffer-delete-btn');
-        if (deleteBtn) {
-          deleteBtn.addEventListener('click', function() {
-            // Direct removal from map and buffer group
-            map.removeLayer(bufferLayer);
-            bufferLayers.removeLayer(bufferLayer);
-            
-            // Make sure original polygon is also removed if it exists
-            if (bufferLayer._originalPolygon) {
-              if (map.hasLayer(bufferLayer._originalPolygon)) {
-                map.removeLayer(bufferLayer._originalPolygon);
+
+        // Add delete event handler to the popup
+        bufferLayer.on('popupopen', function () {
+          const deleteBtn = document.querySelector('.buffer-delete-btn');
+          if (deleteBtn) {
+            deleteBtn.addEventListener('click', function () {
+              // Direct removal from map and buffer group
+              map.removeLayer(bufferLayer);
+              bufferLayers.removeLayer(bufferLayer);
+
+              // Make sure original polygon is also removed if it exists
+              if (bufferLayer._originalPolygon) {
+                if (map.hasLayer(bufferLayer._originalPolygon)) {
+                  map.removeLayer(bufferLayer._originalPolygon);
+                }
               }
-            }
-            
-            map.closePopup();
-            showNotification("Buffer Deleted", "Polygon buffer has been removed", "info");
-          });
-        }
-      });
-      
-      showNotification("Buffered Polygon Created", `Polygon with ${bufferKm}km buffer created`, "success");
-      
-      return bufferLayer;
-    } catch (error) {
-      console.error("Error creating buffered polygon:", error);
-      showNotification("Error", "Failed to create buffered polygon: " + error.message, "error");
+
+              map.closePopup();
+              showNotification("Buffer Deleted", "Polygon buffer has been removed", "info");
+            });
+          }
+        });
+
+        showNotification("Buffered Polygon Created", `Polygon with ${bufferKm}km buffer created`, "success");
+
+        return bufferLayer;
+      } catch (error) {
+        console.error("Error creating buffered polygon:", error);
+        showNotification("Error", "Failed to create buffered polygon: " + error.message, "error");
+      }
     }
-  }
-});
+  });
   ///////////////////
 
 </script>

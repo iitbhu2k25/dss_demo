@@ -556,7 +556,7 @@
                 </div>
                 {% for pdf in pdfs %}
                 <div class="pdf-item {% if selected_pdf.id == pdf.id %}active{% endif %}" data-pdf-id="{{ pdf.id }}"
-                    onclick="loadPdf({{ pdf.id }})">
+                    onclick="loadPdf('{{ pdf.id }}')" >
                     <div class="pdf-title">{{ pdf.title }}</div>
                     <div class="pdf-date">
                         <i class="far fa-calendar-alt"></i> {{ pdf.uploaded_at|date:"M d, Y" }}
