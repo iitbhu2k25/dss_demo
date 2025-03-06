@@ -251,7 +251,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Calculate button click event handler
     calculateButton.addEventListener('click', async (event) => {
+        resultContainer.textContent = ''; // Clear previous result
         event.preventDefault();
+        
         resultContainer.innerHTML = '<h5 class="text-primary">Calculating...</h5>';
         await new Promise(resolve => setTimeout(resolve, 700)); // Brief delay for UI update
 
@@ -357,6 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const sewagedemand = waterdemand * 0.84;
             resultContainer.textContent = `Total Generated Sewage Water is: ${sewagedemand.toFixed(2)} MLD`;
         } else if (methodsDropdown.value === 'water_supply') {
+            resultContainer.textContent = ''; // Clear previous result
             // Water supply method
             const supplydemand = parseFloat(document.getElementById('supply_field').value) || 0;
             if (!supplydemand) {
