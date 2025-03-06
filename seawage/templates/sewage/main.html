@@ -93,8 +93,9 @@
 
         <!-- Year -->
         <div class="mb-3">
-            <label class="form-label">Select Target Year:</label>
             <div>
+                <label class="form-label">Select Target Year:</label>
+                <br>
                 <!-- Single Year Option -->
                 <input type="radio" id="single_year_radio" name="year_selection" value="single" checked>
                 <label for="single_year_radio">Single Year:</label>
@@ -137,12 +138,9 @@
         <div id="result_container" class="mt-3 text-center result"></div>
 
         <!-- Pollution Load Button -->
-        <div class="mb-3">
-            <button id="pollution_load_button" type="button" class="btn btn-secondary">Pollution Load</button>
-        </div>
-        
-        <!-- Container for Pollution Load Table -->
-        <div id="pollution_result_container"></div>
+        <button id="pollution_load_btn" type="button" class="btn btn-secondary" style="display:none;">Pollution Load</button>
+        <div id="pollution_load_container"></div>
+
     </form>
 </div>
 </div>

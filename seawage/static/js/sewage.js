@@ -29,8 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const unmeteredContainer = document.getElementById('unmetered_container');
     const unmeteredField = document.getElementById('unmetered_field');
-    const pollutionLoadButton = document.getElementById('pollution_load_button');
-    const pollutionResultContainer = document.getElementById('pollution_result_container');
+    const pollutionLoadBtn = document.getElementById('pollution_load_btn');
+    const pollutionLoadContainer = document.getElementById('pollution_load_container');
+
+    pollutionLoadBtn.style.display = "none";
 
     // Global variable to store sewage generation data for later use
     let sewageData = [];
@@ -411,6 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('Error fetching sewage estimation:', error);
                 }
             }
+            pollutionLoadBtn.style.display = "block";
         } else if (demandType === 'manual') {
             // Manual demand entry
             const waterdemand = parseFloat(domesticField.value) || 0;
@@ -434,4 +437,131 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please select a valid demand type.');
         }
     });
+    pollutionLoadBtn.addEventListener('click', async (event) => {
+        event.preventDefault();
+        
+        // Determine which year to use (here, for single-year mode)
+        let selectedYear;
+        if (singleYearRadio.checked) {
+          selectedYear = singleYearDropdown.value;
+        } else if (rangeYearRadio.checked) {
+          // For range mode, you could choose the first year (or any logic you prefer)
+          selectedYear = startYearInput.value;
+        }
+        if (!selectedYear) {
+          alert("Please select a valid year for fetching population.");
+          return;
+        }
+        
+        // Get other parameters for fetching population
+        const stateCode = stateDropdown.value;
+        const districtCode = districtDropdown.value;
+        const subdistrictCode = subdistrictDropdown.value;
+        const selectedVillages = Array.from(document.querySelectorAll('#village-container input[type="checkbox"]:checked'))
+          .map(checkbox => checkbox.value);
+        
+        // Build the URL for fetching population
+        const url = `waterdemand/get_combined_population/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}&year=${selectedYear}&villages[]=${selectedVillages.join('&villages[]=')}`;
+        
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+          if (data.combined_population) {
+            const population = data.combined_population;
+            
+            // Calculate the base coefficient
+            const baseCoefficient = population >= 1000000 ? 150 : 135;
+            const unmetered = parseFloat(unmeteredField.value) || 0;
+            
+            // Calculate total coefficient according to your new formula:
+            const totalCoefficient = (baseCoefficient + unmetered) * 0.80;
+            
+            // Now, build your pollution load table using this fetched population.
+            // (For each pollutant, concentration = (perCapitaContribution/totalCoefficient)*1000)
+            let table = document.createElement('table');
+            table.className = "table table-striped";
+            let thead = document.createElement('thead');
+            let trHead = document.createElement('tr');
+            
+            let thItem = document.createElement('th');
+            thItem.textContent = "Item";
+            let thPerCapita = document.createElement('th');
+            thPerCapita.textContent = "Per Capita Contribution (g/c/d)";
+            let thAdditional = document.createElement('th');
+            thAdditional.textContent = "Additional Contributiong (g/c/d)";
+            let thConcentration = document.createElement('th');
+            thConcentration.textContent = "Concentration (mg/L)";
+            
+            trHead.appendChild(thItem);
+            trHead.appendChild(thPerCapita);
+            trHead.appendChild(thAdditional);
+            trHead.appendChild(thConcentration);
+            thead.appendChild(trHead);
+            table.appendChild(thead);
+            
+            let tbody = document.createElement('tbody');
+            
+            const pollutionItems = [
+              { name: "BOD", perCapita: 27.0 },
+              { name: "COD", perCapita: 45.9 },
+              { name: "TSS", perCapita: 40.5 },
+              { name: "VSS", perCapita: 28.4 },
+              { name: "Total Nitrogen", perCapita: 5.4 },
+              { name: "Organic Nitrogen", perCapita: 1.4 },
+              { name: "Ammonia Nitrogen", perCapita: 3.5 },
+              { name: "Nitrate Nitrogen", perCapita: 0.5 },
+              { name: "Total Phosphorus", perCapita: 0.8 },
+              { name: "Ortho Phosphorous", perCapita: 0.5 }
+            ];
+            
+            pollutionItems.forEach((item, index) => {
+              let tr = document.createElement('tr');
+              
+              let tdItem = document.createElement('td');
+              tdItem.textContent = item.name;
+              
+              let tdPerCapita = document.createElement('td');
+              tdPerCapita.textContent = item.perCapita.toFixed(1);
+              
+              let tdAdditional = document.createElement('td');
+              let inputAdditional = document.createElement('input');
+              inputAdditional.type = "number";
+              inputAdditional.className = "form-control";
+              inputAdditional.value = 0;
+              inputAdditional.id = "additional_input_" + index;
+              tdAdditional.appendChild(inputAdditional);
+              
+              let tdConcentration = document.createElement('td');
+              tdConcentration.id = "concentration_" + index;
+              // Initial concentration calculation with additional = 0
+              let concentration = (item.perCapita / totalCoefficient) * 1000;
+              tdConcentration.textContent = concentration.toFixed(2);
+              
+              tr.appendChild(tdItem);
+              tr.appendChild(tdPerCapita);
+              tr.appendChild(tdAdditional);
+              tr.appendChild(tdConcentration);
+              tbody.appendChild(tr);
+              
+              // Update concentration when additional contribution changes
+              inputAdditional.addEventListener('input', () => {
+                let additional = parseFloat(inputAdditional.value) || 0;
+                let updatedTotalCoefficient = (baseCoefficient + unmetered + additional) * 0.80;
+                let newConcentration = (item.perCapita / updatedTotalCoefficient) * 1000;
+                tdConcentration.textContent = newConcentration.toFixed(2);
+              });
+            });
+            
+            table.appendChild(tbody);
+            pollutionLoadContainer.innerHTML = "";
+            pollutionLoadContainer.appendChild(table);
+            
+          } else {
+            alert("Population data not available.");
+          }
+        } catch (error) {
+          console.error("Error fetching population data:", error);
+        }
+      });
+      
 });
