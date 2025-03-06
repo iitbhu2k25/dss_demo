@@ -82,15 +82,16 @@
  
         
 
-        <!-- Year -->
-        <div class="mb-3 hidden" id="year_container">
+        <!-- Grouped Domestic Fields Container -->
+        <div class="domestic-fields-container mb-3 hidden">
+            <div id="year_container">
             <h6><b>Domestic Fields</b></h6>
             <label for="year_dropdown" class="form-label">Select Year:</label>
             <select id="year_dropdown" name="year_dropdown" class="form-select">
                 <option value="">Select Year</option>
             </select>
-        </div>
-        <div class="mb-3 hidden" id="method_container">
+            </div>
+            <div id="method_container">
             <label for="method_dropdown" class="form-label">Method of Projection:</label>
             <select id="method_dropdown" name="method_dropdown" class="form-select">
                 <option value="incremental-growth">Incremental Growth Method</option>
@@ -99,18 +100,22 @@
                 <option value="logistic-growth">Logistic Growth Method</option>
                 <option value="exponential-growth">Exponential Growth Method</option>
             </select>
-        </div>
-
-        <!-- Population -->
-        <div class="mb-3 hidden" id="population_container">
-            <label for="population_field" class="form-label">Population (Total Population In Case Of Multiple Region):</label>
+            </div>
+            <div id="population_container">
+            <label for="population_field" class="form-label">
+                Population (Total Population In Case Of Multiple Region):
+            </label>
             <input id="population_field" name="population_field" type="text" class="form-control" placeholder="Enter Population">
+            </div>
         </div>
+  
         
         <!--floating-->
 
-        <div class="mb-3 hidden" id="enu_container">
-            <h6><b>Floating fields</b></h6>
+        <!-- Grouped Floating Fields Container -->
+        <div class="floating-fields-container mb-3 hidden">
+            <div id="enu_container">
+            <h6><b>Floating Fields</b></h6>
             <label for="enu_dropdown" class="form-label">Enumeration Type:</label>
             <select id="enu_dropdown" name="enu_dropdown" class="form-select">
                 <option value="Total">Select option</option>
@@ -118,22 +123,21 @@
                 <option value="Urban">Urban</option>
                 <option value="Rural">Rural</option>
             </select>
-        </div>
-        
-        <div class="mb-3 hidden" id="floating_container">
+            </div>
+            <div id="floating_container">
             <label for="floating_field" class="form-label">Floating population:</label>
             <input id="floating_field" name="floating_field" type="text" class="form-control" placeholder="Enter floating population">
-        </div>
-
-        <!-- Facility Type Dropdown -->
-        <div class="mb-3 hidden" id="facility_container">
+            </div>
+            <div id="facility_container">
             <label for="facility_dropdown" class="form-label">Facility Type:</label>
             <select id="facility_dropdown" name="facility_dropdown" class="form-select">
                 <option value="provided">Bathing facilities provided</option>
                 <option value="notprovided">Bathing facilities not provided</option>
                 <option value="onlypublic">Floating population using only public facilities</option>
             </select>
+            </div>
         </div>
+  
 
         
 

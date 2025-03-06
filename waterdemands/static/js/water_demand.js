@@ -25,6 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const villageContainer = document.getElementById('village-container');
     const selectedVillagesContainer = document.getElementById('selected-villages');
     const totalPopulationContainer = document.getElementById('total-population');
+    const domesticContainer = document.querySelector('.domestic-fields-container');
+    const floatingFieldsContainer = document.querySelector('.floating-fields-container');
+
+
     let state=null;
     let district=null;
     if (yearDropdown.options.length <= 1) { 
@@ -51,14 +55,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const totalDemandFields = {
         domestic: [
-            document.getElementById('year_container'),
-            document.getElementById('method_container'),
-            document.getElementById('population_container')
+            document.querySelector('.domestic-fields-container')
+
         ],
         floating: [
-            document.getElementById('floating_container'),
-            document.getElementById('enu_container'),
-            document.getElementById('facility_container')
+            document.querySelector('.floating-fields-container')
         ],
         institutional: [
             document.getElementById('institutional_container')
@@ -277,14 +278,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const demandType = demandTypeField.value;
     
         // Reset all sections to hidden by default
-        yearContainer.classList.add('hidden');
-        populationContainer.classList.add('hidden');
-        methodContainer.classList.add('hidden');
-        floatingContainer.classList.add('hidden');
-        enuContainer.classList.add('hidden');
-        facilityContainer.classList.add('hidden');
+        
+        // Hide all sections by default
+        domesticContainer.classList.add('hidden');
+        floatingFieldsContainer.classList.add('hidden');
         villageContainer.classList.add('hidden');
-        selectedVillagesContainer.classList.add('hidden'); // Hide selected village text
+        selectedVillagesContainer.classList.add('hidden'); // Hide selected villages text
         subdistrictDropdown.parentElement.classList.add('hidden'); // Hide subdistrict container
         institutionalContainer.classList.add('hidden');
         firefightingContainer.classList.add('hidden');
@@ -292,19 +291,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
         // Show/hide fields based on the selected demand type
         if (demandType === 'domestic') {
-            yearContainer.classList.remove('hidden');
-            methodContainer.classList.remove('hidden');
-            populationContainer.classList.remove('hidden');
+            domesticContainer.classList.remove('hidden');
             villageContainer.classList.remove('hidden');
             selectedVillagesContainer.classList.remove('hidden'); // Show selected village text
             subdistrictDropdown.parentElement.classList.remove('hidden'); // Show subdistrict container
         } else if (demandType === 'floating') {
-            floatingContainer.classList.remove('hidden');
-            enuContainer.classList.remove('hidden');
-            facilityContainer.classList.remove('hidden');
+            floatingFieldsContainer.classList.remove('hidden');
             villageContainer.classList.remove('hidden');
-            selectedVillagesContainer.classList.remove('hidden'); // Show selected village text
-            subdistrictDropdown.parentElement.classList.remove('hidden'); // Show subdistrict container
+            selectedVillagesContainer.classList.remove('hidden');
+            subdistrictDropdown.parentElement.classList.remove('hidden');
         } else if (demandType === 'institutional') {
             institutionalContainer.classList.remove('hidden');
             villageContainer.classList.remove('hidden');
@@ -320,6 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
             villageContainer.classList.remove('hidden');
             selectedVillagesContainer.classList.remove('hidden'); // Show selected village text
             subdistrictDropdown.parentElement.classList.remove('hidden'); // Show subdistrict container
+            
         } else {
             // If no valid demand type is selected, hide everything
             resultContainer.textContent = '';
