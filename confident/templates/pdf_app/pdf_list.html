@@ -674,111 +674,216 @@
         let pdfContainer = document.getElementById('pdf-container');
         let isInitialLoad = true;
 
-        // Function to load PDF
-        function loadPdf(pdfId) {
-            // Update active state
-            const items = document.querySelectorAll('.pdf-item');
-            items.forEach(item => {
-                if (parseInt(item.getAttribute('data-pdf-id')) === pdfId) {
-                    item.classList.add('active');
-                } else {
-                    item.classList.remove('active');
-                }
-            });
+     // Add this check before setting the title
+function loadPdf(pdfId) {
+    // Update active state
+    const items = document.querySelectorAll('.pdf-item');
+    items.forEach(item => {
+        if (parseInt(item.getAttribute('data-pdf-id')) === parseInt(pdfId)) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
 
-            // Save state to session storage
-            sessionStorage.setItem('currentPdfId', pdfId);
+    // Save state to session storage
+    sessionStorage.setItem('currentPdfId', pdfId);
 
-            // Update URL without reloading the page
-            const url = new URL(window.location);
-            url.searchParams.set('pdf_id', pdfId);
-            window.history.pushState({ pdfId: pdfId }, '', url);
+    // Update URL without reloading the page
+    const url = new URL(window.location);
+    url.searchParams.set('pdf_id', pdfId);
+    window.history.pushState({ pdfId: pdfId }, '', url);
 
-            // Show loading indicator
-            pdfContainer.innerHTML = '<div class="loader"></div>';
+    // Show loading indicator
+    pdfContainer.innerHTML = '<div class="loader"></div>';
 
-            // Get PDF details from API
-            fetch(`/confident/pdf/${pdfId}/detail/`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    document.getElementById('pdf-title').textContent = data.title;
+    // Get PDF details from API
+    fetch(`/confident/pdf/${pdfId}/detail/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Check if element exists before accessing it
+            const pdfTitleElement = document.getElementById('pdf-title');
+            
+            // If the PDF toolbar isn't in the DOM yet, we need to create it
+            if (!pdfTitleElement) {
+                // First clear the container
+                const pdfViewer = document.querySelector('.pdf-viewer');
+                
+                // Create the toolbar structure
+                const toolbarHTML = `
+                <div class="pdf-toolbar">
+                    <div class="pdf-controls">
+                        <button class="control-button" id="prev-page">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
 
-                    // Create container for all pages
-                    pdfContainer.innerHTML = '<div class="pdf-pages-container"></div>';
-                    const pagesContainer = document.querySelector('.pdf-pages-container');
-
-                    // Load the PDF content
-                    const pdfUrl = `/confident/pdf/${pdfId}/content/`;
-                    console.log(`Loading PDF from: ${pdfUrl}`);
-
-                    const loadingTask = pdfjsLib.getDocument(pdfUrl);
-
-                    loadingTask.promise.then(function (pdf) {
-                        console.log(`PDF loaded successfully with ${pdf.numPages} pages`);
-                        pdfDoc = pdf;
-                        document.getElementById('total-pages').textContent = pdf.numPages;
-
-                        // Create canvas elements for each page
-                        for (let i = 1; i <= pdf.numPages; i++) {
-                            const pageContainer = document.createElement('div');
-                            pageContainer.className = 'pdf-page-container';
-                            pageContainer.id = `page-container-${i}`;
-                            pageContainer.setAttribute('data-page-num', i);
-
-                            const canvas = document.createElement('canvas');
-                            canvas.id = `pdf-canvas-${i}`;
-                            pageContainer.appendChild(canvas);
-
-                            pagesContainer.appendChild(pageContainer);
-                        }
-
-                        // Set up Intersection Observer to render pages when they come into view
-                        setupIntersectionObserver();
-
-                        // Restore scroll position if it exists
-                        const savedScrollPos = sessionStorage.getItem('pdfScrollPosition');
-                        if (savedScrollPos && !isInitialLoad) {
-                            setTimeout(() => {
-                                window.scrollTo(0, parseInt(savedScrollPos));
-                            }, 100);
-                        }
-
-                        isInitialLoad = false;
-
-                        // Update page number input when scrolling
-                        updateCurrentPageOnScroll();
-
-                    }).catch(function (error) {
-                        console.error('Error loading PDF:', error);
-                        pdfContainer.innerHTML = `
-                    <div class="no-pdf-selected">
-                        <div class="no-pdf-icon" style="color: #e74c3c;">
-                            <i class="fas fa-exclamation-circle"></i>
+                        <div class="page-info">
+                            <span>Page</span>
+                            <input type="number" id="current-page" class="page-number" value="1" min="1">
+                            <span>of <span id="total-pages">?</span></span>
                         </div>
-                        <p class="no-pdf-message">Error loading PDF</p>
-                        <p class="no-pdf-hint">${error.message}</p>
+
+                        <button class="control-button" id="next-page">
+                            <i class="fas fa-chevron-right"></i> Next
+                        </button>
+
+                        <button class="control-button" id="zoom-out">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+
+                        <button class="control-button" id="zoom-in">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
                     </div>
+
+                    <div class="pdf-details">
+                        <div class="current-pdf-title" id="pdf-title">${data.title}</div>
+                        <div class="current-pdf-info">
+                            Uploaded on ${new Date(data.uploaded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </div>
+                    </div>
+                </div>
+                <div class="pdf-container" id="pdf-container">
+                    <div class="loader"></div>
+                </div>
                 `;
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching PDF details:', error);
-                    pdfContainer.innerHTML = `
+                
+                // Remove any 'no-pdf-selected' div if it exists
+                const noPdfSelected = pdfViewer.querySelector('.no-pdf-selected');
+                if (noPdfSelected) {
+                    pdfViewer.removeChild(noPdfSelected);
+                }
+                
+                // Add the toolbar to the PDF viewer
+                pdfViewer.innerHTML = toolbarHTML;
+                
+                // Re-get the pdfContainer since we just recreated it
+                pdfContainer = document.getElementById('pdf-container');
+                
+                // Reattach event listeners
+                attachEventListeners();
+            } else {
+                // Element exists, just update the title
+                pdfTitleElement.textContent = data.title;
+            }
+
+            // Create container for all pages
+            pdfContainer.innerHTML = '<div class="pdf-pages-container"></div>';
+            const pagesContainer = document.querySelector('.pdf-pages-container');
+
+            // Rest of your code remains the same...
+            // Load the PDF content
+            const pdfUrl = `/confident/pdf/${pdfId}/content/`;
+            console.log(`Loading PDF from: ${pdfUrl}`);
+
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+
+            loadingTask.promise.then(function (pdf) {
+                console.log(`PDF loaded successfully with ${pdf.numPages} pages`);
+                pdfDoc = pdf;
+                
+                const totalPagesElement = document.getElementById('total-pages');
+                if (totalPagesElement) {
+                    totalPagesElement.textContent = pdf.numPages;
+                }
+
+                // Create canvas elements for each page
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const pageContainer = document.createElement('div');
+                    pageContainer.className = 'pdf-page-container';
+                    pageContainer.id = `page-container-${i}`;
+                    pageContainer.setAttribute('data-page-num', i);
+
+                    const canvas = document.createElement('canvas');
+                    canvas.id = `pdf-canvas-${i}`;
+                    pageContainer.appendChild(canvas);
+
+                    pagesContainer.appendChild(pageContainer);
+                }
+
+                // Set up Intersection Observer to render pages when they come into view
+                setupIntersectionObserver();
+
+                // Restore scroll position if it exists
+                const savedScrollPos = sessionStorage.getItem('pdfScrollPosition');
+                if (savedScrollPos && !isInitialLoad) {
+                    setTimeout(() => {
+                        window.scrollTo(0, parseInt(savedScrollPos));
+                    }, 100);
+                }
+
+                isInitialLoad = false;
+
+                // Update page number input when scrolling
+                updateCurrentPageOnScroll();
+
+            }).catch(function (error) {
+                console.error('Error loading PDF:', error);
+                pdfContainer.innerHTML = `
                 <div class="no-pdf-selected">
                     <div class="no-pdf-icon" style="color: #e74c3c;">
                         <i class="fas fa-exclamation-circle"></i>
                     </div>
-                    <p class="no-pdf-message">Error loading PDF details</p>
+                    <p class="no-pdf-message">Error loading PDF</p>
                     <p class="no-pdf-hint">${error.message}</p>
                 </div>
             `;
-                });
-        }
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching PDF details:', error);
+            pdfContainer.innerHTML = `
+            <div class="no-pdf-selected">
+                <div class="no-pdf-icon" style="color: #e74c3c;">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <p class="no-pdf-message">Error loading PDF details</p>
+                <p class="no-pdf-hint">${error.message}</p>
+            </div>
+        `;
+        });
+}
+
+// Function to attach event listeners for newly created elements
+function attachEventListeners() {
+    if (document.getElementById('current-page')) {
+        document.getElementById('current-page').addEventListener('change', function () {
+            const newPage = parseInt(this.value);
+            if (newPage > 0 && newPage <= pdfDoc.numPages) {
+                jumpToPage(newPage);
+            } else {
+                this.value = pageNum;
+            }
+        });
+    }
+
+    if (document.getElementById('prev-page')) {
+        document.getElementById('prev-page').addEventListener('click', function () {
+            if (pageNum <= 1) return;
+            jumpToPage(pageNum - 1);
+        });
+    }
+
+    if (document.getElementById('next-page')) {
+        document.getElementById('next-page').addEventListener('click', function () {
+            if (pageNum >= pdfDoc.numPages) return;
+            jumpToPage(pageNum + 1);
+        });
+    }
+
+    if (document.getElementById('zoom-in')) {
+        document.getElementById('zoom-in').addEventListener('click', zoomIn);
+    }
+
+    if (document.getElementById('zoom-out')) {
+        document.getElementById('zoom-out').addEventListener('click', zoomOut);
+    }
+}
 
         // Set up Intersection Observer to render pages when they come into view
         function setupIntersectionObserver() {

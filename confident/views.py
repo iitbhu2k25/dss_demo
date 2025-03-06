@@ -2,8 +2,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from .models import PDFDocument
-from django.contrib.auth.decorators import login_required
-@login_required 
+import os
+from django.conf import settings
+# from django.contrib.auth.decorators import login_required
+# @login_required 
 def pdf_list(request):
     """View to display list of PDFs and PDF viewer"""
     # Only use fields that exist in your database
@@ -58,70 +60,73 @@ def pdf_detail_api(request, pdf_id):
     """API endpoint to get PDF data for the viewer"""
     pdf = get_object_or_404(PDFDocument, id=pdf_id)
     
+    # Try to get file size safely
+    file_size = ''
+    try:
+        if hasattr(pdf, 'size_display'):
+            file_size = pdf.size_display
+        elif hasattr(pdf.file, 'size'):
+            size = pdf.file.size
+            if size < 1024:
+                file_size = f"{size} bytes"
+            elif size < 1024*1024:
+                file_size = f"{size/1024:.1f} KB"
+            else:
+                file_size = f"{size/(1024*1024):.1f} MB"
+    except Exception as e:
+        # Log the error but don't fail the request
+        print(f"Error getting file size: {str(e)}")
+    
+    # Try to get filename safely
+    try:
+        filename = pdf.filename()
+    except Exception as e:
+        print(f"Error getting filename: {str(e)}")
+        filename = os.path.basename(pdf.file.name) if pdf.file else f"document-{pdf.id}.pdf"
+    
     # Return the PDF details as JSON
     return JsonResponse({
         'id': pdf.id,
         'title': pdf.title,
-        'description': pdf.description,
+        'description': pdf.description or '',
         'file_url': reverse('pdf_content', args=[pdf.id]),
-        'file_name': pdf.filename(),  # Use the method to generate a name
-        'file_size': pdf.size_display if hasattr(pdf, 'size_display') else '',
+        'file_name': filename,
+        'file_size': file_size,
         'uploaded_at': pdf.uploaded_at.isoformat(),
     })
-
 def pdf_content(request, pdf_id):
     """Return the PDF content"""
     pdf = get_object_or_404(PDFDocument, id=pdf_id)
     
     try:
-        # Use a fixed content type since we don't have it in the model anymore
+        # Get the filename from the model
+        filename = os.path.basename(pdf.file.name)
+        
+        # First try the standard Django media path
+        file_path = pdf.file.path
+        
+        # If that doesn't exist, try the app directory
+        if not os.path.exists(file_path):
+            app_dir_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Draft Documents_DSS', filename)
+            if os.path.exists(app_dir_path):
+                file_path = app_dir_path
+            else:
+                # If still not found, return a 404
+                return HttpResponse(f"PDF file not found: {filename}", status=404)
+        
+        # File exists, serve it
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename="{pdf.filename()}"'
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
         response['Cache-Control'] = 'public, max-age=3600'
         
-        # Open the file and stream it to the response
-        with open(pdf.file.path, 'rb') as f:
+        with open(file_path, 'rb') as f:
             response.write(f.read())
             
         return response
-    except Exception as e:
-        print(f"Error serving PDF: {str(e)}")
-        return HttpResponse(f"Error loading PDF: {str(e)}", status=500)
-    """Return the PDF content"""
-    pdf = get_object_or_404(PDFDocument, id=pdf_id)
-    
-    try:
-        response = HttpResponse(content_type=pdf.content_type)
-        response['Content-Disposition'] = f'inline; filename="{pdf.filename()}"'
-        response['Cache-Control'] = 'public, max-age=3600'
-        
-        # Open the file and stream it to the response
-        with open(pdf.file.path, 'rb') as f:
-            response.write(f.read())
             
-        return response
     except Exception as e:
         print(f"Error serving PDF: {str(e)}")
         return HttpResponse(f"Error loading PDF: {str(e)}", status=500)
-    """Return the raw PDF content with proper content type"""
-    pdf = get_object_or_404(PDFDocument, id=pdf_id)
-    
-    try:
-        # Check if we have content in the database
-        if pdf.file_content:
-            # Create the response with the PDF binary data from the database
-            response = HttpResponse(pdf.file_content, content_type='application/pdf')
-            response['Content-Disposition'] = f'inline; filename="{pdf.filename()}"'
-            
-            # Set cache headers to improve performance
-            response['Cache-Control'] = 'public, max-age=3600'
-            return response
-        else:
-            return HttpResponse("PDF content not found", status=404)
-    except Exception as e:
-        print(f"Error serving PDF: {str(e)}")
-        return HttpResponse(f"Error loading PDF: {str(e)}", status=500)
-
 def upload_pdf(request):
     """View to handle PDF uploads"""
     if request.method == 'POST':
