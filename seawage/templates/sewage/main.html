@@ -87,28 +87,30 @@
         
 
         <!-- Year -->
-        <div class="mb-3 hidden" id="year_container">
-            <label for="year_dropdown" class="form-label">Select Year:</label>
-            <select id="year_dropdown" name="year_dropdown" class="form-select">
-                <option value="">Select Year</option>
-            </select>
+        <div class="mb-3">
+            <label class="form-label">Select Target Year:</label>
+            <div>
+                <!-- Single Year Option -->
+                <input type="radio" id="single_year_radio" name="year_selection" value="single" checked>
+                <label for="single_year_radio">Single Year:</label>
+                <select id="single_year_dropdown" class="form-select d-inline-block w-auto">
+                    <option value="">Select Year</option>
+                </select>
+            </div>
+        
+            <div class="mt-2">
+                <!-- Year Range Option -->
+                <input type="radio" id="range_year_radio" name="year_selection" value="range">
+                <label for="range_year_radio">Range of Years:</label>
+                <input type="number" id="start_year_input" class="form-control d-inline-block w-auto" placeholder="Start Year (e.g., 2025)" >
+                <span class="mx-2">to</span>
+                <input type="number" id="end_year_input" class="form-control d-inline-block w-auto" placeholder="End Year (e.g., 2060)" >
+            </div>
         </div>
 
-        <script>
-            const yearSelect = document.getElementById('year_dropdown');
-            for (let year = 2021; year <= 2060; year++) {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                yearSelect.appendChild(option);
-            }
-        </script>
 
-        <!-- Population -->
-        <div class="mb-3 hidden" id="population_container">
-            <label for="population_field" class="form-label">Population (Total Population In Case Of Multiple Region):</label>
-            <input id="population_field" name="population_field" type="text" class="form-control" placeholder="Enter Population">
-        </div>
+
+
         
         <div class="mb-3 hidden" id="domestic_container">
             <label for="domestic_field" class="form-label">Domestic Water Demand:</label>

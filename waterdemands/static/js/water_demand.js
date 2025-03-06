@@ -457,6 +457,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     calculateButton.addEventListener('click', async (event) => {
         event.preventDefault();
+        resultContainer.innerHTML = '<h5 class="text-primary">Calculating...</h5>';
+        await new Promise(resolve => setTimeout(resolve, 700));
         const selectedVillages = Array.from(
             document.querySelectorAll('#village-container input[type="checkbox"]:checked')
         ).map(checkbox => checkbox.value);

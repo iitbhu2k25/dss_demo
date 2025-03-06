@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     label.htmlFor = `village_${village.code}`;
                     label.textContent = displayName;
                     checkbox.addEventListener('change', () => {
-                        updateSelectedVillages(selectedContainer);
+                        updateSelectedVillages(selectedContainer, totalPopulationContainer);
                     });
                     checkboxWrapper.appendChild(checkbox);
                     checkboxWrapper.appendChild(label);
@@ -248,7 +248,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Calculate Water Supply on Button Click
     // ======================================
     calculateButton.addEventListener('click', () => {
-        resultContainer.innerHTML = '';
+        resultContainer.innerHTML = '<h5 class="text-primary">Calculating...</h5>';
+        setTimeout(() => {
 
         // Groundwater inputs
         const surfaceWater = parseFloat(document.getElementById('surface_water').value) || 0;
@@ -280,5 +281,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const totalWaterSupply = surfaceWater + groundwaterSupply + alternateWaterSupply;
         resultContainer.innerHTML = `<h4>Total Water Supply for Selected Region is: ${totalWaterSupply.toFixed(2)} MLD</h4>`;
+    },700);
     });
 });

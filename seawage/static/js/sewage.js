@@ -1,88 +1,139 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Element references
     const methodsDropdown = document.getElementById('methods_dropdown');
     const demandTypeField = document.getElementById('demand_type');
     const stateDropdown = document.getElementById('state_dropdown');
     const districtDropdown = document.getElementById('district_dropdown');
     const subdistrictDropdown = document.getElementById('subdistrict_dropdown');
-    const yearDropdown = document.getElementById('year_dropdown');
+    // Removed original yearDropdown as we now use radio buttons and dedicated inputs
     const populationField = document.getElementById('population_field');
-    const domesticfield = document.getElementById('domestic_field')
-    // const floatingField = document.getElementById('floating_field');
-    // const enuDropdown = document.getElementById('enu_dropdown');
-    // const facilityDropdown = document.getElementById('facility_dropdown');
+    const domesticField = document.getElementById('domestic_field');
     const calculateButton = document.getElementById('calculate_button');
     const resultContainer = document.getElementById('result_container');
-    const yearContainer = document.getElementById('year_container');
-    // const institutionalContainer = document.getElementById('institutional_container');
-    // const firefightingContainer = document.getElementById('firefighting_container');
-    // const totalDemandField = document.getElementById('totaldemand');
-    // const intermediateStageField = document.getElementById('intermediate_stage');
-    // const intermediateStagePopulationField = document.getElementById('population_load_intermediate'); // For Intermediate Stage Population
     const populationContainer = document.getElementById('population_container');
-    // const floatingContainer = document.getElementById('floating_container');
-    // const enuContainer = document.getElementById('enu_container');
-    // const facilityContainer = document.getElementById('facility_container');
+    // const floatingContainer = document.getElementById('floating_field');
+    // const enuDropdown = document.getElementById('enu_dropdown');
+    // const facilityDropdown = document.getElementById('facility_dropdown');
     const villageContainer = document.getElementById('village-container');
     const selectedVillagesContainer = document.getElementById('selected-villages');
     const demandContainer = document.getElementById('domestic_container');
     const supplyContainer = document.getElementById('supply_container');
     const totalPopulationContainer = document.getElementById('total-population');
 
-    
+    // New year selection elements (for modeled method)
+    const singleYearRadio = document.getElementById('single_year_radio');
+    const rangeYearRadio = document.getElementById('range_year_radio');
+    const singleYearDropdown = document.getElementById('single_year_dropdown');
+    const startYearInput = document.getElementById('start_year_input');
+    const endYearInput = document.getElementById('end_year_input');
+
+    // Initially hide elements that are not needed
     demandTypeField.parentElement.classList.add('hidden');
-    yearContainer.classList.add('hidden');
-    populationContainer.classList.add('hidden');
-    // floatingContainer.classList.add('hidden');
-    // enuContainer.classList.add('hidden');
-    // facilityContainer.classList.add('hidden');
-    // institutionalContainer.classList.add('hidden');
-    // firefightingContainer.classList.add('hidden');
-    // document.getElementById('totaldemand').classList.add('hidden');
+    singleYearRadio.parentElement.classList.add('hidden');
+    rangeYearRadio.parentElement.classList.add('hidden');
+    singleYearDropdown.parentElement.classList.add('hidden');
+    startYearInput.parentElement.classList.add('hidden');
+    endYearInput.parentElement.classList.add('hidden');
+    //populationContainer.classList.add('hidden');
+
+    // Populate single-year dropdown (from 2025 to 2060)
+    for (let year = 2025; year <= 2060; year++) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        singleYearDropdown.appendChild(option);
+    }
+
+    // When the method changes, show/hide appropriate sections
     methodsDropdown.addEventListener('change', () => {
         const selectedMethod = methodsDropdown.value;
-        console.log('Selected Method:', selectedMethod); // Debugging output
-
-        // Hide all sections initially
-        // demandTypeField.parentElement.classList.add('hidden');
-        yearContainer.classList.add('hidden');
-        populationContainer.classList.add('hidden');
-        demandContainer.classList.add('hidden')
-        supplyContainer.classList.add('hidden')
-        domesticfield.classList.add('hidden')
-        // floatingContainer.classList.add('hidden');
-        // enuContainer.classList.add('hidden');
-        // facilityContainer.classList.add('hidden');
-        // institutionalContainer.classList.add('hidden');
-        // firefightingContainer.classList.add('hidden');
-        // document.getElementById('totaldemand').classList.add('hidden');
-
+        console.log('Selected Method:', selectedMethod);
+        // Hide sections by default
+        demandTypeField.parentElement.classList.add('hidden');
+        supplyContainer.classList.add('hidden');
+        demandContainer.classList.add('hidden');
+        // For sector-based (domestic sewage estimation) show the demand type selection
         if (selectedMethod === 'sector_based') {
-            console.log('Showing Sector-Based Section'); // Debugging output
             demandTypeField.parentElement.classList.remove('hidden');
-            
         } else if (selectedMethod === 'water_supply') {
-            console.log('Showing Village-Based Section'); // Debugging output
+            // For water supply, hide demand type and show the water supply input
             demandTypeField.parentElement.classList.add('hidden');
             supplyContainer.classList.remove('hidden');
         }
     });
-    
 
+    // When demand type changes, toggle year selection and other fields
+    demandTypeField.addEventListener('change', () => {
+        const demandType = demandTypeField.value;
+
+        // Reset/hide all related sections first
+        singleYearRadio.parentElement.classList.add('hidden');
+        rangeYearRadio.parentElement.classList.add('hidden');
+        singleYearDropdown.parentElement.classList.add('hidden');
+        startYearInput.parentElement.classList.add('hidden');
+        endYearInput.parentElement.classList.add('hidden');
+        demandContainer.classList.add('hidden');
+
+        // Always show village selection and subdistrict container
+        villageContainer.classList.remove('hidden');
+        selectedVillagesContainer.classList.remove('hidden');
+        subdistrictDropdown.parentElement.classList.remove('hidden');
+
+        if (demandType === 'modeled') {
+            // For modeled demand, allow selection between Single Year or Year Range
+            singleYearRadio.parentElement.classList.remove('hidden');
+            rangeYearRadio.parentElement.classList.remove('hidden');
+            // Depending on the radio button selection, show the corresponding input
+            if (singleYearRadio.checked) {
+                singleYearDropdown.parentElement.classList.remove('hidden');
+            }
+            if (rangeYearRadio.checked) {
+                startYearInput.parentElement.classList.remove('hidden');
+                endYearInput.parentElement.classList.remove('hidden');
+            }
+        } else if (demandType === 'manual') {
+            // For manual demand, show the domestic water demand input
+            demandContainer.classList.remove('hidden');
+        } else {
+            // If no valid option is selected, clear the result container
+            resultContainer.textContent = '';
+        }
+    });
+
+    // Toggle year selection mode based on radio buttons
+    // Toggle year selection mode based on radio buttons
+    singleYearRadio.addEventListener('change', () => {
+        // Show single year dropdown and disable/hide range inputs
+        singleYearDropdown.parentElement.classList.remove('hidden');
+        startYearInput.parentElement.classList.add('hidden');
+        endYearInput.parentElement.classList.add('hidden');
+        singleYearDropdown.disabled = false;
+        startYearInput.disabled = true;
+        endYearInput.disabled = true;
+    });
+
+    rangeYearRadio.addEventListener('change', () => {
+        // Hide single year dropdown and enable range inputs
+        singleYearDropdown.parentElement.classList.add('hidden');
+        startYearInput.parentElement.classList.remove('hidden');
+        endYearInput.parentElement.classList.remove('hidden');
+        singleYearDropdown.disabled = true;
+        startYearInput.disabled = false;
+        endYearInput.disabled = false;
+    });
+
+
+    // Fetch locations for dropdowns
     const fetchLocations = (url, dropdown, placeholder) => {
         fetch(url)
             .then(response => response.json())
             .then(locations => {
-
-
                 locations.sort((a, b) => a.name.localeCompare(b.name));
-
-
-                dropdown.innerHTML = ''; // Clear existing options
+                dropdown.innerHTML = ''; // Clear any existing options
                 const defaultOption = document.createElement('option');
                 defaultOption.value = '';
                 defaultOption.textContent = placeholder;
                 dropdown.appendChild(defaultOption);
-
                 locations.forEach(location => {
                     const option = document.createElement('option');
                     option.value = location.code;
@@ -93,56 +144,46 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(error => console.error('Error fetching locations:', error));
     };
 
-
+    // Fetch villages based on the selected subdistrict
     const fetchVillages = (url, container, selectedContainer) => {
         fetch(url)
             .then(response => response.json())
             .then(villages => {
-                container.innerHTML = ''; // Clear the container
-    
+                container.innerHTML = ''; // Clear container
                 if (villages.length === 0) {
                     container.innerHTML = '<p class="text-center">No villages available.</p>';
                     return;
                 }
-    
-                // Separate villages with code === 0
+                // Separate special village (code === 0) and others
                 const specialVillage = villages.find(village => village.code === 0);
                 const otherVillages = villages.filter(village => village.code !== 0);
-    
-                // Sort other villages by name in alphabetical order
+                // Sort other villages alphabetically
                 otherVillages.sort((a, b) => a.name.localeCompare(b.name));
-    
-                // Create a function to add a checkbox
+                // Function to create a checkbox for each village
                 const addCheckbox = (village, displayName) => {
                     const checkboxWrapper = document.createElement('div');
                     checkboxWrapper.classList.add('form-check');
-    
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     checkbox.classList.add('form-check-input');
                     checkbox.id = `village_${village.code}`;
                     checkbox.value = village.code;
                     checkbox.dataset.name = village.name;
-    
                     const label = document.createElement('label');
                     label.classList.add('form-check-label');
                     label.htmlFor = `village_${village.code}`;
                     label.textContent = displayName;
-    
                     checkbox.addEventListener('change', () => {
-                        updateSelectedVillages(selectedContainer);
+                        updateSelectedVillages(selectedContainer, totalPopulationContainer);
                     });
-    
                     checkboxWrapper.appendChild(checkbox);
                     checkboxWrapper.appendChild(label);
                     return checkboxWrapper;
                 };
-    
-                // Add the special village (code === 0) at the top, with the name "ALL"
+                // Add special village at the top if available
                 if (specialVillage) {
                     container.appendChild(addCheckbox(specialVillage, ' ALL'));
                 }
-    
                 // Add the remaining villages
                 otherVillages.forEach(village => {
                     container.appendChild(addCheckbox(village, village.name));
@@ -150,24 +191,21 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(error => console.error('Error fetching villages:', error));
     };
-    
+
+    // Update the display of selected villages and fetch their population data
     const updateSelectedVillages = (selectedContainer, totalPopulationContainer) => {
         const selectedCheckboxes = document.querySelectorAll('#village-container input[type="checkbox"]:checked');
         const selectedVillages = Array.from(selectedCheckboxes).map(checkbox => ({
             code: checkbox.value,
             name: checkbox.dataset.name
         }));
-    
         let url = '';
         let populationLevel = '';
-    
-        // If any village checkboxes are selected, fetch village-level population
         if (selectedVillages.length > 0) {
             const villageCodes = selectedVillages.map(v => v.code);
             url = `waterdemand/get_village_population/?state_code=${stateDropdown.value}&district_code=${districtDropdown.value}&subdistrict_code=${subdistrictDropdown.value}&village_codes=${villageCodes.join(',')}`;
             populationLevel = 'village';
         } else {
-            // If no village is selected, default to district (or state) level as appropriate
             if (districtDropdown.value === "0") {
                 url = `waterdemand/get_village_population/?state_code=${stateDropdown.value}&district_code=${districtDropdown.value}&subdistrict_code=0&village_codes=0`;
                 populationLevel = 'state';
@@ -176,185 +214,157 @@ document.addEventListener('DOMContentLoaded', () => {
                 populationLevel = 'district';
             }
         }
-    
         fetch(url)
             .then(response => response.json())
             .then(data => {
                 const populationData = data.population_data;
                 if (populationLevel === 'village') {
-                    selectedContainer.innerHTML = populationData.map(village => 
+                    selectedContainer.innerHTML = populationData.map(village =>
                         `<span class="badge bg-primary me-1">${village.name} (Population in 2011: ${village.population_2011})</span>`
                     ).join('');
                     const totalPopulation = populationData.reduce((acc, village) => acc + village.population_2011, 0);
                     totalPopulationContainer.innerHTML = `Total population: ${totalPopulation}`;
                 } else {
-                    // For district or state, assume one record is returned
                     selectedContainer.innerHTML = '';
                     totalPopulationContainer.innerHTML = 'Total population: 0';
                 }
             })
             .catch(error => console.error('Error fetching population data:', error));
     };
-    
 
-
+    // Fetch locations for state, district, and subdistrict dropdowns
     fetchLocations('waterdemand/get_locations/', stateDropdown, 'Select State');
 
     stateDropdown.addEventListener('change', () => {
-        const stateCode = stateDropdown.value;
-        fetchLocations(`waterdemand/get_locations/?state_code=${stateCode}`, districtDropdown, 'Select District');
+        fetchLocations(`waterdemand/get_locations/?state_code=${stateDropdown.value}`, districtDropdown, 'Select District');
     });
 
     districtDropdown.addEventListener('change', () => {
-        const stateCode = stateDropdown.value;
-        const districtCode = districtDropdown.value;
-        fetchLocations(`waterdemand/get_locations/?state_code=${stateCode}&district_code=${districtCode}`, subdistrictDropdown, 'Select Subdistrict');
+        fetchLocations(`waterdemand/get_locations/?state_code=${stateDropdown.value}&district_code=${districtDropdown.value}`, subdistrictDropdown, 'Select Subdistrict');
     });
 
     subdistrictDropdown.addEventListener('change', () => {
-        const stateCode = stateDropdown.value;
-        const districtCode = districtDropdown.value;
-        const subdistrictCode = subdistrictDropdown.value;
-
-        if (subdistrictCode) {
-            const url = `waterdemand/get_locations/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}`;
-            fetchVillages(url, villageContainer, selectedVillagesContainer);
-        }
-        updateSelectedVillages(selectedContainer, totalPopulationContainer);
+        const url = `waterdemand/get_locations/?state_code=${stateDropdown.value}&district_code=${districtDropdown.value}&subdistrict_code=${subdistrictDropdown.value}`;
+        fetchVillages(url, villageContainer, selectedVillagesContainer);
+        updateSelectedVillages(selectedVillagesContainer, totalPopulationContainer);
     });
 
-
-    
-
-
-    demandTypeField.addEventListener('change', () => {
-        const demandType = demandTypeField.value;
-    
-        // Reset all sections to hidden by default
-        yearContainer.classList.add('hidden');
-        populationContainer.classList.add('hidden');
-        villageContainer.classList.add('hidden');
-        selectedVillagesContainer.classList.add('hidden'); // Hide selected village text
-        demandContainer.classList.add('hidden');
-    
-        // Show/hide fields based on the selected demand type
-        if (demandType === 'modeled') {
-            yearContainer.classList.remove('hidden');
-            populationContainer.classList.remove('hidden');
-            
-            villageContainer.classList.remove('hidden');
-            selectedVillagesContainer.classList.remove('hidden'); // Show selected village text
-            subdistrictDropdown.parentElement.classList.remove('hidden'); // Show subdistrict container
-        } else if (demandType === 'manual') {
-            demandContainer.classList.remove('hidden')
-            villageContainer.classList.remove('hidden');
-            selectedVillagesContainer.classList.remove('hidden'); // Show selected village text
-            subdistrictDropdown.parentElement.classList.remove('hidden'); // Show subdistrict container
-            domesticfield.classList.remove('hidden')
-        } else {
-            // If no valid demand type is selected, hide everything
-            resultContainer.textContent = '';
-        }
-    });
-    
-    
-
-    yearDropdown.addEventListener('change', () => {
-        const stateCode = stateDropdown.value;
-        const districtCode = districtDropdown.value;
-        const subdistrictCode = subdistrictDropdown.value;
-        const selectedVillages = Array.from(
-            document.querySelectorAll('#village-container input[type="checkbox"]:checked')
-        ).map(checkbox => checkbox.value);
-        const year = yearDropdown.value;
-    
-        console.log("Selected Villages:", selectedVillages);
-    
-        if (year && stateCode && districtCode && subdistrictCode && selectedVillages.length > 0) {
-            // Prepare villages as a query parameter
-            const villagesQuery = selectedVillages
-                .map(v => `villages[]=${encodeURIComponent(v)}`)
-                .join('&');
-
-            
-            // Build the URL
-            const url = `waterdemand/get_combined_population/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}&year=${year}&${villagesQuery}`;
-    
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.combined_population) {
-                        populationField.value = Math.floor(data.combined_population).toString(); // Auto-populate the field
-                    } else if (data.error) {
-                        alert(data.error);
-                    }
-                })
-                .catch(error => console.error('Error fetching combined population data:', error));
-        } else {
-            alert('Please select all required fields, including at least one village.');
-        }
-    });
-    
-    
-    
-
+    // Calculate button click event handler
     calculateButton.addEventListener('click', async (event) => {
         event.preventDefault();
+        resultContainer.innerHTML = '<h5 class="text-primary">Calculating...</h5>';
+        await new Promise(resolve => setTimeout(resolve, 700)); // Brief delay for UI update
+
         const selectedVillages = Array.from(
             document.querySelectorAll('#village-container input[type="checkbox"]:checked')
         ).map(checkbox => checkbox.value);
-    
+
         if (selectedVillages.length === 0) {
             alert('Please select at least one village.');
             return;
         }
-        if (demandTypeField.value === 'modeled') {
-            const stateCode = stateDropdown.value;
-            const districtCode = districtDropdown.value;
-            const subdistrictCode = subdistrictDropdown.value;
-            const year = yearDropdown.value;
 
-            if (!year || !stateCode || !districtCode || !subdistrictCode) {
-                alert('Please select State, District, and Subdistrict.');
+        const stateCode = stateDropdown.value;
+        const districtCode = districtDropdown.value;
+        const subdistrictCode = subdistrictDropdown.value;
+        const demandType = demandTypeField.value;
+
+        if (demandType === 'modeled') {
+            // Modeled demand
+            if (singleYearRadio.checked) {
+                // Single Year Mode
+                const selectedYear = singleYearDropdown.value;
+                if (!selectedYear) {
+                    alert('Please select a valid year.');
+                    return;
+                }
+                const url = `waterdemand/get_combined_population/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}&year=${selectedYear}&villages[]=${selectedVillages.join('&villages[]=')}`;
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    if (data.combined_population) {
+                        const population = data.combined_population;
+                        const demandValue = population >= 1000000 ? population * 150 / 1000000 : population * 135 / 1000000;
+                        const sewage = demandValue * 0.84;
+                        resultContainer.textContent = `Total Generated Sewage Water is: ${sewage.toFixed(2)} MLD`;
+                    } else if (data.error) {
+                        alert(data.error);
+                    }
+                } catch (error) {
+                    console.error('Error fetching population data:', error);
+                }
+            } else if (rangeYearRadio.checked) {
+                // Year Range Mode: iterate over 5-year intervals
+                const startYear = parseInt(startYearInput.value);
+                const endYear = parseInt(endYearInput.value);
+                if (!startYear || !endYear || startYear >= endYear || startYear < 2025 || endYear > 2060) {
+                    alert("Please enter a valid year range (2025-2060).");
+                    return;
+                }
+                let yearsToFetch = [];
+                for (let year = startYear; year <= endYear; year += 5) {
+                    yearsToFetch.push(year);
+                }
+                try {
+                    let tableHTML = `
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Year</th>
+                                    <th>Projected Population</th>
+                                    <th>Sewage Generation (MLD)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    for (const year of yearsToFetch) {
+                        const url = `waterdemand/get_combined_population/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}&year=${year}&villages[]=${selectedVillages.join('&villages[]=')}`;
+                        const response = await fetch(url);
+                        const data = await response.json();
+                        if (data.combined_population) {
+                            const population = data.combined_population;
+                            const demandValue = population >= 1000000 ? population * 150 / 1000000 : population * 135 / 1000000;
+                            const sewage = demandValue * 0.84;
+                            tableHTML += `
+                                <tr>
+                                    <td>${year}</td>
+                                    <td>${Math.round(population)}</td>
+                                    <td>${sewage.toFixed(2)}</td>
+                                </tr>
+                            `;
+                        } else if (data.error) {
+                            tableHTML += `
+                                <tr>
+                                    <td>${year}</td>
+                                    <td colspan="2" class="text-danger">${data.error}</td>
+                                </tr>
+                            `;
+                        }
+                    }
+                    tableHTML += '</tbody></table>';
+                    resultContainer.innerHTML = tableHTML;
+                } catch (error) {
+                    console.error('Error fetching sewage estimation:', error);
+                }
+            }
+        } else if (demandType === 'manual') {
+            // Manual demand entry
+            const waterdemand = parseFloat(domesticField.value) || 0;
+            if (!waterdemand) {
+                alert('Please enter water demand.');
                 return;
             }
-
-            try {
-                const response = await fetch(`waterdemand/get_combined_population/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}&year=${year}&villages[]=${selectedVillages.join('&villages[]=')}`);
-                const data = await response.json();
-    
-                if (data.combined_population) {
-                    const population = data.combined_population;
-                    const demand = population >= 1000000 ? population * 150/1000000 : population * 135/1000000;
-                    const sewage = demand * 0.84;
-                    resultContainer.textContent = `Total Generated Sewage Water is: ${sewage.toFixed(2)} MLD`;
-                } else if (data.error) {
-                    alert(data.error);
-                }
-            } catch (error) {
-                console.error('Error fetching population data:', error);
+            const sewagedemand = waterdemand * 0.84;
+            resultContainer.textContent = `Total Generated Sewage Water is: ${sewagedemand.toFixed(2)} MLD`;
+        } else if (methodsDropdown.value === 'water_supply') {
+            // Water supply method
+            const supplydemand = parseFloat(document.getElementById('supply_field').value) || 0;
+            if (!supplydemand) {
+                alert('Please enter water supply.');
+                return;
             }
-        }  else if (demandTypeField.value === 'manual') {
-                const waterdemand = parseFloat(document.getElementById('domestic_field').value) || 0;
-                if (!waterdemand) {
-                    alert('Please enter water demand.');
-                    return;
-                }
-                const sewagedemand = waterdemand * 0.84;
-
-                
-                resultContainer.textContent = `Total Generated Sewage Water is: ${sewagedemand.toFixed(2)} MLD`;
-        } else if (selectedMethod = 'water_supply') {
-                const supplydemand = parseFloat(document.getElementById('supply_field').value) || 0;
-                if (!supplydemand) {
-                    alert('Please enter water supply.');
-                    return;
-                }
-                const sewagedemand = supplydemand * 0.84;
-
-                
-                resultContainer.textContent = `Total Generated Sewage Water is: ${sewagedemand.toFixed(2)} MLD`;
-        
+            const sewagedemand = supplydemand * 0.84;
+            resultContainer.textContent = `Total Generated Sewage Water is: ${sewagedemand.toFixed(2)} MLD`;
         } else {
             alert('Please select a valid demand type.');
         }
