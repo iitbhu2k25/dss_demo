@@ -75,6 +75,19 @@ document.addEventListener('DOMContentLoaded', () => {
             // For water supply, hide demand type and show the water supply input
             demandTypeField.parentElement.classList.add('hidden');
             supplyContainer.classList.remove('hidden');
+            unmeteredContainer.classList.add('hidden');
+            singleYearRadio.parentElement.classList.add('hidden');
+            rangeYearRadio.parentElement.classList.add('hidden');
+            singleYearDropdown.parentElement.classList.add('hidden');
+            startYearInput.parentElement.classList.add('hidden');
+            endYearInput.parentElement.classList.add('hidden');
+            resultContainer.textContent = ('');
+            pollutionLoadContainer.textContent = ('');
+            downloadCsvBtn.style.display = "none";
+            pollutionLoadBtn.style.display = "none";
+            // Hide village-related containers when in water supply mode
+
+           
         }
     });
 
@@ -436,6 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultContainer.textContent = `Total Generated Sewage Water is: ${sewagedemand.toFixed(2)} MLD`;
         } else if (methodsDropdown.value === 'water_supply') {
             resultContainer.textContent = ''; // Clear previous result
+            
             // Water supply method
             const supplydemand = parseFloat(document.getElementById('supply_field').value) || 0;
             if (!supplydemand) {
@@ -444,6 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const sewagedemand = supplydemand * 0.84;
             resultContainer.textContent = `Total Generated Sewage Water is: ${sewagedemand.toFixed(2)} MLD`;
+        
         } else {
             alert('Please select a valid demand type.');
         }
