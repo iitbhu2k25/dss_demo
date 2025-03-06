@@ -100,32 +100,49 @@ def pdf_content(request, pdf_id):
     
     try:
         # Get the filename from the model
-        filename = os.path.basename(pdf.file.name)
+        if pdf.file and pdf.file.name:
+            filename = os.path.basename(pdf.file.name)
+        else:
+            return HttpResponse("PDF filename not found in database", status=404)
         
-        # First try the standard Django media path
-        file_path = pdf.file.path
+        # First try standard path (which isn't working based on logs)
+        standard_path = os.path.join('/app/media/pdfs/', filename)
         
-        # If that doesn't exist, try the app directory
-        if not os.path.exists(file_path):
-            app_dir_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Draft Documents_DSS', filename)
-            if os.path.exists(app_dir_path):
-                file_path = app_dir_path
-            else:
-                # If still not found, return a 404
-                return HttpResponse(f"PDF file not found: {filename}", status=404)
+        # Then try the app's Draft Documents_DSS folder directly
+        app_dir = os.path.dirname(os.path.abspath(__file__))
+        draft_docs_path = os.path.join(app_dir, 'Draft Documents_DSS', filename)
         
-        # File exists, serve it
+        # For debugging
+        print(f"Looking for PDF file: {filename}")
+        print(f"Standard path: {standard_path}")
+        print(f"Draft docs path: {draft_docs_path}")
+        
+        # Try to find the file
+        if os.path.exists(standard_path):
+            file_path = standard_path
+        elif os.path.exists(draft_docs_path):
+            file_path = draft_docs_path
+        else:
+            return HttpResponse(f"PDF file not found: {filename}", status=404)
+        
+        # Create the response with the PDF content
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="{filename}"'
         response['Cache-Control'] = 'public, max-age=3600'
         
+        # Allow iframe embedding for this response
+        response['X-Frame-Options'] = 'SAMEORIGIN'
+        
+        # Open the file and stream it to the response
         with open(file_path, 'rb') as f:
             response.write(f.read())
             
         return response
-            
+        
     except Exception as e:
         print(f"Error serving PDF: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return HttpResponse(f"Error loading PDF: {str(e)}", status=500)
 def upload_pdf(request):
     """View to handle PDF uploads"""

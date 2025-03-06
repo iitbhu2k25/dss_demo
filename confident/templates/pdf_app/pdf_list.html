@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secret Library</title>
+    <title>Library</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
@@ -665,18 +665,19 @@
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script>
-        // Global variables
-        // Global variables
-        let pdfDoc = null;
-        let pageNum = 1;
-        let pagesRendered = new Set(); // Track which pages have been rendered
-        let scale = 1.5;
-        let pdfContainer = document.getElementById('pdf-container');
-        let isInitialLoad = true;
+    // Replace your existing JavaScript with this complete version
+// Global variables
+let pdfContainer;
+let currentPdfId = null;
+let isInitialLoad = true;
 
-     // Add this check before setting the title
+// Function to load PDF directly embedded in the page
 function loadPdf(pdfId) {
-    // Update active state
+    // Don't reload the same PDF
+    if (currentPdfId === pdfId && !isInitialLoad) return;
+    currentPdfId = pdfId;
+    
+    // Update active state in the list
     const items = document.querySelectorAll('.pdf-item');
     items.forEach(item => {
         if (parseInt(item.getAttribute('data-pdf-id')) === parseInt(pdfId)) {
@@ -694,8 +695,29 @@ function loadPdf(pdfId) {
     url.searchParams.set('pdf_id', pdfId);
     window.history.pushState({ pdfId: pdfId }, '', url);
 
-    // Show loading indicator
-    pdfContainer.innerHTML = '<div class="loader"></div>';
+    // Get the viewer container
+    pdfContainer = document.getElementById('pdf-container');
+    if (!pdfContainer) {
+        const pdfViewer = document.querySelector('.pdf-viewer');
+        if (pdfViewer) {
+            // If no container exists yet, create the basic structure
+            pdfViewer.innerHTML = `
+                <div class="pdf-toolbar">
+                    <div class="pdf-details">
+                        <div class="current-pdf-title" id="pdf-title">Loading...</div>
+                        <div class="current-pdf-info" id="pdf-info"></div>
+                    </div>
+                </div>
+                <div class="pdf-container" id="pdf-container">
+                    <div class="loader"></div>
+                </div>
+            `;
+            pdfContainer = document.getElementById('pdf-container');
+        }
+    } else {
+        // Show loading indicator
+        pdfContainer.innerHTML = '<div class="loader"></div>';
+    }
 
     // Get PDF details from API
     fetch(`/confident/pdf/${pdfId}/detail/`)
@@ -706,125 +728,38 @@ function loadPdf(pdfId) {
             return response.json();
         })
         .then(data => {
-            // Check if element exists before accessing it
-            const pdfTitleElement = document.getElementById('pdf-title');
+            // Update title and info
+            const titleElement = document.getElementById('pdf-title');
+            const infoElement = document.getElementById('pdf-info');
             
-            // If the PDF toolbar isn't in the DOM yet, we need to create it
-            if (!pdfTitleElement) {
-                // First clear the container
-                const pdfViewer = document.querySelector('.pdf-viewer');
-                
-                // Create the toolbar structure
-                const toolbarHTML = `
-                <div class="pdf-toolbar">
-                    <div class="pdf-controls">
-                        <button class="control-button" id="prev-page">
-                            <i class="fas fa-chevron-left"></i> Previous
-                        </button>
-
-                        <div class="page-info">
-                            <span>Page</span>
-                            <input type="number" id="current-page" class="page-number" value="1" min="1">
-                            <span>of <span id="total-pages">?</span></span>
-                        </div>
-
-                        <button class="control-button" id="next-page">
-                            <i class="fas fa-chevron-right"></i> Next
-                        </button>
-
-                        <button class="control-button" id="zoom-out">
-                            <i class="fas fa-search-minus"></i>
-                        </button>
-
-                        <button class="control-button" id="zoom-in">
-                            <i class="fas fa-search-plus"></i>
-                        </button>
-                    </div>
-
-                    <div class="pdf-details">
-                        <div class="current-pdf-title" id="pdf-title">${data.title}</div>
-                        <div class="current-pdf-info">
-                            Uploaded on ${new Date(data.uploaded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </div>
-                    </div>
-                </div>
-                <div class="pdf-container" id="pdf-container">
-                    <div class="loader"></div>
-                </div>
-                `;
-                
-                // Remove any 'no-pdf-selected' div if it exists
-                const noPdfSelected = pdfViewer.querySelector('.no-pdf-selected');
-                if (noPdfSelected) {
-                    pdfViewer.removeChild(noPdfSelected);
-                }
-                
-                // Add the toolbar to the PDF viewer
-                pdfViewer.innerHTML = toolbarHTML;
-                
-                // Re-get the pdfContainer since we just recreated it
-                pdfContainer = document.getElementById('pdf-container');
-                
-                // Reattach event listeners
-                attachEventListeners();
-            } else {
-                // Element exists, just update the title
-                pdfTitleElement.textContent = data.title;
+            if (titleElement) {
+                titleElement.textContent = data.title;
             }
-
-            // Create container for all pages
-            pdfContainer.innerHTML = '<div class="pdf-pages-container"></div>';
-            const pagesContainer = document.querySelector('.pdf-pages-container');
-
-            // Rest of your code remains the same...
-            // Load the PDF content
+            
+            if (infoElement) {
+                infoElement.textContent = `Uploaded on ${new Date(data.uploaded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+            }
+            
+            // Get the direct PDF URL
             const pdfUrl = `/confident/pdf/${pdfId}/content/`;
-            console.log(`Loading PDF from: ${pdfUrl}`);
-
-            const loadingTask = pdfjsLib.getDocument(pdfUrl);
-
-            loadingTask.promise.then(function (pdf) {
-                console.log(`PDF loaded successfully with ${pdf.numPages} pages`);
-                pdfDoc = pdf;
-                
-                const totalPagesElement = document.getElementById('total-pages');
-                if (totalPagesElement) {
-                    totalPagesElement.textContent = pdf.numPages;
-                }
-
-                // Create canvas elements for each page
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const pageContainer = document.createElement('div');
-                    pageContainer.className = 'pdf-page-container';
-                    pageContainer.id = `page-container-${i}`;
-                    pageContainer.setAttribute('data-page-num', i);
-
-                    const canvas = document.createElement('canvas');
-                    canvas.id = `pdf-canvas-${i}`;
-                    pageContainer.appendChild(canvas);
-
-                    pagesContainer.appendChild(pageContainer);
-                }
-
-                // Set up Intersection Observer to render pages when they come into view
-                setupIntersectionObserver();
-
-                // Restore scroll position if it exists
-                const savedScrollPos = sessionStorage.getItem('pdfScrollPosition');
-                if (savedScrollPos && !isInitialLoad) {
-                    setTimeout(() => {
-                        window.scrollTo(0, parseInt(savedScrollPos));
-                    }, 100);
-                }
-
-                isInitialLoad = false;
-
-                // Update page number input when scrolling
-                updateCurrentPageOnScroll();
-
-            }).catch(function (error) {
-                console.error('Error loading PDF:', error);
-                pdfContainer.innerHTML = `
+            
+            // Create embedded iframe for the PDF viewer
+            pdfContainer.innerHTML = `
+                <iframe 
+                    src="${pdfUrl}" 
+                    class="embedded-pdf" 
+                    frameborder="0" 
+                    width="100%" 
+                    height="100%"
+                    allowfullscreen
+                ></iframe>
+            `;
+            
+            isInitialLoad = false;
+        })
+        .catch(error => {
+            console.error('Error fetching PDF details:', error);
+            pdfContainer.innerHTML = `
                 <div class="no-pdf-selected">
                     <div class="no-pdf-icon" style="color: #e74c3c;">
                         <i class="fas fa-exclamation-circle"></i>
@@ -833,294 +768,130 @@ function loadPdf(pdfId) {
                     <p class="no-pdf-hint">${error.message}</p>
                 </div>
             `;
-            });
-        })
-        .catch(error => {
-            console.error('Error fetching PDF details:', error);
-            pdfContainer.innerHTML = `
-            <div class="no-pdf-selected">
-                <div class="no-pdf-icon" style="color: #e74c3c;">
-                    <i class="fas fa-exclamation-circle"></i>
-                </div>
-                <p class="no-pdf-message">Error loading PDF details</p>
-                <p class="no-pdf-hint">${error.message}</p>
-            </div>
-        `;
         });
 }
 
-// Function to attach event listeners for newly created elements
-function attachEventListeners() {
-    if (document.getElementById('current-page')) {
-        document.getElementById('current-page').addEventListener('change', function () {
-            const newPage = parseInt(this.value);
-            if (newPage > 0 && newPage <= pdfDoc.numPages) {
-                jumpToPage(newPage);
-            } else {
-                this.value = pageNum;
-            }
-        });
+// Add CSS to make the PDF viewer work correctly
+const embedStyles = document.createElement('style');
+embedStyles.textContent = `
+    .embedded-pdf {
+        width: 100%;
+        height: 100%;
+        min-height: 80vh;
+        border: none;
     }
 
-    if (document.getElementById('prev-page')) {
-        document.getElementById('prev-page').addEventListener('click', function () {
-            if (pageNum <= 1) return;
-            jumpToPage(pageNum - 1);
-        });
+    .pdf-container {
+        flex-grow: 1;
+        background-color: #525659;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: calc(100% - 60px); /* Adjust based on your toolbar height */
+        overflow: hidden; /* Prevent scrolling in the container */
     }
-
-    if (document.getElementById('next-page')) {
-        document.getElementById('next-page').addEventListener('click', function () {
-            if (pageNum >= pdfDoc.numPages) return;
-            jumpToPage(pageNum + 1);
-        });
+    
+    .pdf-viewer {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
     }
-
-    if (document.getElementById('zoom-in')) {
-        document.getElementById('zoom-in').addEventListener('click', zoomIn);
+    
+    .pdf-toolbar {
+        padding: 15px 20px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e0e0e0;
     }
+`;
+document.head.appendChild(embedStyles);
 
-    if (document.getElementById('zoom-out')) {
-        document.getElementById('zoom-out').addEventListener('click', zoomOut);
+// Initialize when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    // Check if there's a PDF ID in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const pdfId = urlParams.get('pdf_id');
+
+    if (pdfId) {
+        loadPdf(parseInt(pdfId));
+    } else {
+        // Try to restore from session storage
+        const savedPdfId = sessionStorage.getItem('currentPdfId');
+        if (savedPdfId) {
+            loadPdf(parseInt(savedPdfId));
+        }
     }
-}
+    
+    // Attach click handlers to each PDF item in the list
+    setupPdfListHandlers();
+    setupModalHandlers();
+});
 
-        // Set up Intersection Observer to render pages when they come into view
-        function setupIntersectionObserver() {
-            const options = {
-                root: null,
-                rootMargin: '100px',
-                threshold: 0.1
-            };
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const pageNum = parseInt(entry.target.getAttribute('data-page-num'));
-                        if (!pagesRendered.has(pageNum)) {
-                            renderPage(pageNum);
-                        }
-                    }
-                });
-            }, options);
-
-            // Observe all page containers
-            document.querySelectorAll('.pdf-page-container').forEach(pageContainer => {
-                observer.observe(pageContainer);
-            });
-        }
-
-        // Render a specific page
-        function renderPage(num) {
-            if (pagesRendered.has(num)) return;
-
-            pdfDoc.getPage(num).then(function (page) {
-                const canvas = document.getElementById(`pdf-canvas-${num}`);
-                const ctx = canvas.getContext('2d');
-
-                const viewport = page.getViewport({ scale: scale });
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-
-                // Render PDF page into canvas context
-                const renderContext = {
-                    canvasContext: ctx,
-                    viewport: viewport
-                };
-
-                const renderTask = page.render(renderContext);
-
-                // Mark this page as rendered
-                renderTask.promise.then(function () {
-                    pagesRendered.add(num);
-                });
-            });
-        }
-
-        // Jump to specific page
-        function jumpToPage(num) {
-            if (num < 1 || num > pdfDoc.numPages) return;
-
-            const pageElement = document.getElementById(`page-container-${num}`);
-            if (pageElement) {
-                pageElement.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-
-        // Update current page based on scroll position
-        function updateCurrentPageOnScroll() {
-            window.addEventListener('scroll', () => {
-                // Save scroll position
-                sessionStorage.setItem('pdfScrollPosition', window.scrollY);
-
-                // Find which page is most visible
-                const pageContainers = document.querySelectorAll('.pdf-page-container');
-                let mostVisiblePage = 1;
-                let maxVisibleHeight = 0;
-
-                pageContainers.forEach(container => {
-                    const rect = container.getBoundingClientRect();
-                    const visibleHeight = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
-
-                    if (visibleHeight > maxVisibleHeight) {
-                        maxVisibleHeight = visibleHeight;
-                        mostVisiblePage = parseInt(container.getAttribute('data-page-num'));
-                    }
-                });
-
-                // Update page number input
-                if (document.getElementById('current-page')) {
-                    document.getElementById('current-page').value = mostVisiblePage;
-                    pageNum = mostVisiblePage;
-                }
-            });
-        }
-
-        // Handle zoom functions
-        function zoomIn() {
-            scale += 0.25;
-            resetRendering();
-        }
-
-        function zoomOut() {
-            if (scale <= 0.5) return;
-            scale -= 0.25;
-            resetRendering();
-        }
-
-        // Reset rendering on zoom change
-        function resetRendering() {
-            pagesRendered.clear();
-            const currentScroll = window.scrollY;
-
-            // Get all pages that are currently in viewport or near it
-            const pageContainers = document.querySelectorAll('.pdf-page-container');
-            pageContainers.forEach(container => {
-                const rect = container.getBoundingClientRect();
-                if (rect.bottom >= -200 && rect.top <= window.innerHeight + 200) {
-                    const pageNum = parseInt(container.getAttribute('data-page-num'));
-                    renderPage(pageNum);
-                }
-            });
-
-            // Restore scroll position
-            window.scrollTo(0, currentScroll);
-        }
-
-        // Handle back button and history navigation
-        window.addEventListener('popstate', (event) => {
-            if (event.state && event.state.pdfId) {
-                loadPdf(event.state.pdfId);
-            } else {
-                // Try to restore from session storage
-                const savedPdfId = sessionStorage.getItem('currentPdfId');
-                if (savedPdfId) {
-                    loadPdf(parseInt(savedPdfId));
-                }
-            }
-        });
-
-        // Initial load or restore from session storage
-        window.addEventListener('DOMContentLoaded', () => {
-            // Check if there's a PDF ID in the URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const pdfId = urlParams.get('pdf_id');
-
+// Set up click handlers for the PDF list
+function setupPdfListHandlers() {
+    document.querySelectorAll('.pdf-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const pdfId = this.getAttribute('data-pdf-id');
             if (pdfId) {
                 loadPdf(parseInt(pdfId));
-            } else {
-                // Try to restore from session storage
-                const savedPdfId = sessionStorage.getItem('currentPdfId');
-                if (savedPdfId) {
-                    loadPdf(parseInt(savedPdfId));
-                }
             }
         });
+    });
+}
 
-        // Update event listeners for page navigation
-        if (document.getElementById('current-page')) {
-            document.getElementById('current-page').addEventListener('change', function () {
-                const newPage = parseInt(this.value);
-                if (newPage > 0 && newPage <= pdfDoc.numPages) {
-                    jumpToPage(newPage);
-                } else {
-                    this.value = pageNum;
-                }
-            });
-        }
+// Set up handlers for the upload modal
+function setupModalHandlers() {
+    // File input change handler
+    const fileInput = document.getElementById('pdf_file');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            const fileName = this.files[0] ? this.files[0].name : 'No file selected';
+            const fileNameElement = document.getElementById('file-name');
+            if (fileNameElement) {
+                fileNameElement.textContent = fileName;
+            }
 
-        if (document.getElementById('prev-page')) {
-            document.getElementById('prev-page').addEventListener('click', function () {
-                if (pageNum <= 1) return;
-                jumpToPage(pageNum - 1);
-            });
-        }
-
-        if (document.getElementById('next-page')) {
-            document.getElementById('next-page').addEventListener('click', function () {
-                if (pageNum >= pdfDoc.numPages) return;
-                jumpToPage(pageNum + 1);
-            });
-        }
-
-        if (document.getElementById('zoom-in')) {
-            document.getElementById('zoom-in').addEventListener('click', zoomIn);
-        }
-
-        if (document.getElementById('zoom-out')) {
-            document.getElementById('zoom-out').addEventListener('click', zoomOut);
-        }
-
-        // Upload modal functions
-        function openUploadModal() {
-            document.getElementById('upload-modal').classList.add('active');
-        }
-
-        function closeUploadModal() {
-            document.getElementById('upload-modal').classList.remove('active');
-        }
-
-        // File input change handler
-        if (document.getElementById('pdf_file')) {
-            document.getElementById('pdf_file').addEventListener('change', function () {
-                const fileName = this.files[0] ? this.files[0].name : 'No file selected';
-                document.getElementById('file-name').textContent = fileName;
-
-                // Auto-fill title with filename (without extension)
-                if (this.files[0] && !document.getElementById('title').value) {
-                    const titleWithoutExt = fileName.replace(/\.[^/.]+$/, "");
-                    document.getElementById('title').value = titleWithoutExt;
-                }
-            });
-        }
-
-        // Close modal when clicking outside
-        window.addEventListener('click', function (event) {
-            const modal = document.getElementById('upload-modal');
-            if (event.target === modal) {
-                closeUploadModal();
+            // Auto-fill title with filename (without extension)
+            const titleInput = document.getElementById('title');
+            if (this.files[0] && titleInput && !titleInput.value) {
+                const titleWithoutExt = fileName.replace(/\.[^/.]+$/, "");
+                titleInput.value = titleWithoutExt;
             }
         });
+    }
+    
+    // Modal functions
+    window.openUploadModal = function() {
+        const modal = document.getElementById('upload-modal');
+        if (modal) modal.classList.add('active');
+    };
+    
+    window.closeUploadModal = function() {
+        const modal = document.getElementById('upload-modal');
+        if (modal) modal.classList.remove('active');
+    };
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('upload-modal');
+        if (event.target === modal) {
+            closeUploadModal();
+        }
+    });
+}
 
-        // Handle keyboard shortcuts
-        document.addEventListener('keydown', function (event) {
-            // Only handle shortcuts when not typing in an input
-            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-                return;
-            }
-
-            if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
-                if (pageNum <= 1) return;
-                jumpToPage(pageNum - 1);
-            } else if (event.key === 'ArrowRight' || event.key === 'PageDown') {
-                if (pageNum >= pdfDoc.numPages) return;
-                jumpToPage(pageNum + 1);
-            } else if (event.key === '+') {
-                zoomIn();
-            } else if (event.key === '-') {
-                zoomOut();
-            }
-        });
+// Handle back button and history navigation
+window.addEventListener('popstate', (event) => {
+    if (event.state && event.state.pdfId) {
+        loadPdf(parseInt(event.state.pdfId));
+    } else {
+        // Try to restore from session storage
+        const savedPdfId = sessionStorage.getItem('currentPdfId');
+        if (savedPdfId) {
+            loadPdf(parseInt(savedPdfId));
+        }
+    }
+});
 
         // Additional CSS to add to your stylesheet
         /*
@@ -1137,8 +908,7 @@ function attachEventListeners() {
             margin-bottom: 20px;
         }
         */
-
-    </script>
+   </script>
 </body>
 
 </html>
