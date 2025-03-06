@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const populationField = document.getElementById('population_field');
     const floatingField = document.getElementById('floating_field');
     const enuDropdown = document.getElementById('enu_dropdown');
+    const methodsDropdown = document.getElementById('methods_dropdown');
     const facilityDropdown = document.getElementById('facility_dropdown');
     const calculateButton = document.getElementById('calculate_button');
     const resultContainer = document.getElementById('result_container');
@@ -19,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const populationContainer = document.getElementById('population_container');
     const floatingContainer = document.getElementById('floating_container');
     const enuContainer = document.getElementById('enu_container');
+    const methodContainer = document.getElementById('method_container');
     const facilityContainer = document.getElementById('facility_container');
     const villageContainer = document.getElementById('village-container');
     const selectedVillagesContainer = document.getElementById('selected-villages');
@@ -33,6 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
             yearDropdown.appendChild(option);
         }
     }
+    // Global variable to track if the user manually changed the intermediate population value
+    let intermediatePopulationOverridden = false;
+    document.getElementById('population_load_intermediate').addEventListener('input', () => {
+        intermediatePopulationOverridden = true;
+    });
+
 
     const totalDemandCheckboxes = {
         domestic: document.getElementById('checkbox_domestic'),
@@ -44,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalDemandFields = {
         domestic: [
             document.getElementById('year_container'),
+            document.getElementById('method_container'),
             document.getElementById('population_container')
         ],
         floating: [
@@ -270,6 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset all sections to hidden by default
         yearContainer.classList.add('hidden');
         populationContainer.classList.add('hidden');
+        methodContainer.classList.add('hidden');
         floatingContainer.classList.add('hidden');
         enuContainer.classList.add('hidden');
         facilityContainer.classList.add('hidden');
@@ -283,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show/hide fields based on the selected demand type
         if (demandType === 'domestic') {
             yearContainer.classList.remove('hidden');
+            methodContainer.classList.remove('hidden');
             populationContainer.classList.remove('hidden');
             villageContainer.classList.remove('hidden');
             selectedVillagesContainer.classList.remove('hidden'); // Show selected village text
@@ -457,8 +468,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     calculateButton.addEventListener('click', async (event) => {
         event.preventDefault();
-        resultContainer.innerHTML = '<h5 class="text-primary">Calculating...</h5>';
-        await new Promise(resolve => setTimeout(resolve, 700));
+        resultContainer.textContent = '';
+        
         const selectedVillages = Array.from(
             document.querySelectorAll('#village-container input[type="checkbox"]:checked')
         ).map(checkbox => checkbox.value);
@@ -478,20 +489,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            try {
-                const response = await fetch(`waterdemand/get_combined_population/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}&year=${year}&villages[]=${selectedVillages.join('&villages[]=')}`);
-                const data = await response.json();
-    
-                if (data.combined_population) {
-                    const population = data.combined_population;
-                    const demand = population >= 1000000 ? population * 150/1000000 : population * 135/1000000;
-                    resultContainer.textContent = `Total Domestic Water Demand: ${demand.toFixed(2)} MLD`;
-                } else if (data.error) {
-                    alert(data.error);
-                }
-            } catch (error) {
-                console.error('Error fetching population data:', error);
+            const population = parseFloat(populationField.value);
+            if (!population || isNaN(population)) {
+                alert('Population data is invalid. Please check the input.');
+                return;
             }
+            
+            // Calculate demand based on population size
+            const demand = population >= 1000000 
+                ? population * 150 / 1000000 
+                : population * 135 / 1000000;
+            resultContainer.textContent = `Total Domestic Water Demand: ${demand.toFixed(2)} MLD`;
+            
         } else if (demandTypeField.value === 'floating') {
             const floatingPopulation = parseFloat(floatingField.value);
             const facilityType = document.getElementById('facility_dropdown').value;
@@ -569,63 +578,75 @@ document.addEventListener('DOMContentLoaded', () => {
             const subdistrictCode = subdistrictDropdown.value;
             const populationLoadOperational = parseInt(document.getElementById('population_load_operational').value);
             const operationalZone = document.getElementById('operational_zone').value;
-
-            
+        
             if (selectedVillages.length === 0) {
                 alert('Please select at least one village.');
                 return;
             }
-
+        
             if (isNaN(intermediateStage) || intermediateStage < 1 || intermediateStage > 50) {
                 alert('Please enter a valid intermediate stage (1-50).');
                 return;
             }
-
+        
             if (!stateCode || !districtCode || !subdistrictCode) {
                 alert('Please select valid State, District, and Subdistrict.');
                 return;
             }
-
-            // Construct the URL
-            const villagesQuery = selectedVillages.map(village => `villages[]=${encodeURIComponent(village)}`).join('&');
-            const url = `waterdemand/get_combined_population/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}&intermediate_stage=${intermediateStage}&${villagesQuery}`;
-            
-            console.log('Fetching URL for Firefighting:', url); // Debugging log
-
-            // Fetch combined population for selected villages
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-
-                console.log('Fetched Firefighting Data:', data); // Debugging log
-
-                if (data.error) {
-                    alert(data.error);
+        
+            let population; // This will hold the intermediate stage population value
+        
+            // If the user has not manually overridden the field, fetch the population from the server
+            if (!intermediatePopulationOverridden) {
+                const villagesQuery = selectedVillages
+                    .map(village => `villages[]=${encodeURIComponent(village)}`)
+                    .join('&');
+                const url = `waterdemand/get_combined_population/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}&intermediate_stage=${intermediateStage}&${villagesQuery}`;
+                console.log('Fetching URL for Firefighting:', url); // Debug log
+        
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+        
+                    console.log('Fetched Firefighting Data:', data); // Debug log
+        
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+        
+                    if (data.intermediate_stage_population) {
+                        population = data.intermediate_stage_population;
+                        // Populate the field with the fetched population so the user can see and override it if needed
+                        const populationField = document.getElementById('population_load_intermediate');
+                        if (populationField) {
+                            populationField.value = Math.floor(population).toString();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching firefighting data:', error);
+                    alert('An error occurred while fetching firefighting data. Please try again.');
                     return;
                 }
-
-                if (data.intermediate_stage_population) {
-                    const population = data.intermediate_stage_population;
-
-                    // Populate the `population_load_intermediate` field
-                    const populationField = document.getElementById('population_load_intermediate');
-                    if (populationField) {
-                        populationField.value = Math.floor(population).toString();
-                    }
-
-                    // Calculate firefighting water demand
-                    const waterRequirement = Math.sqrt(population / 1000000); // Adjust calculation logic as needed
-                    const operationalZoneWaterRequirement =(populationLoadOperational * waterRequirement) / population;
-                    resultContainer.textContent = `
-    
-                        - Intermediate Stage Water Requirement: ${waterRequirement.toFixed(2)} MLD
-                        - Operational Zone (${operationalZone}) Water Requirement: ${operationalZoneWaterRequirement.toFixed(2)} MLD
-                    `;
-                }
-            } catch (error) {
-                console.error('Error fetching firefighting data:', error);
-                alert('An error occurred while fetching firefighting data. Please try again.');
+            } else {
+                // Use the manually entered population value from the field
+                const populationField = document.getElementById('population_load_intermediate');
+                population = parseFloat(populationField.value);
             }
+        
+            if (!population || isNaN(population)) {
+                alert('Intermediate stage population data is invalid. Please check the input.');
+                return;
+            }
+        
+            // Calculate firefighting water demand
+            const waterRequirement = Math.sqrt(population / 1000000); // Adjust calculation logic as needed
+            const operationalZoneWaterRequirement = (populationLoadOperational * waterRequirement) / population;
+            resultContainer.textContent = `
+        - Intermediate Stage Water Requirement: ${waterRequirement.toFixed(2)} MLD
+        - Operational Zone (${operationalZone}) Water Requirement: ${operationalZoneWaterRequirement.toFixed(2)} MLD
+            `;
+        
         } else if (demandTypeField.value === 'total') {
             console.log('Calculating Total Demand...');
 
