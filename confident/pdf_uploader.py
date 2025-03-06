@@ -23,9 +23,8 @@ engine = create_engine(f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT
 # Path to "Draft Documents_DSS" folder
 pdf_dir = os.path.join(base_dir, 'Draft Documents_DSS')
 
-# Path to the media/pdfs directory
-project_dir = os.path.dirname(os.path.dirname(base_dir))
-media_dir = os.path.join(project_dir, 'media', 'pdfs')
+# Path to the media/pdfs directory inside the app
+media_dir = os.path.join(base_dir, 'media', 'pdfs')
 
 def ensure_media_directory():
     """Make sure the media/pdfs directory exists"""
