@@ -27,31 +27,65 @@ document.addEventListener('DOMContentLoaded', () => {
     const startYearInput = document.getElementById('start_year_input');
     const endYearInput = document.getElementById('end_year_input');
 
-    const unmeteredContainer = document.getElementById('unmetered_container');
-    const unmeteredField = document.getElementById('unmetered_field');
-    const pollutionLoadBtn = document.getElementById('pollution_load_btn');
-    const pollutionLoadContainer = document.getElementById('pollution_load_container');
-    const downloadCsvBtn = document.getElementById('download_csv_btn');
-
-    downloadCsvBtn.style.display = "none";
-    pollutionLoadBtn.style.display = "none";
-    
-
-    // Global variable to store sewage generation data for later use
-    let sewageData = [];
-
-    // Initially hide elements that are not needed
-    demandTypeField.parentElement.classList.add('hidden');
-    singleYearRadio.parentElement.classList.add('hidden');
-    rangeYearRadio.parentElement.classList.add('hidden');
-    singleYearDropdown.parentElement.classList.add('hidden');
-    startYearInput.parentElement.classList.add('hidden');
-    endYearInput.parentElement.classList.add('hidden');
-    unmeteredContainer.classList.add('hidden');
-    //populationContainer.classList.add('hidden');
-
 
     
+    // When the method changes, show/hide appropriate sections
+    methodsDropdown.addEventListener('change', () => {
+        const selectedMethod = methodsDropdown.value;
+        console.log('Selected Method:', selectedMethod);
+        
+        // Reset all fields and containers
+        demandTypeField.parentElement.classList.add('hidden');
+        supplyContainer.classList.add('hidden');
+        demandContainer.classList.add('hidden');
+        
+        // // Reset dropdowns
+        // stateDropdown.selectedIndex = 0;
+        // districtDropdown.innerHTML = '<option value="">Select District</option>';
+        // subdistrictDropdown.innerHTML = '<option value="">Select Subdistrict</option>';
+        
+        // // Reset village-related containers and checkboxes
+        // villageContainer.innerHTML = ''; // Clear village checkboxes
+        // selectedVillagesContainer.innerHTML = ''; // Clear selected villages
+        // totalPopulationContainer.innerHTML = 'Total population: 0';
+        
+        // Reset population and demand fields
+        document.getElementById('supply_field').value = '';
+        document.getElementById('domestic_field').value = '';
+        resultContainer.textContent = '';
+        
+        // Reset year inputs
+        singleYearDropdown.selectedIndex = 0;
+        startYearInput.value = '';
+        endYearInput.value = '';
+        singleYearRadio.checked = false;
+        rangeYearRadio.checked = false;
+        
+        // Hide year-related elements
+        singleYearRadio.parentElement.classList.add('hidden');
+        rangeYearRadio.parentElement.classList.add('hidden');
+        singleYearDropdown.parentElement.classList.add('hidden');
+        startYearInput.parentElement.classList.add('hidden');
+        endYearInput.parentElement.classList.add('hidden');
+        
+        // // Hide village-related containers
+        // villageContainer.classList.add('hidden');
+        // selectedVillagesContainer.classList.add('hidden');
+        
+        // For sector-based (domestic sewage estimation) show the demand type selection
+        if (selectedMethod === 'sector_based') {
+            demandTypeField.parentElement.classList.remove('hidden');
+            // When sector-based is selected, we want to show village container
+            villageContainer.classList.remove('hidden');
+            selectedVillagesContainer.classList.remove('hidden');
+        } else if (selectedMethod === 'water_supply') {
+            // For water supply, hide demand type and show the water supply input
+            demandTypeField.parentElement.classList.add('hidden');
+            supplyContainer.classList.remove('hidden');
+            
+        }
+    });
+
     // Populate single-year dropdown (from 2025 to 2060)
     for (let year = 2025; year <= 2060; year++) {
         const option = document.createElement('option');
@@ -89,15 +123,13 @@ document.addEventListener('DOMContentLoaded', () => {
         startYearInput.parentElement.classList.add('hidden');
         endYearInput.parentElement.classList.add('hidden');
         demandContainer.classList.add('hidden');
-        unmeteredContainer.classList.add('hidden');
 
         // Always show village selection and subdistrict container
         villageContainer.classList.remove('hidden');
         selectedVillagesContainer.classList.remove('hidden');
         subdistrictDropdown.parentElement.classList.remove('hidden');
-
         if (demandType === 'modeled') {
-            // For modeled demand, allow selection between Single Year or Year Range
+            // For modeled demand, show radio buttons
             singleYearRadio.parentElement.classList.remove('hidden');
             rangeYearRadio.parentElement.classList.remove('hidden');
             
@@ -135,21 +167,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 startYearInput.parentElement.classList.remove('blurred');
                 endYearInput.parentElement.classList.remove('blurred');
             }
-            unmeteredContainer.classList.remove('hidden');
         } else if (demandType === 'manual') {
             // For manual demand, show the domestic water demand input
             demandContainer.classList.remove('hidden');
-            
-            resultContainer.textContent = '';
-            pollutionLoadContainer.textContent = '';
-            downloadCsvBtn.style.display = "none";
-            pollutionLoadBtn.style.display = "none";
         } else {
             // If no valid option is selected, clear the result container
             resultContainer.textContent = '';
         }
     });
 
+    // Toggle year selection mode based on radio buttons
     // Toggle year selection mode based on radio buttons
     singleYearRadio.addEventListener('change', () => {
         // Instead of hiding range inputs, just disable them and add a blur effect
@@ -335,12 +362,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const subdistrictCode = subdistrictDropdown.value;
         const demandType = demandTypeField.value;
 
-        // For modeled demand, also retrieve the unmetered water supply value
-        let unmetered = 0;
-        if (demandType === 'modeled') {
-            unmetered = parseFloat(unmeteredField.value) || 0;
-        }
-
         if (demandType === 'modeled') {
             // Modeled demand
             if (singleYearRadio.checked) {
@@ -356,10 +377,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const data = await response.json();
                     if (data.combined_population) {
                         const population = data.combined_population;
-                        const baseCoefficient = population >= 1000000 ? 150 : 135;
-                        const totalCoefficient = baseCoefficient + unmetered;
-                        const demandValue = population * totalCoefficient / 1000000;
-                        const sewage = demandValue * 0.80;
+                        const demandValue = population >= 1000000 ? population * 150 / 1000000 : population * 135 / 1000000;
+                        const sewage = demandValue * 0.84;
                         resultContainer.textContent = `Total Generated Sewage Water is: ${sewage.toFixed(2)} MLD`;
                     } else if (data.error) {
                         alert(data.error);
@@ -397,10 +416,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         const data = await response.json();
                         if (data.combined_population) {
                             const population = data.combined_population;
-                            const baseCoefficient = population >= 1000000 ? 150 : 135;
-                            const totalCoefficient = baseCoefficient + unmetered;
-                            const demandValue = population * totalCoefficient / 1000000;
-                            const sewage = demandValue * 0.80;
+                            const demandValue = population >= 1000000 ? population * 150 / 1000000 : population * 135 / 1000000;
+                            const sewage = demandValue * 0.84;
                             tableHTML += `
                                 <tr>
                                     <td>${year}</td>
@@ -423,8 +440,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('Error fetching sewage estimation:', error);
                 }
             }
-            pollutionLoadBtn.style.display = "block";
-            downloadCsvBtn.style.display = "block";
         } else if (demandType === 'manual') {
             // Manual demand entry
             const waterdemand = parseFloat(domesticField.value) || 0;
@@ -448,143 +463,4 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please select a valid demand type.');
         }
     });
-    pollutionLoadBtn.addEventListener('click', (event) => {
-        event.preventDefault();
-        // Instead of using window.lastPopulation, we fetch population using the selected year.
-        let selectedYear;
-        if (singleYearRadio.checked) {
-            selectedYear = singleYearDropdown.value;
-        } else if (rangeYearRadio.checked) {
-            // For range mode, use the start year
-            selectedYear = startYearInput.value;
-        }
-        if (!selectedYear) {
-            alert("Please select a valid year for fetching population.");
-            return;
-        }
-        const stateCode = stateDropdown.value;
-        const districtCode = districtDropdown.value;
-        const subdistrictCode = subdistrictDropdown.value;
-        const selectedVillages = Array.from(document.querySelectorAll('#village-container input[type="checkbox"]:checked'))
-            .map(checkbox => checkbox.value);
-        
-        const url = `waterdemand/get_combined_population/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}&year=${selectedYear}&villages[]=${selectedVillages.join('&villages[]=')}`;
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                if (data.combined_population) {
-                    const population = data.combined_population;
-                    const baseCoefficient = population >= 1000000 ? 150 : 135;
-                    const unmetered = parseFloat(unmeteredField.value) || 0;
-                    const totalCoefficient = (baseCoefficient + unmetered) * 0.80;
-                    
-                    // Build the pollution load table with three columns: Item, Editable Per Capita, Concentration
-                    let table = document.createElement('table');
-                    table.className = "table table-striped";
-                    let thead = document.createElement('thead');
-                    let trHead = document.createElement('tr');
-                    
-                    let thItem = document.createElement('th');
-                    thItem.textContent = "Item";
-                    let thPerCapita = document.createElement('th');
-                    thPerCapita.textContent = "Per Capita Contribution (g/c/d)";
-                    let thConcentration = document.createElement('th');
-                    thConcentration.textContent = "Concentration (mg/l)";
-                    
-                    trHead.appendChild(thItem);
-                    trHead.appendChild(thPerCapita);
-                    trHead.appendChild(thConcentration);
-                    thead.appendChild(trHead);
-                    table.appendChild(thead);
-                    
-                    let tbody = document.createElement('tbody');
-                    
-                    const pollutionItems = [
-                        { name: "BOD", perCapita: 27.0 },
-                        { name: "COD", perCapita: 45.9 },
-                        { name: "TSS", perCapita: 40.5 },
-                        { name: "VSS", perCapita: 28.4 },
-                        { name: "Total Nitrogen", perCapita: 5.4 },
-                        { name: "Organic Nitrogen", perCapita: 1.4 },
-                        { name: "Ammonia Nitrogen", perCapita: 3.5 },
-                        { name: "Nitrate Nitrogen", perCapita: 0.5 },
-                        { name: "Total Phosphorus", perCapita: 0.8 },
-                        { name: "Ortho Phosphorous", perCapita: 0.5 }
-                    ];
-                    
-                    pollutionItems.forEach((item, index) => {
-                        let tr = document.createElement('tr');
-                        
-                        let tdItem = document.createElement('td');
-                        tdItem.textContent = item.name;
-                        
-                        let tdPerCapita = document.createElement('td');
-                        let inputPerCapita = document.createElement('input');
-                        inputPerCapita.type = "number";
-                        inputPerCapita.className = "form-control";
-                        // Default value from pollutionItems array
-                        inputPerCapita.value = item.perCapita;
-                        inputPerCapita.id = "percapita_input_" + index;
-                        tdPerCapita.appendChild(inputPerCapita);
-                        
-                        let tdConcentration = document.createElement('td');
-                        tdConcentration.id = "concentration_" + index;
-                        // Initial concentration calculation using default per capita
-                        let concentration = (item.perCapita / totalCoefficient) * 1000;
-                        tdConcentration.textContent = concentration.toFixed(1);
-                        
-                        tr.appendChild(tdItem);
-                        tr.appendChild(tdPerCapita);
-                        tr.appendChild(tdConcentration);
-                        tbody.appendChild(tr);
-                        
-                        // Attach an event listener to update concentration when per capita value changes
-                        inputPerCapita.addEventListener('input', () => {
-                            let editedPerCapita = parseFloat(inputPerCapita.value) || 0;
-                            let newConcentration = (editedPerCapita / totalCoefficient) * 1000;
-                            tdConcentration.textContent = newConcentration.toFixed(1);
-                        });
-                    });
-                    
-                    table.appendChild(tbody);
-                    pollutionLoadContainer.innerHTML = "";
-                    pollutionLoadContainer.appendChild(table);
-                } else {
-                    alert("Population data not available.");
-                }
-            })
-            .catch(error => console.error("Error fetching population data:", error));
-    });
-    // Download CSV button click event handler
-    downloadCsvBtn.addEventListener('click', (event) => {
-        event.preventDefault();
-        // Retrieve the pollution load table from the container
-        const table = pollutionLoadContainer.querySelector("table");
-        if (!table) {
-            alert("No pollution load data available to download.");
-            return;
-        }
-        let csvContent = "data:text/csv;charset=utf-8,";
-        // Get header row
-        const headers = Array.from(table.querySelectorAll("thead th")).map(th => th.textContent.trim());
-        csvContent += headers.join(",") + "\n";
-        // Iterate through each row in the tbody
-        const rows = table.querySelectorAll("tbody tr");
-        rows.forEach(row => {
-            const cols = Array.from(row.querySelectorAll("td")).map(td => {
-                // If the cell contains an input, get its value; otherwise, use textContent.
-                const input = td.querySelector("input");
-                return input ? input.value.trim() : td.textContent.trim();
-            });
-            csvContent += cols.join(",") + "\n";
-        });
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "pollution_load_data.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    });
-      
 });
