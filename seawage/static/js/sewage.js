@@ -27,6 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const startYearInput = document.getElementById('start_year_input');
     const endYearInput = document.getElementById('end_year_input');
 
+    const unmeteredContainer = document.getElementById('unmetered_container');
+    const unmeteredField = document.getElementById('unmetered_field');
+    const pollutionLoadButton = document.getElementById('pollution_load_button');
+    const pollutionResultContainer = document.getElementById('pollution_result_container');
+
+    // Global variable to store sewage generation data for later use
+    let sewageData = [];
+
     // Initially hide elements that are not needed
     demandTypeField.parentElement.classList.add('hidden');
     singleYearRadio.parentElement.classList.add('hidden');
@@ -34,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     singleYearDropdown.parentElement.classList.add('hidden');
     startYearInput.parentElement.classList.add('hidden');
     endYearInput.parentElement.classList.add('hidden');
+    unmeteredContainer.classList.add('hidden');
     //populationContainer.classList.add('hidden');
 
     // Populate single-year dropdown (from 2025 to 2060)
@@ -73,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         startYearInput.parentElement.classList.add('hidden');
         endYearInput.parentElement.classList.add('hidden');
         demandContainer.classList.add('hidden');
+        unmeteredContainer.classList.add('hidden');
 
         // Always show village selection and subdistrict container
         villageContainer.classList.remove('hidden');
@@ -83,14 +93,42 @@ document.addEventListener('DOMContentLoaded', () => {
             // For modeled demand, allow selection between Single Year or Year Range
             singleYearRadio.parentElement.classList.remove('hidden');
             rangeYearRadio.parentElement.classList.remove('hidden');
-            // Depending on the radio button selection, show the corresponding input
-            if (singleYearRadio.checked) {
-                singleYearDropdown.parentElement.classList.remove('hidden');
+            
+            // Show all year inputs
+            singleYearDropdown.parentElement.classList.remove('hidden');
+            startYearInput.parentElement.classList.remove('hidden');
+            endYearInput.parentElement.classList.remove('hidden');
+            
+            // Check if any radio is selected
+            if (!singleYearRadio.checked && !rangeYearRadio.checked) {
+                // If no radio selected, disable all inputs and blur them
+                singleYearDropdown.disabled = true;
+                startYearInput.disabled = true;
+                endYearInput.disabled = true;
+                
+                singleYearDropdown.parentElement.classList.add('blurred');
+                startYearInput.parentElement.classList.add('blurred');
+                endYearInput.parentElement.classList.add('blurred');
+            } else if (singleYearRadio.checked) {
+                // Enable single year, disable range
+                singleYearDropdown.disabled = false;
+                startYearInput.disabled = true;
+                endYearInput.disabled = true;
+                
+                singleYearDropdown.parentElement.classList.remove('blurred');
+                startYearInput.parentElement.classList.add('blurred');
+                endYearInput.parentElement.classList.add('blurred');
+            } else if (rangeYearRadio.checked) {
+                // Disable single year, enable range
+                singleYearDropdown.disabled = true;
+                startYearInput.disabled = false;
+                endYearInput.disabled = false;
+                
+                singleYearDropdown.parentElement.classList.add('blurred');
+                startYearInput.parentElement.classList.remove('blurred');
+                endYearInput.parentElement.classList.remove('blurred');
             }
-            if (rangeYearRadio.checked) {
-                startYearInput.parentElement.classList.remove('hidden');
-                endYearInput.parentElement.classList.remove('hidden');
-            }
+            unmeteredContainer.classList.remove('hidden');
         } else if (demandType === 'manual') {
             // For manual demand, show the domestic water demand input
             demandContainer.classList.remove('hidden');
@@ -101,25 +139,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Toggle year selection mode based on radio buttons
-    // Toggle year selection mode based on radio buttons
     singleYearRadio.addEventListener('change', () => {
-        // Show single year dropdown and disable/hide range inputs
+        // Instead of hiding range inputs, just disable them and add a blur effect
         singleYearDropdown.parentElement.classList.remove('hidden');
-        startYearInput.parentElement.classList.add('hidden');
-        endYearInput.parentElement.classList.add('hidden');
+        startYearInput.parentElement.classList.remove('hidden');
+        endYearInput.parentElement.classList.remove('hidden');
+        
+        // Enable single year input and disable range inputs
         singleYearDropdown.disabled = false;
         startYearInput.disabled = true;
         endYearInput.disabled = true;
+        
+        // Add blur effect to disabled inputs
+        singleYearDropdown.parentElement.classList.remove('blurred');
+        startYearInput.parentElement.classList.add('blurred');
+        endYearInput.parentElement.classList.add('blurred');
     });
+    
 
     rangeYearRadio.addEventListener('change', () => {
-        // Hide single year dropdown and enable range inputs
-        singleYearDropdown.parentElement.classList.add('hidden');
+        // Keep all inputs visible
+        singleYearDropdown.parentElement.classList.remove('hidden');
         startYearInput.parentElement.classList.remove('hidden');
         endYearInput.parentElement.classList.remove('hidden');
+        
+        // Disable single year dropdown and enable range inputs
         singleYearDropdown.disabled = true;
         startYearInput.disabled = false;
         endYearInput.disabled = false;
+        
+        // Add blur effect to disabled input
+        singleYearDropdown.parentElement.classList.add('blurred');
+        startYearInput.parentElement.classList.remove('blurred');
+        endYearInput.parentElement.classList.remove('blurred');
     });
 
 
@@ -271,6 +323,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const subdistrictCode = subdistrictDropdown.value;
         const demandType = demandTypeField.value;
 
+        // For modeled demand, also retrieve the unmetered water supply value
+        let unmetered = 0;
+        if (demandType === 'modeled') {
+            unmetered = parseFloat(unmeteredField.value) || 0;
+        }
+
         if (demandType === 'modeled') {
             // Modeled demand
             if (singleYearRadio.checked) {
@@ -286,8 +344,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const data = await response.json();
                     if (data.combined_population) {
                         const population = data.combined_population;
-                        const demandValue = population >= 1000000 ? population * 150 / 1000000 : population * 135 / 1000000;
-                        const sewage = demandValue * 0.84;
+                        const baseCoefficient = population >= 1000000 ? 150 : 135;
+                        const totalCoefficient = baseCoefficient + unmetered;
+                        const demandValue = population * totalCoefficient / 1000000;
+                        const sewage = demandValue * 0.80;
                         resultContainer.textContent = `Total Generated Sewage Water is: ${sewage.toFixed(2)} MLD`;
                     } else if (data.error) {
                         alert(data.error);
@@ -325,8 +385,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         const data = await response.json();
                         if (data.combined_population) {
                             const population = data.combined_population;
-                            const demandValue = population >= 1000000 ? population * 150 / 1000000 : population * 135 / 1000000;
-                            const sewage = demandValue * 0.84;
+                            const baseCoefficient = population >= 1000000 ? 150 : 135;
+                            const totalCoefficient = baseCoefficient + unmetered;
+                            const demandValue = population * totalCoefficient / 1000000;
+                            const sewage = demandValue * 0.80;
                             tableHTML += `
                                 <tr>
                                     <td>${year}</td>
