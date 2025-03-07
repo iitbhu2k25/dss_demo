@@ -92,15 +92,25 @@
             </select>
             </div>
             <div id="method_container">
-            <label for="method_dropdown" class="form-label">Method of Projection:</label>
-            <select id="method_dropdown" name="method_dropdown" class="form-select">
-                <option value="incremental-growth">Incremental Growth Method</option>
-                <option value="arithmetic-increase">Arithmetic Increase Method</option>
-                <option value="geometric-increase">Geometric Increase Method</option>
-                <option value="logistic-growth">Logistic Growth Method</option>
-                <option value="exponential-growth">Exponential Growth Method</option>
-            </select>
+                <label class="form-label">Method of Projection:</label>
+                <div id="method_dropdown">
+                    <input type="radio" id="incremental-growth" name="method_dropdown" value="incremental-growth" checked>
+                    <label for="incremental-growth">Incremental Growth Method</label><br>
+                    
+                    <input type="radio" id="arithmetic-increase" name="method_dropdown" value="arithmetic-increase">
+                    <label for="arithmetic-increase">Arithmetic Increase Method</label><br>
+                    
+                    <input type="radio" id="geometric-increase" name="method_dropdown" value="geometric-increase">
+                    <label for="geometric-increase">Geometric Increase Method</label><br>
+                    
+                    <input type="radio" id="logistic-growth" name="method_dropdown" value="logistic-growth">
+                    <label for="logistic-growth">Logistic Growth Method</label><br>
+                    
+                    <input type="radio" id="exponential-growth" name="method_dropdown" value="exponential-growth">
+                    <label for="exponential-growth">Exponential Growth Method</label>
+                </div>
             </div>
+
             <div id="population_container">
             <label for="population_field" class="form-label">
                 Population (Total Population In Case Of Multiple Region):

@@ -141,9 +141,41 @@
     appearance: none;
     width: 700px;
 }
-
+#method_container ,#population_container{ 
+  margin-top: 20px;
+}   
+@media (max-width: 480px) { /* Mobile */
+    #method_container, #population_container {
+      margin-top: 10px;
+    }
+  }
+  
+  @media (min-width: 481px) and (max-width: 768px) { /* Tablet */
+    #method_container, #population_container {
+      margin-top: 15px;
+    }
+  }
+  
+  @media (min-width: 769px) and (max-width: 1024px) { /* Laptop */
+    #method_container, #population_container {
+      margin-top: 20px;
+    }
+  }
+  
+  @media (min-width: 1025px) and (max-width: 1440px) { /* Mac and standard PC */
+    #method_container, #population_container {
+      margin-top: 25px;
+    }
+  }
+  
+  @media (min-width: 1441px) { /* Large screens */
+    #method_container, #population_container {
+      margin-top: 30px;
+    }
+  }
     
   </style>
+
 </head>
 
 <body>
