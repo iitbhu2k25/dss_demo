@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
             pollutionLoadContainer.textContent = ('');
             downloadCsvBtn.style.display = "none";
             pollutionLoadBtn.style.display = "none";
+            demandTypeField.value = "";
             // Hide village-related containers when in water supply mode
 
            
@@ -328,84 +329,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Calculate button click event handler
     calculateButton.addEventListener('click', async (event) => {
-        resultContainer.textContent = ''; // Clear previous result
         event.preventDefault();
-        
+        // Clear previous results and display a calculating message
+        resultContainer.textContent = '';
         resultContainer.innerHTML = '<h5 class="text-primary">Calculating...</h5>';
-        await new Promise(resolve => setTimeout(resolve, 700)); // Brief delay for UI update
-
+        await new Promise(resolve => setTimeout(resolve, 700));
+    
+        // Validate that at least one village is selected
         const selectedVillages = Array.from(
             document.querySelectorAll('#village-container input[type="checkbox"]:checked')
         ).map(checkbox => checkbox.value);
-
         if (selectedVillages.length === 0) {
             alert('Please select at least one village.');
             return;
         }
-
+    
+        // Get location values
         const stateCode = stateDropdown.value;
         const districtCode = districtDropdown.value;
         const subdistrictCode = subdistrictDropdown.value;
-        const demandType = demandTypeField.value;
-
-        // For modeled demand, also retrieve the unmetered water supply value
-        let unmetered = 0;
-        if (demandType === 'modeled') {
-            unmetered = parseFloat(unmeteredField.value) || 0;
+    
+        // Determine which method is selected
+        const method = methodsDropdown.value;
+        if (!method) {
+            alert('Please select a valid method.');
+            return;
         }
-
-        if (demandType === 'modeled') {
-            // Modeled demand
-            if (singleYearRadio.checked) {
+    
+        // If the method is Water Supply, perform its calculation
+        if (method === 'water_supply') {
+            const supplyDemand = parseFloat(document.getElementById('supply_field').value) || 0;
+            if (!supplyDemand) {
+                alert('Please enter water supply.');
+                return;
+            }
+            const sewageDemand = supplyDemand * 0.84;
+            resultContainer.textContent = `Total Generated Sewage Water is: ${sewageDemand.toFixed(2)} MLD`;
+            // Hide any pollution load or CSV download buttons if visible
+            pollutionLoadBtn.style.display = "none";
+            downloadCsvBtn.style.display = "none";
+            return;
+        }
+        // Else, if the method is Domestic Sewage Load Estimation
+        else if (method === 'sector_based') {
+            const demandType = demandTypeField.value;
+            if (!demandType) {
+                alert('Please select a valid domestic sewage demand type.');
+                return;
+            }
+    
+            // For modeled demand, retrieve unmetered water supply and calculate based on year selection
+            if (demandType === 'modeled') {
+                const unmetered = parseFloat(unmeteredField.value) || 0;
+                
                 // Single Year Mode
-                const selectedYear = singleYearDropdown.value;
-                if (!selectedYear) {
-                    alert('Please select a valid year.');
-                    return;
-                }
-                const url = `waterdemand/get_combined_population/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}&year=${selectedYear}&villages[]=${selectedVillages.join('&villages[]=')}`;
-                try {
-                    const response = await fetch(url);
-                    const data = await response.json();
-                    if (data.combined_population) {
-                        const population = data.combined_population;
-                        const baseCoefficient = population >= 1000000 ? 150 : 135;
-                        const totalCoefficient = baseCoefficient + unmetered;
-                        const demandValue = population * totalCoefficient / 1000000;
-                        const sewage = demandValue * 0.80;
-                        resultContainer.textContent = `Total Generated Sewage Water is: ${sewage.toFixed(2)} MLD`;
-                    } else if (data.error) {
-                        alert(data.error);
+                if (singleYearRadio.checked) {
+                    const selectedYear = singleYearDropdown.value;
+                    if (!selectedYear) {
+                        alert('Please select a valid year.');
+                        return;
                     }
-                } catch (error) {
-                    console.error('Error fetching population data:', error);
-                }
-            } else if (rangeYearRadio.checked) {
-                // Year Range Mode: iterate over 5-year intervals
-                const startYear = parseInt(startYearInput.value);
-                const endYear = parseInt(endYearInput.value);
-                if (!startYear || !endYear || startYear >= endYear || startYear < 2025 || endYear > 2060) {
-                    alert("Please enter a valid year range (2025-2060).");
-                    return;
-                }
-                let yearsToFetch = [];
-                for (let year = startYear; year <= endYear; year += 5) {
-                    yearsToFetch.push(year);
-                }
-                try {
-                    let tableHTML = `
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Year</th>
-                                    <th>Projected Population</th>
-                                    <th>Sewage Generation (MLD)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-                    for (const year of yearsToFetch) {
-                        const url = `waterdemand/get_combined_population/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}&year=${year}&villages[]=${selectedVillages.join('&villages[]=')}`;
+                    const url = `waterdemand/get_combined_population/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}&year=${selectedYear}&villages[]=${selectedVillages.join('&villages[]=')}`;
+                    try {
                         const response = await fetch(url);
                         const data = await response.json();
                         if (data.combined_population) {
@@ -414,55 +399,93 @@ document.addEventListener('DOMContentLoaded', () => {
                             const totalCoefficient = baseCoefficient + unmetered;
                             const demandValue = population * totalCoefficient / 1000000;
                             const sewage = demandValue * 0.80;
-                            tableHTML += `
-                                <tr>
-                                    <td>${year}</td>
-                                    <td>${Math.round(population)}</td>
-                                    <td>${sewage.toFixed(2)}</td>
-                                </tr>
-                            `;
+                            resultContainer.textContent = `Total Generated Sewage Water is: ${sewage.toFixed(2)} MLD`;
                         } else if (data.error) {
-                            tableHTML += `
-                                <tr>
-                                    <td>${year}</td>
-                                    <td colspan="2" class="text-danger">${data.error}</td>
-                                </tr>
-                            `;
+                            alert(data.error);
                         }
+                    } catch (error) {
+                        console.error('Error fetching population data:', error);
                     }
-                    tableHTML += '</tbody></table>';
-                    resultContainer.innerHTML = tableHTML;
-                } catch (error) {
-                    console.error('Error fetching sewage estimation:', error);
                 }
+                // Year Range Mode: iterate over 5-year intervals
+                else if (rangeYearRadio.checked) {
+                    const startYear = parseInt(startYearInput.value);
+                    const endYear = parseInt(endYearInput.value);
+                    if (!startYear || !endYear || startYear >= endYear || startYear < 2025 || endYear > 2060) {
+                        alert("Please enter a valid year range (2025-2060).");
+                        return;
+                    }
+                    let yearsToFetch = [];
+                    for (let year = startYear; year <= endYear; year += 5) {
+                        yearsToFetch.push(year);
+                    }
+                    try {
+                        let tableHTML = `
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Year</th>
+                                        <th>Projected Population</th>
+                                        <th>Sewage Generation (MLD)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        for (const year of yearsToFetch) {
+                            const url = `waterdemand/get_combined_population/?state_code=${stateCode}&district_code=${districtCode}&subdistrict_code=${subdistrictCode}&year=${year}&villages[]=${selectedVillages.join('&villages[]=')}`;
+                            const response = await fetch(url);
+                            const data = await response.json();
+                            if (data.combined_population) {
+                                const population = data.combined_population;
+                                const baseCoefficient = population >= 1000000 ? 150 : 135;
+                                const totalCoefficient = baseCoefficient + unmetered;
+                                const demandValue = population * totalCoefficient / 1000000;
+                                const sewage = demandValue * 0.80;
+                                tableHTML += `
+                                    <tr>
+                                        <td>${year}</td>
+                                        <td>${Math.round(population)}</td>
+                                        <td>${sewage.toFixed(2)}</td>
+                                    </tr>
+                                `;
+                            } else if (data.error) {
+                                tableHTML += `
+                                    <tr>
+                                        <td>${year}</td>
+                                        <td colspan="2" class="text-danger">${data.error}</td>
+                                    </tr>
+                                `;
+                            }
+                        }
+                        tableHTML += '</tbody></table>';
+                        resultContainer.innerHTML = tableHTML;
+                    } catch (error) {
+                        console.error('Error fetching sewage estimation:', error);
+                    }
+                }
+                // Show additional buttons for pollution load details and CSV download
+                pollutionLoadBtn.style.display = "block";
+                downloadCsvBtn.style.display = "block";
             }
-            pollutionLoadBtn.style.display = "block";
-            downloadCsvBtn.style.display = "block";
-        } else if (demandType === 'manual') {
-            // Manual demand entry
-            const waterdemand = parseFloat(domesticField.value) || 0;
-            if (!waterdemand) {
-                alert('Please enter water demand.');
-                return;
+            // For manual demand entry
+            else if (demandType === 'manual') {
+                const waterDemand = parseFloat(domesticField.value) || 0;
+                if (!waterDemand) {
+                    alert('Please enter water demand.');
+                    return;
+                }
+                const sewageDemand = waterDemand * 0.84;
+                resultContainer.textContent = `Total Generated Sewage Water is: ${sewageDemand.toFixed(2)} MLD`;
             }
-            const sewagedemand = waterdemand * 0.84;
-            resultContainer.textContent = `Total Generated Sewage Water is: ${sewagedemand.toFixed(2)} MLD`;
-        } else if (methodsDropdown.value === 'water_supply') {
-            resultContainer.textContent = ''; // Clear previous result
-            
-            // Water supply method
-            const supplydemand = parseFloat(document.getElementById('supply_field').value) || 0;
-            if (!supplydemand) {
-                alert('Please enter water supply.');
-                return;
+            else {
+                alert('Please select a valid domestic sewage demand type.');
             }
-            const sewagedemand = supplydemand * 0.84;
-            resultContainer.textContent = `Total Generated Sewage Water is: ${sewagedemand.toFixed(2)} MLD`;
-        
-        } else {
-            alert('Please select a valid demand type.');
+        }
+        else {
+            alert('Please select a valid method.');
         }
     });
+    
     pollutionLoadBtn.addEventListener('click', (event) => {
         event.preventDefault();
         // Instead of using window.lastPopulation, we fetch population using the selected year.

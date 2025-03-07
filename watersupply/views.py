@@ -20,19 +20,24 @@ def get_locations(request):
             location_list = [{"code": loc.state_code, "name": loc.region_name} for loc in locations]
             return JsonResponse(location_list, safe=False)
 
-        elif state_code and (not district_code or district_code == "0"):
+        elif state_code and not district_code:
             # Fetch districts within the given state
             locations = PopulationData.objects.filter(state_code=state_code, subdistrict_code=0, village_code=0)
             location_list = [{"code": loc.district_code, "name": " ALL" if loc.district_code == 0 else loc.region_name} for loc in locations]
             return JsonResponse(location_list, safe=False)
 
         elif state_code and district_code and not subdistrict_code:
+            if district_code == "0":
+                return JsonResponse([{"code": "0", "name": " ALL"}], safe=False)
             # Fetch subdistricts within the given state and district
             locations = PopulationData.objects.filter(state_code=state_code, district_code=district_code, village_code=0)
             location_list = [{"code": loc.subdistrict_code, "name": " ALL" if loc.subdistrict_code == 0 else loc.region_name} for loc in locations]
             return JsonResponse(location_list, safe=False)
 
         elif state_code and district_code and subdistrict_code and not village_code:
+
+            if district_code == "0" and subdistrict_code == "0":
+                return JsonResponse([{"code": "0", "name": " ALL"}], safe=False)
             # Fetch villages based on selected hierarchy
             filters = {"state_code": state_code}
             if district_code != "0":
